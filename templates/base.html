@@ -1,0 +1,96 @@
+{% load static core_tags %}<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="malmal">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>{% block title %}{{ site_settings.store_name }} — فروشگاه آنلاین لوازم خانگی{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}فروشگاه آنلاین لوازم خانگی {{ site_settings.store_name }} با ارسال به سراسر کشور{% endblock %}">
+
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f7f4ee">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#161513">
+
+  <link rel="icon" href="{% static 'favicon/favicon.ico' %}" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}">
+  <link rel="manifest" href="{% static 'favicon/site.webmanifest' %}">
+
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fa_IR">
+  <meta property="og:site_name" content="{{ site_settings.store_name }}">
+  <meta property="og:title" content="{% block og_title %}{{ site_settings.store_name }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}فروشگاه آنلاین لوازم خانگی {{ site_settings.store_name }}{% endblock %}">
+  <meta property="og:image" content="{{ site_url }}{% static 'favicon/og-default.png' %}">
+  <link rel="preload" href="{% static 'fonts/dastnevis/dastnevis.woff2' %}" as="font" type="font/woff2" crossorigin>
+  {% block extra_head %}{% endblock %}
+
+  <script>
+    (function () {
+      var pref = "system";
+      try {
+        pref = localStorage.getItem("malmal.theme") || "system";
+      } catch (e) {}
+      var dark =
+        pref === "dark" ||
+        (pref !== "light" &&
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.setAttribute("data-theme", dark ? "malmal-dark" : "malmal");
+      document.documentElement.dataset.themePref = pref;
+    })();
+  </script>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="bg-base-200 text-base-content min-h-screen flex flex-col" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:start-2 focus:z-50 btn btn-sm bg-base-100 border">
+    رفتن به محتوای اصلی
+  </a>
+
+  <div id="toasts" class="toast toast-top toast-center z-50" aria-live="polite"></div>
+
+  <div class="drawer">
+    <input id="mobile-cat-drawer" type="checkbox" class="drawer-toggle" />
+
+    <div class="drawer-content flex flex-col min-h-screen pb-20 lg:pb-0">
+      {% include "partials/_header.html" %}
+
+      <main id="main-content" class="flex-1">
+        {% block content %}{% endblock %}
+      </main>
+
+      {% include "partials/_footer.html" %}
+      {% include "partials/_dock.html" %}
+    </div>
+
+    <div class="drawer-side z-50 lg:hidden">
+      <label for="mobile-cat-drawer" aria-label="بستن دسته‌بندی‌ها" class="drawer-overlay"></label>
+      <aside class="bg-base-100 text-base-content min-h-full w-72 p-4 flex flex-col gap-4 border-e">
+        <div class="flex items-center justify-between pb-3 border-b">
+          <span class="text-lead font-medium">دسته‌بندی‌ها</span>
+          <label for="mobile-cat-drawer" class="btn btn-ghost btn-square btn-sm" aria-label="بستن">
+            {% icon "x" size=18 %}
+          </label>
+        </div>
+        <ul class="menu w-full p-0 gap-1">
+          {% for cat in nav_categories %}
+            <li>
+              <details>
+                <summary class="text-small font-medium">{{ cat.name }}</summary>
+                <ul>
+                  {% for child in cat.children %}
+                    <li><span class="text-small text-ink-2">{{ child }}</span></li>
+                  {% endfor %}
+                </ul>
+              </details>
+            </li>
+          {% endfor %}
+        </ul>
+      </aside>
+    </div>
+  </div>
+
+  <script src="{% static 'js/htmx.min.js' %}" defer></script>
+  <script src="{% static 'js/app.js' %}" defer></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

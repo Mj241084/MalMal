@@ -1,0 +1,17 @@
+{% load core_tags %}
+<nav class="dock lg:hidden bg-base-100 border-t z-40" aria-label="ناوبری پایین">
+  <a href="{% url 'core:home' %}" class="{% if request.path == '/' %}dock-active{% endif %}">
+    {% icon "home" size=20 %}
+    <span class="dock-label">خانه</span>
+  </a>
+
+  <label for="mobile-cat-drawer" class="cursor-pointer">
+    {% icon "layout-grid" size=20 %}
+    <span class="dock-label">دسته‌ها</span>
+  </label>
+
+  <a href="#cart" class="relative">
+    {% icon "shopping-cart" size=20 %}
+    <span class="dock-label">سبد خرید</span>
+  </a>
+</nav>

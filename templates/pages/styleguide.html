@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}{{ site_settings.store_name }} — راهنمای سبک{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8 flex flex-col gap-12">
+  <header class="flex flex-col gap-2">
+    <h1 class="text-display font-medium">راهنمای سبک {{ site_settings.store_name }}</h1>
+    <p class="text-small text-ink-2">
+      بررسی توکن‌های رنگ، تایپوگرافی، فاصله‌گذاری، کارت محصول و حالت‌های HTMX در هر دو تم روشن و تاریک
+    </p>
+  </header>
+
+  {# 1. Color Tokens #}
+  <section class="flex flex-col gap-4">
+    {% include "partials/_section_heading.html" with title="رنگ‌ها و نقش‌های سطح" %}
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div class="bg-base-200 border rounded-box p-4 flex flex-col gap-2">
+        <span class="text-small font-medium">پس‌زمینه‌ی صفحه</span>
+        <span class="text-label text-ink-3 latin">base-200</span>
+      </div>
+      <div class="bg-base-100 border rounded-box p-4 flex flex-col gap-2">
+        <span class="text-small font-medium">کارت و هدر</span>
+        <span class="text-label text-ink-3 latin">base-100</span>
+      </div>
+      <div class="bg-base-300 border rounded-box p-4 flex flex-col gap-2">
+        <span class="text-small font-medium">سطح بالاآمده</span>
+        <span class="text-label text-ink-3 latin">base-300</span>
+      </div>
+      <div class="bg-primary text-primary-content border rounded-box p-4 flex flex-col gap-2">
+        <span class="text-small font-medium">رنگ تاکیدی</span>
+        <span class="text-label latin">primary</span>
+      </div>
+      <div class="bg-base-100 border rounded-box p-4 flex flex-col gap-2">
+        <span class="text-small font-medium text-brand-ink">متن تاکیدی</span>
+        <span class="text-label text-ink-3 latin">text-brand-ink</span>
+      </div>
+      <div class="bg-base-100 border rounded-box p-4 flex flex-col gap-2">
+        <span class="text-small font-medium text-ink-2">متن ثانویه</span>
+        <span class="text-label text-ink-3 latin">text-ink-2 / ink-3</span>
+      </div>
+    </div>
+  </section>
+
+  {# 2. Typography & Font Mixing #}
+  <section class="flex flex-col gap-4">
+    {% include "partials/_section_heading.html" with title="تایپوگرافی و ترکیب فونت" %}
+    <div class="bg-base-100 border rounded-box p-6 flex flex-col gap-4">
+      <div class="flex flex-col gap-1 border-b pb-4">
+        <span class="text-label text-ink-3">فونت نمایشی برند (Dastnevis — فقط جایگاه نام برند)</span>
+        <div class="py-1" id="brand-font-sample">
+          {% include "partials/_brand_name.html" with brand_class="text-display leading-tight" %}
+        </div>
+      </div>
+      <div class="flex flex-col gap-1 border-b pb-4">
+        <span class="text-label text-ink-3">نمونه‌ی ترکیب Inter و وزیر</span>
+        <p class="text-lead font-medium" id="font-mix-sample">Samsung ۱۲۳ مدل WM-1450</p>
+        <p class="text-small text-ink-2">
+          کد سفارش: <span class="latin">ML-48291034</span> — مبلغ:
+          <span class="text-lead font-medium text-base-content">{{ 46800000|toman }}</span>
+          <span class="text-small text-ink-2">تومان</span>
+        </p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="text-display font-medium">تیتر محصول (۲۸ پیکسل، وزن ۵۰۰)</div>
+        <div class="text-title font-medium">عنوان صفحه (۲۴ پیکسل، وزن ۵۰۰)</div>
+        <div class="text-lead font-medium">قیمت و زیرعنوان (۱۸ پیکسل، وزن ۵۰۰)</div>
+        <div class="text-body">متن اصلی بدنه (۱۵ پیکسل، وزن ۴۰۰)</div>
+        <div class="text-small text-ink-2">متن ثانویه و عنوان کارت (۱۴ پیکسل، وزن ۴۰۰)</div>
+        <div class="text-label text-ink-3">برچسب و متادیتا (۱۲ پیکسل، وزن ۴۰۰)</div>
+      </div>
+    </div>
+  </section>
+
+  {# 3. Buttons & HTMX #}
+  <section class="flex flex-col gap-4">
+    {% include "partials/_section_heading.html" with title="دکمه‌ها و درخواست HTMX" %}
+    <div class="bg-base-100 border rounded-box p-6 flex flex-wrap items-center gap-3">
+      <button type="button" class="btn btn-primary h-10">افزودن به سبد</button>
+      <button type="button" class="btn h-10">دکمه‌ی پیش‌فرض</button>
+      <button type="button" class="btn btn-outline h-10">دکمه‌ی خط‌دار</button>
+      <button type="button" class="btn btn-ghost h-10">دکمه‌ی ساده</button>
+      <button type="button" class="btn h-10 btn-disabled" tabindex="-1" aria-disabled="true">غیرفعال</button>
+      <button
+        type="button"
+        class="btn btn-outline h-10 gap-2"
+        hx-get="{% url 'core:styleguide_ping' %}"
+        hx-target="#htmx-ping-result"
+        hx-swap="innerHTML"
+        hx-indicator="#htmx-ping-spinner"
+        hx-disabled-elt="this"
+      >
+        <span>بررسی پاسخ سرور</span>
+        <span id="htmx-ping-spinner" class="htmx-indicator loading loading-spinner loading-sm"></span>
+      </button>
+      <div id="htmx-ping-result" class="min-h-6 flex items-center"></div>
+    </div>
+  </section>
+
+  {# 4. Form Fields #}
+  <section class="flex flex-col gap-4">
+    {% include "partials/_section_heading.html" with title="فیلدهای فرم" %}
+    <div class="bg-base-100 border rounded-box p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend text-small font-medium">نام و نام خانوادگی</legend>
+        <input type="text" class="input w-full h-10" value="سارا محمدی" />
+        <p class="label text-label text-ink-3">مطابق کارت ملی</p>
+      </fieldset>
+
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend text-small font-medium">کد ملی (قفل‌شده)</legend>
+        <label class="input w-full h-10 bg-base-300 flex items-center gap-2">
+          {% icon "lock" size=18 class="text-ink-3" %}
+          <input type="text" value="۰۰۱۲۳۴۵۶۷۸" readonly dir="ltr" class="grow text-end latin" />
+        </label>
+        <p class="label text-label text-ink-3">برای تغییر با پشتیبانی تماس بگیرید</p>
+      </fieldset>
+
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend text-small font-medium">کدپستی</legend>
+        <input type="text" inputmode="numeric" dir="ltr" class="input input-error w-full h-10 text-end" value="12345" />
+        <p class="text-label text-error flex items-center gap-1 mt-1">
+          {% icon "alert-circle" size=18 %}
+          <span>کدپستی باید دقیقاً ۱۰ رقم باشد</span>
+        </p>
+      </fieldset>
+    </div>
+  </section>
+
+  {# 5. Product Cards (2 cols mobile, 3 md, 4 lg) #}
+  <section class="flex flex-col gap-4">
+    {% include "partials/_section_heading.html" with title="کارت محصول" %}
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+      {% for item in sample_products %}
+        <article class="card bg-base-100 border rounded-box p-2 hover:bg-base-300 transition-colors relative">
+          <button
+            type="button"
+            class="btn btn-circle bg-base-100 border w-10 h-10 absolute top-3 end-3 z-10"
+            aria-label="افزودن به علاقه‌مندی‌ها"
+          >
+            {% if item.liked %}
+              {% icon "heart" size=18 class="text-base-content fill-current" %}
+            {% else %}
+              {% icon "heart" size=18 class="text-ink-2" %}
+            {% endif %}
+          </button>
+
+          {% if item.discount_pct %}
+            <span class="badge bg-base-content text-base-100 border-0 text-label font-medium absolute top-3 start-3 z-10">
+              {{ item.discount_pct|fa_digits }}٪
+            </span>
+          {% endif %}
+
+          <a href="#product-{{ forloop.counter }}" class="flex flex-col gap-3">
+            <div class="bg-white border rounded-lg aspect-square flex items-center justify-center p-4 {% if not item.in_stock %}opacity-60{% endif %}">
+              {% icon "layout-grid" size=40 class="text-neutral/40" %}
+            </div>
+
+            <div class="flex flex-col gap-1 px-1 pb-1">
+              <span class="text-label text-ink-3">{{ item.brand }}</span>
+              <h3 class="text-small font-medium line-clamp-2 min-h-12">{{ item.title }}</h3>
+
+              {% if item.in_stock %}
+                <div class="flex flex-col gap-1 mt-1">
+                  {% if item.compare_at_price %}
+                    <span class="text-label text-ink-3 line-through">{{ item.compare_at_price|toman }}</span>
+                  {% endif %}
+                  <div class="flex items-baseline gap-1">
+                    <span class="text-lead font-medium">{{ item.price|toman }}</span>
+                    <span class="text-small text-ink-2">تومان</span>
+                  </div>
+                </div>
+              {% else %}
+                <div class="mt-1">
+                  <span class="badge bg-base-300 text-ink-2 border-0 text-label">ناموجود</span>
+                </div>
+              {% endif %}
+            </div>
+          </a>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# 6. Badges, Order Status, Alerts, Toast, Skeleton, Empty State, Directional Icons #}
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-base-100 border rounded-box p-6 flex flex-col gap-4">
+      <h3 class="text-lead font-medium">وضعیت سفارش و اعلان</h3>
+      <ul class="flex flex-col gap-2">
+        {% for status_cls, label in statuses %}
+          <li class="flex items-center gap-2 text-small">
+            <span class="status {{ status_cls }}"></span>
+            <span>{{ label }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <div role="alert" class="alert text-small">
+        {% icon "info" size=18 class="text-ink-2" %}
+        <span>ارسال سفارش‌ها با تیپاکس و به‌صورت پس‌کرایه انجام می‌شود</span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          class="btn btn-sm h-10"
+          data-demo-toast="محصول به سبد خرید اضافه شد"
+          data-demo-toast-level="success"
+        >
+          نمایش اعلان نمونه
+        </button>
+        <span class="inline-flex items-center gap-2 text-small text-ink-2 px-2">
+          {% icon "chevron-left" size=18 flip=True class="text-ink-2" %}
+          {% icon "arrow-left" size=18 flip=True class="text-ink-2" %}
+          {% icon "log-out" size=18 flip=True class="text-ink-2" %}
+          <span>آیکون‌های جهت‌دار در RTL</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="bg-base-100 border rounded-box p-6 flex flex-col gap-6">
+      <div class="flex flex-col gap-2">
+        <h3 class="text-lead font-medium">اسکلت بارگذاری (ارتفاع رزروشده)</h3>
+        <div class="min-h-20 flex flex-col gap-2">
+          <div class="skeleton h-5 w-48"></div>
+          <div class="skeleton h-4 w-full"></div>
+          <div class="skeleton h-4 w-3/4"></div>
+        </div>
+      </div>
+
+      <div class="border-t pt-6 flex flex-col items-center text-center gap-2">
+        {% icon "shopping-cart" size=40 class="text-ink-3" %}
+        <p class="text-lead font-medium">سبد خرید خالی است</p>
+        <p class="text-small text-ink-2">برای شروع، دسته‌بندی‌های لوازم خانگی را ببینید</p>
+        <a href="{% url 'core:home' %}" class="btn btn-sm h-10 mt-2">مشاهده‌ی محصولات</a>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

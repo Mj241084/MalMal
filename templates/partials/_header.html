@@ -1,0 +1,127 @@
+{% load core_tags %}
+<header class="bg-base-100 border-b sticky top-0 z-30">
+  {# Mobile bar (56px) #}
+  <div class="lg:hidden">
+    <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
+      <a href="{% url 'core:home' %}" class="inline-flex items-center gap-2 py-2" aria-label="{{ site_settings.store_name }}">
+        {% include "partials/_logo.html" with img_class="h-10 w-auto" brand_class="text-title leading-none" %}
+      </a>
+
+      <div class="flex items-center gap-1">
+        <button type="button" class="btn btn-ghost btn-square w-10 h-10" aria-label="جستجو">
+          {% icon "search" size=20 class="text-ink-2" %}
+        </button>
+
+        <a href="#cart" class="btn btn-ghost btn-square w-10 h-10 relative" aria-label="سبد خرید">
+          {% icon "shopping-cart" size=20 class="text-ink-2" %}
+          <span class="badge badge-sm bg-base-300 text-base-content absolute top-1 end-1 px-1 min-w-4 h-4 text-label" data-cart-count>{{ 0|fa_digits }}</span>
+        </a>
+
+        <details class="dropdown dropdown-end">
+          <summary class="btn btn-ghost btn-square w-10 h-10 list-none" aria-label="حساب کاربری">
+            {% icon "user" size=20 class="text-ink-2" %}
+          </summary>
+          <ul class="dropdown-content menu bg-base-100 rounded-box border surface-float w-52 p-2 mt-2 z-40">
+            <li class="menu-title text-label text-ink-3">حساب کاربری</li>
+            <li><a href="#login" class="text-small">ورود یا ثبت‌نام</a></li>
+            <li class="border-t mt-1 pt-1">
+              <span class="text-label text-ink-3">پوسته</span>
+              <div class="flex items-center gap-1 p-1">
+                <button type="button" data-theme-choice="light" class="btn btn-ghost btn-xs flex-1" aria-label="تم روشن">
+                  {% icon "sun" size=16 %}
+                </button>
+                <button type="button" data-theme-choice="dark" class="btn btn-ghost btn-xs flex-1" aria-label="تم تاریک">
+                  {% icon "moon" size=16 %}
+                </button>
+                <button type="button" data-theme-choice="system" class="btn btn-ghost btn-xs flex-1" aria-label="تم سیستم">
+                  {% icon "monitor" size=16 %}
+                </button>
+              </div>
+            </li>
+          </ul>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  {# Desktop two-row header (64px + 40px) #}
+  <div class="hidden lg:block">
+    <div class="max-w-7xl mx-auto px-8 h-16 flex items-center justify-between gap-6">
+      <a href="{% url 'core:home' %}" class="inline-flex items-center gap-2 shrink-0 py-2" aria-label="{{ site_settings.store_name }}">
+        {% include "partials/_logo.html" with img_class="h-11 w-auto" brand_class="text-display leading-none" %}
+      </a>
+
+      <form action="#" method="get" class="flex-1 max-w-xl" role="search">
+        <label class="input h-10 w-full bg-base-200 flex items-center gap-2">
+          {% icon "search" size=18 class="text-ink-3" %}
+          <input type="search" name="q" placeholder="جستجوی لوازم خانگی" class="grow text-small" autocomplete="off" />
+        </label>
+      </form>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <details class="dropdown dropdown-end">
+          <summary class="btn btn-ghost h-10 px-3 gap-2 text-small font-normal list-none">
+            {% icon "user" size=18 class="text-ink-2" %}
+            <span>ورود / حساب کاربری</span>
+            {% icon "chevron-down" size=18 class="text-ink-3" %}
+          </summary>
+          <ul class="dropdown-content menu bg-base-100 rounded-box border surface-float w-56 p-2 mt-2 z-40">
+            <li><a href="#login" class="text-small">ورود یا ثبت‌نام</a></li>
+            <li><a href="#orders" class="text-small text-ink-2">سفارش‌های من</a></li>
+            <li><a href="#wishlist" class="text-small text-ink-2">علاقه‌مندی‌ها</a></li>
+            <li class="border-t mt-1 pt-1">
+              <div class="flex items-center justify-between gap-2 px-2 py-1 hover:bg-transparent">
+                <span class="text-label text-ink-3">پوسته</span>
+                <div class="flex items-center gap-1">
+                  <button type="button" data-theme-choice="light" class="btn btn-ghost btn-xs px-2" aria-label="تم روشن">روشن</button>
+                  <button type="button" data-theme-choice="dark" class="btn btn-ghost btn-xs px-2" aria-label="تم تاریک">تاریک</button>
+                  <button type="button" data-theme-choice="system" class="btn btn-ghost btn-xs px-2" aria-label="تم سیستم">سیستم</button>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </details>
+
+        <a href="#cart" class="btn btn-ghost h-10 px-3 gap-2 text-small font-normal" aria-label="سبد خرید">
+          {% icon "shopping-cart" size=18 class="text-ink-2" %}
+          <span>سبد خرید</span>
+          <span class="badge badge-sm bg-base-300 text-base-content" data-cart-count>{{ 0|fa_digits }}</span>
+        </a>
+      </div>
+    </div>
+
+    {# Desktop navigation row (40px) #}
+    <nav class="border-t" aria-label="ناوبری دسته‌بندی‌ها">
+      <div class="max-w-7xl mx-auto px-8 h-10 flex items-center gap-4">
+        <details class="dropdown dropdown-start">
+          <summary class="btn btn-ghost btn-sm h-8 px-2 gap-2 text-small font-medium list-none">
+            {% icon "menu" size=18 class="text-ink-2" %}
+            <span>همه‌ی دسته‌ها</span>
+          </summary>
+          <div class="dropdown-content bg-base-100 rounded-box border surface-float p-4 mt-1 w-96 z-40">
+            <ul class="grid grid-cols-2 gap-2">
+              {% for cat in nav_categories %}
+                <li class="p-2 rounded-field hover:bg-base-300 transition-colors">
+                  <span class="text-small font-medium block">{{ cat.name }}</span>
+                  <span class="text-label text-ink-3">{{ cat.children|join:"، " }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </details>
+
+        <span class="h-4 w-px bg-base-300" aria-hidden="true"></span>
+
+        <ul class="flex items-center gap-4 overflow-x-auto no-scrollbar">
+          {% for cat in nav_categories %}
+            <li class="shrink-0">
+              <a href="#cat-{{ cat.slug }}" class="text-small text-ink-2 hover:text-base-content transition-colors py-1">
+                {{ cat.name }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </nav>
+  </div>
+</header>

@@ -1,0 +1,30 @@
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Python / uv
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node / pnpm
+node_modules/
+
+# Django local runtime
+db.sqlite3
+db.sqlite3-*
+dump.rdb
+media/
+staticfiles/
+
+# Incoming user assets & screenshots
+assets-incoming/
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,33 @@
+{
+  "name": "Malmal",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "sync:vendor": "node scripts/sync_vendor.mjs",
+    "build:css": "tailwindcss -i ./static/src/input.css -o ./static/css/app.css --minify",
+    "watch:css": "tailwindcss -i ./static/src/input.css -o ./static/css/app.css --watch",
+    "postinstall": "node scripts/sync_vendor.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.18.0",
+      "onFail": "download"
+    }
+  },
+  "packageManager": "pnpm@12.18.0",
+  "type": "module",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.5",
+    "daisyui": "^5.7.50",
+    "tailwindcss": "^4.3.5"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "htmx.org": "^2.0.11"
+  }
+}

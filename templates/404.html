@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}{{ site_settings.store_name }} — صفحه پیدا نشد{% endblock %}
+
+{% block content %}
+<section class="max-w-xl mx-auto px-4 py-16 text-center">
+  <div class="bg-base-100 border rounded-box p-8 flex flex-col items-center gap-3">
+    {% icon "info" size=40 class="text-ink-3" %}
+    <h1 class="text-title font-medium">صفحه‌ی مورد نظر پیدا نشد</h1>
+    <p class="text-small text-ink-2">ممکن است نشانی تغییر کرده باشد یا صفحه حذف شده باشد</p>
+    <a href="{% url 'core:home' %}" class="btn btn-primary h-10 mt-2">بازگشت به صفحه‌ی اصلی</a>
+  </div>
+</section>
+{% endblock %}
