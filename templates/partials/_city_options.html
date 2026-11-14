@@ -1,0 +1,5 @@
+{% load core_tags %}
+<option value="">{% if cities %}انتخاب شهر{% else %}ابتدا استان را انتخاب کنید{% endif %}</option>
+{% for city in cities %}
+  <option value="{{ city.pk }}"{% if city.pk|stringformat:"s" == selected|stringformat:"s" %} selected{% endif %}>{{ city.name }}</option>
+{% endfor %}

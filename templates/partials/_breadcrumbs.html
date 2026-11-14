@@ -1,0 +1,17 @@
+{% load core_tags catalog_tags %}
+{% if breadcrumbs %}
+<nav aria-label="مسیر صفحه" class="breadcrumbs text-small text-ink-2 overflow-x-hidden">
+  <ul class="flex-nowrap min-w-0">
+    <li class="shrink-0"><a href="{% url 'core:home' %}" class="hover:text-base-content transition-colors">خانه</a></li>
+    {% for crumb in breadcrumbs %}
+      <li class="min-w-0{% if not forloop.last %} shrink-0{% endif %}">
+        {% if crumb.url %}
+          <a href="{{ crumb.url }}" class="hover:text-base-content transition-colors">{{ crumb.name|fa_text }}</a>
+        {% else %}
+          <span class="block truncate max-w-[14rem] sm:max-w-xs text-base-content">{{ crumb.name|fa_text }}</span>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+</nav>
+{% endif %}

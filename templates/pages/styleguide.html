@@ -237,5 +237,35 @@
       </div>
     </div>
   </section>
+  {# 7. UI Modules (MM.ui & MM.otp) #}
+  <section class="flex flex-col gap-4">
+    {% include "partials/_section_heading.html" with title="پنجره‌ها و اعلان‌ها" %}
+    <div class="bg-base-100 border rounded-box p-6 flex flex-col gap-6">
+      <div class="flex flex-wrap items-center gap-3">
+        <button type="button" class="btn btn-sm h-10"
+                data-demo-toast="تغییرات با موفقیت ثبت شد" data-demo-toast-level="info">
+          نمایش اعلان
+        </button>
+        <button type="button" class="btn btn-sm h-10"
+                data-demo-confirm="آیا این تغییر اعمال شود؟"
+                data-confirm-title="تایید عملیات" data-confirm-label="بله، اعمال شود">
+          تایید عادی
+        </button>
+        <button type="button" class="btn btn-sm h-10 text-error"
+                data-demo-confirm="این مورد برای همیشه حذف شود؟"
+                data-confirm-title="حذف مورد" data-confirm-label="حذف" data-confirm-tone="danger">
+          تایید حذف
+        </button>
+      </div>
+
+      <fieldset class="fieldset max-w-xs">
+        <legend class="fieldset-legend text-small font-medium">نمونه ورودی کد تایید (MM.otp)</legend>
+        <div class="min-h-14">
+          <input type="text" data-otp data-otp-length="4" inputmode="numeric" autocomplete="one-time-code" dir="ltr"
+                 class="input input-lg w-full text-center num" maxlength="4" aria-label="نمونه کد تایید">
+        </div>
+      </fieldset>
+    </div>
+  </section>
 </div>
 {% endblock %}

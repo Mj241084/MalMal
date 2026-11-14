@@ -7,6 +7,19 @@ import re
 _DIGITS_TO_EN = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789")
 _DIGITS_TO_FA = str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹")
 
+_LATIN_RE = re.compile(r"[A-Za-z]")
+_SPLIT_WS_RE = re.compile(r"(\s+)")
+
+
+def to_fa_text(value: object) -> str:
+    """Persian digits for free text. Tokens that contain Latin letters (WM-1234, 5kg) stay untouched."""
+    if value is None:
+        return ""
+    return "".join(
+        part if _LATIN_RE.search(part) else part.translate(_DIGITS_TO_FA) for part in _SPLIT_WS_RE.split(str(value))
+    )
+
+
 # For general user input: preserve hamza forms (ئ، أ، ؤ) in Persian words like "می‌خواهم", "مسئله", "سؤال".
 _GENERAL_CHAR_MAP = str.maketrans(
     {

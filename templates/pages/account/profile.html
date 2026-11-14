@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}اطلاعات حساب — {{ site_settings.store_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-6 lg:py-8 pb-36 lg:pb-8">
+  <h1 class="text-title font-medium">حساب کاربری</h1>
+  {% include "partials/_account_nav.html" with active="profile" %}
+
+  <form id="profile-form" method="post" class="mt-6 bg-base-100 border rounded-box p-4 lg:p-6 flex flex-col gap-4" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div role="alert" class="alert alert-error text-small">
+        {% icon "alert-circle" size=18 class="shrink-0" %}
+        {% for error in form.non_field_errors %}<span>{{ error }}</span>{% endfor %}
+      </div>
+    {% endif %}
+
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend text-small font-medium">شماره موبایل</legend>
+      <label class="input w-full h-10 bg-base-300 flex items-center gap-2">
+        {% icon "lock" size=18 class="text-ink-3" %}
+        <input type="text" value="{{ user.mobile|fa_digits }}" readonly dir="ltr" class="grow text-end num">
+      </label>
+      <p class="label text-label text-ink-3">شماره موبایل حساب قابل تغییر نیست</p>
+    </fieldset>
+
+    <div class="grid sm:grid-cols-2 gap-4">
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend text-small font-medium">{{ form.first_name.label }}</legend>
+        {{ form.first_name }}
+        {% for error in form.first_name.errors %}
+          <p class="text-label text-error flex items-center gap-1 mt-1">
+            {% icon "alert-circle" size=18 class="shrink-0" %}
+            <span>{{ error }}</span>
+          </p>
+        {% endfor %}
+      </fieldset>
+
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend text-small font-medium">{{ form.last_name.label }}</legend>
+        {{ form.last_name }}
+        {% for error in form.last_name.errors %}
+          <p class="text-label text-error flex items-center gap-1 mt-1">
+            {% icon "alert-circle" size=18 class="shrink-0" %}
+            <span>{{ error }}</span>
+          </p>
+        {% endfor %}
+      </fieldset>
+    </div>
+
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend text-small font-medium">{{ form.national_code.label }}</legend>
+      {% if user.national_code %}
+        <label class="input w-full h-10 bg-base-300 flex items-center gap-2">
+          {% icon "lock" size=18 class="text-ink-3" %}
+          <input type="text" value="{{ user.national_code|fa_digits }}" readonly dir="ltr" class="grow text-end num">
+        </label>
+        <p class="label text-label text-ink-3">کد ملی بعد از ثبت قابل تغییر نیست. برای تغییر با پشتیبانی تماس بگیرید</p>
+      {% else %}
+        {{ form.national_code }}
+        {% for error in form.national_code.errors %}
+          <p class="text-label text-error flex items-center gap-1 mt-1">
+            {% icon "alert-circle" size=18 class="shrink-0" %}
+            <span>{{ error }}</span>
+          </p>
+        {% endfor %}
+        <div role="alert" class="alert text-small mt-2 items-start">
+          {% icon "info" size=18 class="text-ink-2 shrink-0 mt-0.5" %}
+          <div class="flex flex-col gap-2">
+            <span>کد ملی بعد از ثبت قابل تغییر نیست. از درستی آن مطمئن شوید</span>
+            <label class="flex items-start gap-2 cursor-pointer">
+              {{ form.national_code_confirm }}
+              <span class="text-label text-ink-2 leading-5">{{ form.national_code_confirm.label }}</span>
+            </label>
+          </div>
+        </div>
+      {% endif %}
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend text-small font-medium">{{ form.email.label }}</legend>
+      {{ form.email }}
+      {% for error in form.email.errors %}
+        <p class="text-label text-error flex items-center gap-1 mt-1">
+          {% icon "alert-circle" size=18 class="shrink-0" %}
+          <span>{{ error }}</span>
+        </p>
+      {% endfor %}
+    </fieldset>
+
+    <div class="hidden lg:flex border-t pt-4">
+      <button type="submit" class="btn btn-primary h-10 min-h-10">ذخیره تغییرات</button>
+    </div>
+  </form>
+
+  <div class="mt-4 bg-base-100 border rounded-box p-4 flex items-center justify-between gap-4">
+    <div class="flex flex-col gap-1">
+      <span class="text-small font-medium">امنیت نشست</span>
+      <span class="text-label text-ink-3">خروج همزمان از همه‌ی مرورگرها و دستگاه‌های فعال</span>
+    </div>
+    <form method="post" action="{% url 'accounts:logout_all' %}" class="shrink-0" data-confirm="از همه‌ی دستگاه‌ها خارج می‌شوید؟">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-ghost h-10 text-ink-2 text-small">خروج از همه‌ی دستگاه‌ها</button>
+    </form>
+  </div>
+</div>
+
+<div class="lg:hidden fixed bottom-16 inset-x-0 z-20 bg-base-100 border-t px-4 py-3">
+  <button type="submit" form="profile-form" class="btn btn-primary w-full h-11 min-h-11">
+    ذخیره تغییرات
+  </button>
+</div>
+{% endblock %}

@@ -12,7 +12,7 @@
 1. این فایل و `docs/00-README.md` را بخوان.
 2. بریف فاز جاری را بخوان: `docs/phases/phase-0X-*.md`. اگر کاربر فاز را نگفت، بپرس (یک سوال کوتاه).
 3. فقط بخش‌هایی از `docs/02` تا `docs/07` را بخوان که بریف فاز به آن‌ها ارجاع داده. کل اسناد را بی‌دلیل نخوان.
-4. اسکیل‌های `.claude/skills/` را طبق نیاز فاز بخوان (بخش ۵).
+4. اسکیل‌های `skills/` را طبق نیاز فاز بخوان (بخش ۵).
 5. یک فهرست کار (TaskCreate) از «کارها» و «Definition of Done» بریف بساز.
 
 **هر فاز در یک نشست.** اگر نشست طولانی شد و زمینه‌ات پر شد، خلاصه‌ی وضعیت را در `docs/phases/STATUS.md` بنویس (چه شد، چه ماند، تصمیم‌های تازه) تا نشست بعد ادامه دهد.
@@ -77,13 +77,17 @@
 - کد ملی قفل است (D20). فیلد پرشده پروفایل هرگز با داده‌ی فرم بازنویسی نمی‌شود (D07).
 - بدون CDN خارجی. فونت، htmx، آیکون self-host.
 
-**رابط**
-- RTL: فقط کلاس‌های منطقی (`ms-/me-/ps-/pe-/start-/end-`).
-- رنگ و کامپوننت فقط از DaisyUI و توکن‌های `docs/04`. بدون `dark:` روی رنگ‌های DaisyUI.
-- HTMX: partialهای `_partial.html`، `request.htmx`، `hx-indicator` + `hx-disabled-elt`، رزرو ارتفاع برای بلوک‌های دیر آمده.
-- ارقام نمایش فارسی (`fa_digits`)، مبلغ با فیلتر `toman`، ورودی نرمال با `normalize_fa`.
+- **رابط (D30، D31، D28):**
+  - RTL: فقط کلاس‌های منطقی (`ms-/me-/ps-/pe-/start-/end-`).
+  - موبایل: عمل اصلی پایین و سمت `start` (`docs/04` بخش ۴.۱).
+  - رنگ و کامپوننت فقط از DaisyUI و توکن‌های `docs/04`. بدون `dark:` روی رنگ‌های DaisyUI.
+  - HTMX: partialهای `_partial.html`، `request.htmx`، `hx-indicator` + `hx-disabled-elt`، رزرو ارتفاع برای بلوک‌های دیر آمده.
+  - **ارقام (D30):** ذخیره، URL، فیلد hidden و ارتباط سرور ASCII است؛ نمایش و ورودی کاربر فارسی. `|fa_digits` برای عدد خالص، `|fa_text` برای متن آزاد، `.latin` فقط برای رشته‌های لاتین واقعی، `.num` برای اعداد فارسیِ چپ‌به‌راست (موبایل، کدپستی، تایمر).
+  - **پنجره‌ها و اعلان‌ها (D31):** `alert()`، `confirm()`، `prompt()` و هر پنجره‌ی بومی مرورگر ممنوع است؛ همه‌چیز فقط از `MM.ui`. قبل از نوشتن JS، سند `docs/08-ui-modules.md` را بخوان.
 
-## ۵. اسکیل‌ها (`.claude/skills/`)
+## ۵. اسکیل‌ها (`skills/` در ریشه‌ی پروژه)
+
+مسیر اسکیل‌ها `skills/` در ریشه‌ی پروژه است.
 
 | اسکیل | چه وقت |
 |-------|--------|
@@ -119,9 +123,9 @@
 config/        env.py، settings/ (base/dev/prod)، urls.py، wsgi.py، asgi.py
 apps/core/     مدل‌های پایه (SiteSettings، StaticPage، FooterLink)، jalali، text، validators، templatetags، tests
 templates/     base.html، 404.html، 500.html، partials/ (_header، _dock، _footer، _logo، _brand_name، _section_heading)، pages/
-static/        fonts/{vazir,inter,dastnevis}/، src/ (input.css، sprite.svg — در collectstatic ignore می‌شود)، css/app.css، js/{htmx.min.js,app.js}، sprite.svg، logo.webp، favicon/
+static/        fonts/{vazir,inter,dastnevis}/، src/ (input.css، sprite.svg — در collectstatic ignore می‌شود)، css/app.css، js/{htmx.min.js,mm/*.js}، sprite.svg، logo.webp، favicon/
 scripts/       build_sprite.py، make_favicons.py، sync_vendor.mjs
-docs/          اسناد ۰۱ تا ۰۷، phases/، vendors/
+docs/          اسناد ۰۱ تا ۰۸، phases/، vendors/
 Makefile       میانبرهای run، css، sprite، favicons، test، lint، format، check
 ```
 

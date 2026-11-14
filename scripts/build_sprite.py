@@ -29,6 +29,11 @@ ALWAYS_INCLUDE: set[str] = {
     "check",
     "info",
     "x",
+    # TrustItem icons live in the database, so the template scan cannot see them.
+    "lock",
+    "phone",
+    "shield-check",
+    "truck",
 }
 
 
@@ -39,6 +44,9 @@ def collect_used_icons() -> set[str]:
             continue
         for ext in ("*.html", "*.py"):
             for path in base.rglob(ext):
+                # Tests reference deliberately missing icon names, which are not real usages.
+                if "tests" in path.parts or path.name.startswith("test_"):
+                    continue
                 text = path.read_text(encoding="utf-8", errors="ignore")
                 names.update(ICON_RE.findall(text))
     return names

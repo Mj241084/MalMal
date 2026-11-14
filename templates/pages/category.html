@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load core_tags catalog_tags %}
+
+{% block title %}{{ category.name|fa_text }} — {{ site_settings.store_name }}{% endblock %}
+{% block meta_description %}{{ category.description|default:category.name|truncatechars:160 }}{% endblock %}
+{% block og_title %}{{ category.name|fa_text }} — {{ site_settings.store_name }}{% endblock %}
+
+{% block extra_head %}
+  <link rel="canonical" href="{{ canonical_url }}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 lg:py-8">
+  {% include "partials/_breadcrumbs.html" with breadcrumbs=breadcrumbs %}
+
+  <header class="mt-4 flex flex-col gap-2">
+    <div class="flex items-center gap-3">
+      <span class="inline-flex items-center gap-1 shrink-0" aria-hidden="true">
+        <span class="w-0.5 h-4 bg-base-content inline-block"></span>
+        <span class="w-0.5 h-4 bg-base-content inline-block"></span>
+      </span>
+      <h1 class="text-title font-medium">{{ category.name|fa_text }}</h1>
+    </div>
+    {% if category.description %}
+      <p class="text-small text-ink-2 max-w-2xl">{{ category.description|fa_text }}</p>
+    {% endif %}
+  </header>
+
+  {% include "partials/_category_tiles.html" with children=children %}
+
+  <div class="mt-8 lg:grid lg:grid-cols-[280px_1fr] lg:gap-8">
+    <aside class="hidden lg:block" aria-label="فیلترها">
+      <div class="sticky top-32">
+        {% include "partials/_filters.html" %}
+      </div>
+    </aside>
+
+    <div class="min-w-0">
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <details class="dropdown lg:hidden">
+          <summary class="btn btn-sm bg-base-100 border gap-2">
+            {% icon "sliders-horizontal" size=18 class="text-ink-2" %}
+            <span>فیلترها</span>
+          </summary>
+          <div class="dropdown-content bg-base-100 rounded-box border surface-float p-4 mt-2 w-72 z-40">
+            {% include "partials/_filters.html" %}
+          </div>
+        </details>
+
+        <span id="results-indicator" class="htmx-indicator loading loading-spinner loading-sm w-4 shrink-0" aria-hidden="true"></span>
+
+        <div class="flex items-center gap-2 ms-auto">
+          <label class="text-label text-ink-2" for="sort-select">مرتب‌سازی</label>
+          <select id="sort-select" name="sort" form="category-sort-form"
+                  class="select select-sm w-40 text-small"
+                  hx-get="{{ request.path }}"
+                  hx-include="#category-sort-form"
+                  hx-target="#category-results" hx-swap="innerHTML" hx-push-url="true"
+                  hx-indicator="#results-indicator">
+            {% for value, label in sort_choices %}
+              <option value="{{ value }}" {% if filters.sort == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <form id="category-sort-form" class="hidden">
+            {% for name, value in filters.pairs %}
+              <input type="hidden" name="{{ name }}" value="{{ value }}">
+            {% endfor %}
+          </form>
+        </div>
+      </div>
+
+      <div id="category-results" aria-live="polite">
+        {{ results_html }}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

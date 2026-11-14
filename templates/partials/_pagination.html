@@ -1,0 +1,42 @@
+{% load core_tags catalog_tags %}
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="join flex justify-center mt-8" aria-label="صفحه‌بندی">
+  {% if page_obj.has_previous %}
+    <a class="join-item btn btn-sm"
+       href="?{{ querystring }}{% if querystring %}&{% endif %}page={{ page_obj.previous_page_number }}"
+       hx-get="?{{ querystring }}{% if querystring %}&{% endif %}page={{ page_obj.previous_page_number }}"
+       hx-target="#category-results" hx-swap="innerHTML" hx-push-url="true"
+       hx-indicator="#results-indicator" rel="prev">
+      {% icon "chevron-right" size=18 flip=True %}
+      <span class="sr-only">صفحه قبل</span>
+    </a>
+  {% else %}
+    <span class="join-item btn btn-sm btn-disabled" aria-hidden="true">{% icon "chevron-right" size=18 flip=True %}</span>
+  {% endif %}
+
+  {% for number in page_obj.paginator.page_range %}
+    {% if number == page_obj.number %}
+      <span class="join-item btn btn-sm bg-base-300 border" aria-current="page">{{ number|fa_digits }}</span>
+    {% elif number >= page_obj.number|add:"-2" and number <= page_obj.number|add:"2" %}
+      <a class="join-item btn btn-sm"
+         href="?{{ querystring }}{% if querystring %}&{% endif %}page={{ number }}"
+         hx-get="?{{ querystring }}{% if querystring %}&{% endif %}page={{ number }}"
+         hx-target="#category-results" hx-swap="innerHTML" hx-push-url="true"
+         hx-indicator="#results-indicator">{{ number|fa_digits }}</a>
+    {% endif %}
+  {% endfor %}
+
+  {% if page_obj.has_next %}
+    <a class="join-item btn btn-sm"
+       href="?{{ querystring }}{% if querystring %}&{% endif %}page={{ page_obj.next_page_number }}"
+       hx-get="?{{ querystring }}{% if querystring %}&{% endif %}page={{ page_obj.next_page_number }}"
+       hx-target="#category-results" hx-swap="innerHTML" hx-push-url="true"
+       hx-indicator="#results-indicator" rel="next">
+      {% icon "chevron-left" size=18 flip=True %}
+      <span class="sr-only">صفحه بعد</span>
+    </a>
+  {% else %}
+    <span class="join-item btn btn-sm btn-disabled" aria-hidden="true">{% icon "chevron-left" size=18 flip=True %}</span>
+  {% endif %}
+</nav>
+{% endif %}

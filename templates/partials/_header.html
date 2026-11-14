@@ -8,13 +8,13 @@
       </a>
 
       <div class="flex items-center gap-1">
-        <button type="button" class="btn btn-ghost btn-square w-10 h-10" aria-label="جستجو">
+        <a href="{% url 'search:results' %}" class="btn btn-ghost btn-square w-10 h-10" aria-label="جستجو">
           {% icon "search" size=20 class="text-ink-2" %}
-        </button>
+        </a>
 
         <a href="#cart" class="btn btn-ghost btn-square w-10 h-10 relative" aria-label="سبد خرید">
           {% icon "shopping-cart" size=20 class="text-ink-2" %}
-          <span class="badge badge-sm bg-base-300 text-base-content absolute top-1 end-1 px-1 min-w-4 h-4 text-label" data-cart-count>{{ 0|fa_digits }}</span>
+          <span class="badge badge-sm bg-base-300 text-base-content absolute top-1 end-1 px-1 min-w-4 h-4 text-label{% if not cart_count %} invisible{% endif %}" data-cart-count>{{ cart_count|fa_digits }}</span>
         </a>
 
         <details class="dropdown dropdown-end">
@@ -23,7 +23,26 @@
           </summary>
           <ul class="dropdown-content menu bg-base-100 rounded-box border surface-float w-52 p-2 mt-2 z-40">
             <li class="menu-title text-label text-ink-3">حساب کاربری</li>
-            <li><a href="#login" class="text-small">ورود یا ثبت‌نام</a></li>
+            {% if user.is_authenticated %}
+              <li><a href="{% url 'accounts:profile' %}" class="text-small">{{ user.get_short_name|fa_text }}</a></li>
+              <li><a href="{% url 'accounts:addresses' %}" class="text-small text-ink-2">آدرس‌های من</a></li>
+              <li><a href="#orders" class="text-small text-ink-2">سفارش‌های من</a></li>
+              <li>
+                <form method="post" action="{% url 'accounts:logout' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="text-small text-ink-2 w-full text-start">خروج از حساب</button>
+                </form>
+              </li>
+            {% else %}
+              <li>
+                <a href="{% url 'accounts:login' %}{% if request.path != '/login/' %}?next={{ request.get_full_path|urlencode }}{% endif %}"
+                   data-auth-open
+                   hx-get="{% url 'accounts:otp_modal' %}{% if request.path != '/login/' %}?next={{ request.get_full_path|urlencode }}{% endif %}"
+                   hx-target="#auth-modal-body"
+                   hx-swap="innerHTML"
+                   class="text-small">ورود یا ثبت‌نام</a>
+              </li>
+            {% endif %}
             <li class="border-t mt-1 pt-1">
               <span class="text-label text-ink-3">پوسته</span>
               <div class="flex items-center gap-1 p-1">
@@ -51,24 +70,54 @@
         {% include "partials/_logo.html" with img_class="h-11 w-auto" brand_class="text-display leading-none" %}
       </a>
 
-      <form action="#" method="get" class="flex-1 max-w-xl" role="search">
+      <form action="{% url 'search:results' %}" method="get" class="flex-1 max-w-xl relative" role="search">
         <label class="input h-10 w-full bg-base-200 flex items-center gap-2">
           {% icon "search" size=18 class="text-ink-3" %}
-          <input type="search" name="q" placeholder="جستجوی لوازم خانگی" class="grow text-small" autocomplete="off" />
+          <input type="search" name="q" placeholder="جستجوی لوازم خانگی" class="grow text-small" autocomplete="off"
+                 aria-label="جستجوی محصولات"
+                 hx-get="{% url 'search:suggest' %}"
+                 hx-trigger="input changed delay:250ms, focus"
+                 hx-target="#search-suggest"
+                 hx-swap="innerHTML"
+                 hx-indicator="#search-suggest-indicator">
+          <span id="search-suggest-indicator" class="htmx-indicator loading loading-spinner loading-xs" aria-hidden="true"></span>
         </label>
+        <div id="search-suggest"
+             class="hidden absolute top-full start-0 end-0 mt-1 z-50 bg-base-100 border rounded-box surface-float p-2"
+             aria-live="polite"></div>
       </form>
 
       <div class="flex items-center gap-2 shrink-0">
         <details class="dropdown dropdown-end">
           <summary class="btn btn-ghost h-10 px-3 gap-2 text-small font-normal list-none">
             {% icon "user" size=18 class="text-ink-2" %}
-            <span>ورود / حساب کاربری</span>
+            <span>{% if user.is_authenticated %}{{ user.get_short_name|fa_text }}{% else %}ورود / حساب کاربری{% endif %}</span>
             {% icon "chevron-down" size=18 class="text-ink-3" %}
           </summary>
           <ul class="dropdown-content menu bg-base-100 rounded-box border surface-float w-56 p-2 mt-2 z-40">
-            <li><a href="#login" class="text-small">ورود یا ثبت‌نام</a></li>
-            <li><a href="#orders" class="text-small text-ink-2">سفارش‌های من</a></li>
-            <li><a href="#wishlist" class="text-small text-ink-2">علاقه‌مندی‌ها</a></li>
+            {% if user.is_authenticated %}
+              <li><a href="{% url 'accounts:profile' %}" class="text-small">اطلاعات حساب</a></li>
+              <li><a href="{% url 'accounts:addresses' %}" class="text-small text-ink-2">آدرس‌های من</a></li>
+              <li><a href="#orders" class="text-small text-ink-2">سفارش‌های من</a></li>
+              <li><a href="#wishlist" class="text-small text-ink-2">علاقه‌مندی‌ها</a></li>
+              <li class="border-t mt-1 pt-1">
+                <form method="post" action="{% url 'accounts:logout' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="text-small text-ink-2 w-full text-start">خروج از حساب</button>
+                </form>
+              </li>
+            {% else %}
+              <li>
+                <a href="{% url 'accounts:login' %}{% if request.path != '/login/' %}?next={{ request.get_full_path|urlencode }}{% endif %}"
+                   data-auth-open
+                   hx-get="{% url 'accounts:otp_modal' %}{% if request.path != '/login/' %}?next={{ request.get_full_path|urlencode }}{% endif %}"
+                   hx-target="#auth-modal-body"
+                   hx-swap="innerHTML"
+                   class="text-small">ورود یا ثبت‌نام</a>
+              </li>
+              <li><a href="#orders" class="text-small text-ink-2">سفارش‌های من</a></li>
+              <li><a href="#wishlist" class="text-small text-ink-2">علاقه‌مندی‌ها</a></li>
+            {% endif %}
             <li class="border-t mt-1 pt-1">
               <div class="flex items-center justify-between gap-2 px-2 py-1 hover:bg-transparent">
                 <span class="text-label text-ink-3">پوسته</span>
@@ -85,7 +134,7 @@
         <a href="#cart" class="btn btn-ghost h-10 px-3 gap-2 text-small font-normal" aria-label="سبد خرید">
           {% icon "shopping-cart" size=18 class="text-ink-2" %}
           <span>سبد خرید</span>
-          <span class="badge badge-sm bg-base-300 text-base-content" data-cart-count>{{ 0|fa_digits }}</span>
+          <span class="badge badge-sm bg-base-300 text-base-content{% if not cart_count %} invisible{% endif %}" data-cart-count>{{ cart_count|fa_digits }}</span>
         </a>
       </div>
     </div>
@@ -99,23 +148,29 @@
             <span>همه‌ی دسته‌ها</span>
           </summary>
           <div class="dropdown-content bg-base-100 rounded-box border surface-float p-4 mt-1 w-96 z-40">
-            <ul class="grid grid-cols-2 gap-2">
-              {% for cat in nav_categories %}
-                <li class="p-2 rounded-field hover:bg-base-300 transition-colors">
-                  <span class="text-small font-medium block">{{ cat.name }}</span>
-                  <span class="text-label text-ink-3">{{ cat.children|join:"، " }}</span>
-                </li>
-              {% endfor %}
-            </ul>
+            {% if nav_categories %}
+              <ul class="grid grid-cols-2 gap-2">
+                {% for cat in nav_categories %}
+                  <li class="p-2 rounded-field hover:bg-base-300 transition-colors">
+                    <a href="{{ cat.url }}" class="text-small font-medium block">{{ cat.name }}</a>
+                    {% if cat.children %}
+                      <span class="text-label text-ink-3">{{ cat.children|length|fa_digits }} زیردسته</span>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="text-small text-ink-2">دسته‌بندی‌ای ثبت نشده است.</p>
+            {% endif %}
           </div>
         </details>
 
         <span class="h-4 w-px bg-base-300" aria-hidden="true"></span>
 
         <ul class="flex items-center gap-4 overflow-x-auto no-scrollbar">
-          {% for cat in nav_categories %}
+          {% for cat in nav_featured %}
             <li class="shrink-0">
-              <a href="#cat-{{ cat.slug }}" class="text-small text-ink-2 hover:text-base-content transition-colors py-1">
+              <a href="{{ cat.url }}" class="text-small text-ink-2 hover:text-base-content transition-colors py-1">
                 {{ cat.name }}
               </a>
             </li>

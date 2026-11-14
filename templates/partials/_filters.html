@@ -1,0 +1,82 @@
+{% load core_tags catalog_tags %}
+<form
+  class="flex flex-col gap-5"
+  hx-get="{{ request.path }}"
+  hx-target="#category-results"
+  hx-swap="innerHTML"
+  hx-push-url="true"
+  hx-trigger="change, submit"
+  hx-indicator="#results-indicator"
+  role="search"
+  aria-label="فیلتر محصولات">
+
+  <div class="flex items-center justify-between gap-2">
+    <span class="text-small font-medium">فیلترها</span>
+    {% if filters.is_filtered %}
+      <a href="{{ request.path }}" class="text-label text-brand-ink">حذف همه</a>
+    {% endif %}
+  </div>
+
+  {% if facets.brands %}
+    <fieldset class="flex flex-col gap-2">
+      <legend class="text-label text-ink-2 mb-1">برند</legend>
+      {% for brand in facets.brands %}
+        <label class="flex items-center gap-2 cursor-pointer h-9 min-h-9">
+          <input type="checkbox" name="brand" value="{{ brand.id }}" class="checkbox checkbox-sm"
+                 {% if brand.id in filters.brands %}checked{% endif %}>
+          <span class="text-small">{{ brand.name }}</span>
+          <span class="text-label text-ink-3">{{ brand.count|fa_digits }}</span>
+        </label>
+      {% endfor %}
+    </fieldset>
+  {% endif %}
+
+  <fieldset class="flex flex-col gap-2">
+    <legend class="text-label text-ink-2 mb-1">بازه قیمت (تومان)</legend>
+    <div class="flex items-center gap-2">
+      <input type="text" name="min_price" inputmode="numeric" data-fa-digits data-digits-only
+             value="{{ filters.min_price|default_if_none:''|fa_digits }}"
+             class="input input-sm w-full text-small num" placeholder="از" aria-label="کمترین قیمت">
+      <span class="text-ink-3">—</span>
+      <input type="text" name="max_price" inputmode="numeric" data-fa-digits data-digits-only
+             value="{{ filters.max_price|default_if_none:''|fa_digits }}"
+             class="input input-sm w-full text-small num" placeholder="تا" aria-label="بیشترین قیمت">
+    </div>
+    {% if facets.price_high %}
+      <p class="text-label text-ink-3">
+        بازه موجود: {{ facets.price_low|toman }} تا {{ facets.price_high|toman }} تومان
+      </p>
+    {% endif %}
+  </fieldset>
+
+  <fieldset class="flex flex-col gap-2">
+    <legend class="text-label text-ink-2 mb-1">وضعیت</legend>
+    <label class="flex items-center gap-2 cursor-pointer min-h-10">
+      <input type="checkbox" name="in_stock" value="1" class="checkbox checkbox-sm" {% if filters.in_stock %}checked{% endif %}>
+      <span class="text-small">فقط کالاهای موجود</span>
+    </label>
+    <label class="flex items-center gap-2 cursor-pointer min-h-10">
+      <input type="checkbox" name="discounted" value="1" class="checkbox checkbox-sm" {% if filters.discounted %}checked{% endif %}>
+      <span class="text-small">فقط تخفیف‌دار</span>
+    </label>
+  </fieldset>
+
+  {% for attribute in facets.attributes %}
+    <fieldset class="flex flex-col gap-2">
+      <legend class="text-label text-ink-2 mb-1">{{ attribute.name }}</legend>
+      {% with selected=filters.specs|get_item:attribute.id %}
+        {% for value in attribute.values %}
+          <label class="flex items-center gap-2 cursor-pointer min-h-10">
+            <input type="checkbox" name="attr_{{ attribute.id }}" value="{{ value }}" class="checkbox checkbox-sm"
+                   {% if value in selected %}checked{% endif %}>
+            <span class="text-small">{{ value }}</span>
+          </label>
+        {% endfor %}
+      {% endwith %}
+    </fieldset>
+  {% endfor %}
+
+  <noscript>
+    <button type="submit" class="btn btn-sm bg-base-300 border">اعمال فیلترها</button>
+  </noscript>
+</form>

@@ -1,0 +1,94 @@
+{% load core_tags catalog_tags %}
+<div class="grid lg:grid-cols-2 gap-6 lg:gap-10">
+  {# --- gallery --- #}
+  <div class="flex flex-col gap-3">
+    {% if images %}
+      <div class="carousel w-full rounded-box border bg-white overflow-hidden">
+        {% for image in images %}
+          <div id="slide-{{ forloop.counter }}" class="carousel-item w-full">
+            <img src="{{ image|image_url }}"
+                 srcset="{{ image|srcset }}"
+                 sizes="(min-width: 1024px) 50vw, 100vw"
+                 width="800" height="800"
+                 alt="{{ image.alt|default:product.title }}"
+                 {% if forloop.first %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %}
+                 decoding="async"
+                 class="w-full aspect-square object-contain p-4">
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if images|length > 1 %}
+        <div class="flex gap-2 overflow-x-auto no-scrollbar">
+          {% for image in images %}
+            <a href="#slide-{{ forloop.counter }}"
+               class="w-16 h-16 shrink-0 rounded-lg border bg-white overflow-hidden"
+               aria-label="تصویر {{ forloop.counter|fa_digits }}">
+              <img src="{{ image|image_url }}" alt="" width="64" height="64" loading="lazy" class="w-full h-full object-contain p-1">
+            </a>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="rounded-box border bg-white aspect-square flex items-center justify-center text-ink-3">
+        {% icon "image" size=40 %}
+      </div>
+    {% endif %}
+  </div>
+
+  {# --- summary --- #}
+  <div class="flex flex-col gap-4">
+    {% if product.brand %}
+      <a href="{% url 'catalog:brand' product.brand.slug %}" class="text-small text-ink-2 hover:text-brand-ink transition-colors self-start">
+        {{ product.brand.name_fa|fa_text }}
+      </a>
+    {% endif %}
+
+    <h1 class="text-title lg:text-display font-medium">{{ product.title|fa_text }}</h1>
+
+    {% if product.short_description %}
+      <p class="text-small text-ink-2">{{ product.short_description|fa_text }}</p>
+    {% endif %}
+
+    {% include "partials/_variant_panel.html" with active_variant=default_variant low_stock_threshold=low_stock_threshold %}
+  </div>
+</div>
+
+{# --- tabs --- #}
+<section class="mt-10" aria-label="اطلاعات محصول">
+  <div role="tablist" class="tabs tabs-border">
+    <input type="radio" name="product-tabs" role="tab" class="tab" aria-label="توضیحات" checked="checked">
+    <div role="tabpanel" class="tab-content pt-6">
+      {% if description_html %}
+        <div class="text-body leading-7 max-w-3xl flex flex-col gap-3">{{ description_html|safe }}</div>
+      {% else %}
+        <p class="text-small text-ink-2">توضیحی برای این محصول ثبت نشده است.</p>
+      {% endif %}
+    </div>
+
+    <input type="radio" name="product-tabs" role="tab" class="tab" aria-label="مشخصات فنی">
+    <div role="tabpanel" class="tab-content pt-6">
+      {% if specs or product.warranty_text %}
+        <dl class="grid sm:grid-cols-2 gap-x-8 max-w-3xl">
+          {% if product.warranty_text %}
+            <div class="flex items-baseline justify-between gap-4 py-2 border-b">
+              <dt class="text-small text-ink-2">گارانتی</dt>
+              <dd class="text-small text-end">{{ product.warranty_text|fa_text }}</dd>
+            </div>
+          {% endif %}
+          {% for spec in specs %}
+            <div class="flex items-baseline justify-between gap-4 py-2 border-b">
+              <dt class="text-small text-ink-2">{{ spec.attribute.name|fa_text }}</dt>
+              <dd class="text-small text-end">
+                {% if spec.value_text %}{{ spec.value_text|fa_text }}{% else %}{{ spec.value_number|fa_digits }}{% endif %}
+                {% if spec.attribute.unit %}<span class="text-ink-3">{{ spec.attribute.unit|fa_text }}</span>{% endif %}
+              </dd>
+            </div>
+          {% endfor %}
+        </dl>
+      {% else %}
+        <p class="text-small text-ink-2">مشخصات فنی برای این محصول ثبت نشده است.</p>
+      {% endif %}
+    </div>
+  </div>
+</section>

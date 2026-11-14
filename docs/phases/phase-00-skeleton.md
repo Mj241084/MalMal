@@ -14,7 +14,7 @@
 - `static/fonts/vazir/` (فایل‌های وزیر WOL؛ بپرس ارقام فارسی دارد یا نه، و وزن ۵۰۰ هست یا نه)
 - `static/src/sprite.svg` (sprite کامل lucide؛ فرمت `<symbol id>` را چک کن)
 - `static/logo.webp`
-- `docs/vendors/` و اسناد `00` تا `07`، `.claude/skills/`
+- `docs/vendors/` و اسناد `00` تا `07`، `skills/`
 
 نبودن فونت یا sprite کار را متوقف نمی‌کند: با فونت سیستم و چند آیکون موقت ادامه بده و علامت بزن.
 

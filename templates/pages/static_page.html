@@ -7,9 +7,9 @@
 {% block content %}
 <article class="max-w-4xl mx-auto px-4 md:px-6 lg:px-8 py-8 lg:py-12">
   <div class="bg-base-100 border rounded-box p-6 md:p-8 flex flex-col gap-6">
-    {% include "partials/_section_heading.html" with title=page.title %}
+    {% include "partials/_section_heading.html" with title=page.title|fa_text %}
     <div class="text-body text-ink-2 leading-relaxed whitespace-pre-line">
-      {{ page.body }}
+      {{ page.body|fa_text }}
     </div>
   </div>
 </article>

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static core_tags %}
+
+{% block title %}آدرس‌های من — {{ site_settings.store_name }}{% endblock %}
+
+{% block extra_head %}
+  {% if neshan_map_key %}
+    {# If self-hosted in static/vendor/neshan/, use {% static 'vendor/neshan/neshan-maplibre-sdk.css' %} #}
+    <link rel="stylesheet" href="https://static.neshan.org/sdk/maplibre/5.24.3/neshan-maplibre-sdk.css">
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-6 lg:py-8">
+  <h1 class="text-title font-medium">آدرس‌های من</h1>
+  {% include "partials/_account_nav.html" with active="addresses" %}
+  <div class="mt-6">
+    {% include "partials/_addresses_section.html" %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'js/mm/addresses.js' %}" defer></script>
+  {% if neshan_map_key %}
+    <script src="https://static.neshan.org/sdk/maplibre/5.24.3/neshan-maplibre-sdk.umd.js" defer></script>
+    <script src="{% static 'js/mm/neshan.js' %}" defer></script>
+  {% endif %}
+{% endblock %}

@@ -4,7 +4,9 @@ from django.core.exceptions import ImproperlyConfigured
 
 from config.env import get_env, get_env_bool, get_env_list
 from config.settings.base import *  # noqa: F403
-from config.settings.base import build_caches
+from config.settings.base import SMSIR_API_KEY, build_caches
+
+SMS_BACKEND = get_env("SMS_BACKEND", "smsir" if SMSIR_API_KEY else "console")
 
 DEBUG = get_env_bool("DEBUG", False)
 

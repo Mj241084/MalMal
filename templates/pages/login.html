@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}ورود یا ثبت‌نام — {{ site_settings.store_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-8 lg:py-12">
+  <div class="bg-base-100 border rounded-box p-5 lg:p-6">
+    {% if step == "code" %}
+      {% include "partials/_otp_code_step.html" %}
+    {% else %}
+      {% include "partials/_login_flow.html" %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

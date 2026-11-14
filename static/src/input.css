@@ -59,7 +59,8 @@
 
 @theme {
   --font-sans: "Inter Latin", "Vazir", ui-sans-serif, system-ui, sans-serif;
-  --font-latin: "Inter Full", "Inter Latin", ui-sans-serif, system-ui, sans-serif;
+  /* Vazir last so Persian digits inside .latin never fall back to the system font */
+  --font-latin: "Inter Full", "Inter Latin", "Vazir", ui-sans-serif, system-ui, sans-serif;
   --font-brand: "Dastnevis", "Vazir", ui-sans-serif, system-ui, sans-serif;
 
   --text-label: 0.75rem;
@@ -211,6 +212,12 @@
   }
   .latin {
     font-family: var(--font-latin);
+    font-variant-numeric: tabular-nums;
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+  /* Persian numbers shown left-to-right (mobile, postal code, timers): fixed width, never reordered by bidi */
+  .num {
     font-variant-numeric: tabular-nums;
     direction: ltr;
     unicode-bidi: isolate;

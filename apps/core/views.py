@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.http import Http404, HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET
 
+from apps.core import shortlinks
 from apps.core.models import StaticPage
 
 
@@ -19,6 +20,21 @@ def home_view(request: HttpRequest) -> HttpResponse:
 def static_page_view(request: HttpRequest, slug: str) -> HttpResponse:
     page = get_object_or_404(StaticPage, slug=slug, is_active=True)
     return render(request, "pages/static_page.html", {"page": page})
+
+
+@require_GET
+def short_link_redirect_view(request: HttpRequest, code: str) -> HttpResponse:
+    from django.apps import apps
+
+    try:
+        kind, pk = shortlinks.decode(code.lower())
+    except ValueError:
+        raise Http404 from None
+    app_label, model_name = shortlinks.KINDS[kind]
+    obj = apps.get_model(app_label, model_name).objects.filter(pk=pk).first()
+    if obj is None or not getattr(obj, "is_active", True):
+        raise Http404
+    return redirect(obj.get_absolute_url())  # 302: the canonical URL may change
 
 
 @require_GET

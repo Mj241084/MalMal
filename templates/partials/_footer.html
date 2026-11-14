@@ -11,21 +11,21 @@
         {% if site_settings.working_hours %}
           <div class="flex items-start gap-2 text-small text-ink-2">
             {% icon "clock" size=18 class="text-ink-3 mt-1" %}
-            <span>{{ site_settings.working_hours }}</span>
+            <span>{{ site_settings.working_hours|fa_text }}</span>
           </div>
         {% endif %}
 
         {% if site_settings.phone %}
           <div class="flex items-center gap-2 text-small text-ink-2">
             {% icon "phone" size=18 class="text-ink-3" %}
-            <a href="tel:{{ site_settings.phone }}" class="latin hover:text-base-content transition-colors">{{ site_settings.phone|fa_digits }}</a>
+            <a href="tel:{{ site_settings.phone }}" class="num hover:text-base-content transition-colors">{{ site_settings.phone|fa_digits }}</a>
           </div>
         {% endif %}
 
         {% if site_settings.address %}
           <div class="flex items-start gap-2 text-small text-ink-2">
             {% icon "map-pin" size=18 class="text-ink-3 mt-1" %}
-            <span>{{ site_settings.address }}</span>
+            <span>{{ site_settings.address|fa_text }}</span>
           </div>
         {% endif %}
       </div>

@@ -4,7 +4,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.template import Context, Template
 
-from apps.core.text import format_toman, normalize_digits, normalize_fa
+from apps.core.text import format_toman, normalize_digits, normalize_fa, to_fa_text
 from apps.core.validators import normalize_iran_mobile, validate_national_code
 
 
@@ -28,6 +28,11 @@ class TestNormalizeFa:
         assert normalize_fa("") == ""
         assert normalize_fa(None) == ""
         assert normalize_digits(None) == ""
+
+    def test_to_fa_text_preserves_latin_tokens(self):
+        assert to_fa_text("Samsung 123 مدل WM-1450 و 5kg و 12") == "Samsung ۱۲۳ مدل WM-1450 و 5kg و ۱۲"
+        assert to_fa_text(None) == ""
+        assert to_fa_text("") == ""
 
 
 class TestTomanFormatting:

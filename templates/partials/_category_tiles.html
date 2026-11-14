@@ -1,0 +1,21 @@
+{% load core_tags %}
+{% if children %}
+<section class="mt-6" aria-labelledby="subcategories-title">
+  <h2 id="subcategories-title" class="sr-only">زیردسته‌ها</h2>
+  <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+    {% for child in children %}
+      <a href="{{ child.get_absolute_url }}"
+         class="flex flex-col items-center gap-2 p-2 rounded-box border bg-base-100 hover:bg-base-300 transition-colors">
+        <span class="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-white border flex items-center justify-center overflow-hidden">
+          {% if child.logo %}
+            <img src="{{ child.logo.url }}" alt="" width="64" height="64" loading="lazy" class="w-full h-full object-contain p-1">
+          {% else %}
+            <span class="text-ink-3">{% icon "layout-grid" size=18 %}</span>
+          {% endif %}
+        </span>
+        <span class="text-small text-center leading-6 line-clamp-2">{{ child.name }}</span>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}

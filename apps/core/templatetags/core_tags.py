@@ -9,11 +9,12 @@ from pathlib import Path
 from django import template
 from django.conf import settings
 from django.templatetags.static import static
+from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 
 from apps.core.jalali import to_fa_digits
-from apps.core.models import SiteSettings
-from apps.core.text import format_toman
+from apps.core.models import SiteSettings, StaticPage
+from apps.core.text import format_toman, to_fa_text
 
 logger = logging.getLogger(__name__)
 register = template.Library()
@@ -56,11 +57,30 @@ def fa_digits_filter(value) -> str:
     return to_fa_digits(value)
 
 
+@register.filter(name="fa_text")
+def fa_text_filter(value) -> str:
+    """Persian digits for names, addresses and titles (Latin codes inside are preserved)."""
+    return to_fa_text(value)
+
+
 @register.simple_tag
-def icon(name: str, size: int = 18, flip: bool = False, **kwargs) -> str:
-    """Render an SVG icon from static/sprite.svg with 1.5 stroke and optional RTL flip."""
+def static_page_url(slug: str) -> str:
+    """URL of an active static page, or '' so templates can hide links to pages that do not exist yet."""
+    if StaticPage.objects.filter(slug=slug, is_active=True).exists():
+        return reverse("core:static_page", args=[slug])
+    return ""
+
+
+@register.simple_tag
+def icon(name: str, size: int = 18, flip: bool = False, safe: bool = False, **kwargs) -> str:
+    """Render an SVG icon from static/sprite.svg with 1.5 stroke and optional RTL flip.
+
+    ``safe=True`` is for icon names that come from the database (e.g. TrustItem.icon):
+    an unknown name renders nothing instead of raising, so a typo in the admin cannot
+    take a page down in DEBUG.
+    """
     if not _icon_exists(name):
-        if settings.DEBUG:
+        if settings.DEBUG and not safe:
             raise ValueError(
                 f"Icon '{name}' not found in static/sprite.svg. Run `uv run python scripts/build_sprite.py`."
             )

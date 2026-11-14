@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load core_tags catalog_tags %}
+
+{% block title %}{{ brand.name_fa|fa_text }} — {{ site_settings.store_name }}{% endblock %}
+{% block meta_description %}محصولات {{ brand.name_fa }} در {{ site_settings.store_name }}{% endblock %}
+
+{% block extra_head %}
+  <link rel="canonical" href="{{ canonical_url }}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 lg:py-8">
+  {% include "partials/_breadcrumbs.html" with breadcrumbs=breadcrumbs %}
+
+  <header class="mt-4 flex items-center gap-3">
+    {% if brand.logo %}
+      <span class="w-14 h-14 rounded-lg bg-white border overflow-hidden shrink-0">
+        <img src="{{ brand.logo.url }}" alt="" width="56" height="56" class="w-full h-full object-contain p-1">
+      </span>
+    {% endif %}
+    <h1 class="text-title font-medium">{{ brand.name_fa|fa_text }}</h1>
+  </header>
+
+  <div class="mt-6 flex items-center justify-between gap-3">
+    <p class="text-small text-ink-2">{{ total|fa_digits }} محصول</p>
+    <div class="flex items-center gap-2">
+      <label class="text-label text-ink-2" for="brand-sort">مرتب‌سازی</label>
+      <select id="brand-sort" name="sort" form="brand-sort-form" class="select select-sm w-40 text-small"
+              hx-get="{{ request.path }}"
+              hx-include="#brand-sort-form"
+              hx-target="#category-results" hx-swap="innerHTML" hx-push-url="true"
+              hx-indicator="#results-indicator">
+        {% for value, label in sort_choices %}
+          <option value="{{ value }}" {% if filters.sort == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <form id="brand-sort-form" class="hidden">
+        {% for name, value in filters.pairs %}
+          {% if name != 'sort' %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endif %}
+        {% endfor %}
+      </form>
+      <span id="results-indicator" class="htmx-indicator loading loading-spinner loading-sm" aria-hidden="true"></span>
+    </div>
+  </div>
+
+  <div id="category-results" class="mt-4" aria-live="polite">
+    {% if page_obj.object_list %}
+      {% include "partials/_product_grid.html" with products=page_obj.object_list %}
+      {% include "partials/_pagination.html" with page_obj=page_obj querystring=filters.querystring %}
+    {% else %}
+      {% include "partials/_empty_state.html" with title="محصولی از این برند موجود نیست" description="به‌زودی محصولات تازه اضافه می‌شود." %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

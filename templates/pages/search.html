@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load core_tags catalog_tags %}
+
+{% block title %}{% if query %}جستجو برای «{{ raw_query|fa_text }}»{% else %}جستجو{% endif %} — {{ site_settings.store_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 lg:py-8">
+  <header class="flex flex-col gap-2">
+    <h1 class="text-title font-medium">
+      {% if query %}نتایج جستجو برای «{{ raw_query|fa_text }}»{% else %}جستجوی محصولات{% endif %}
+    </h1>
+  </header>
+
+  <form action="{% url 'search:results' %}" method="get" role="search" class="mt-4 max-w-xl">
+    <label class="input h-10 w-full bg-base-100 border flex items-center gap-2">
+      {% icon "search" size=18 class="text-ink-3" %}
+      <input type="search" name="q" value="{{ raw_query|fa_text }}" class="grow text-small" autocomplete="off" aria-label="عبارت جستجو">
+    </label>
+  </form>
+
+  {% if query %}
+    <div class="mt-6 flex items-center justify-between gap-3">
+      <p class="text-small text-ink-2">{{ total|fa_digits }} نتیجه</p>
+      <div class="flex items-center gap-2">
+        <label class="text-label text-ink-2" for="search-sort">مرتب‌سازی</label>
+        <select id="search-sort" name="sort" form="search-sort-form" class="select select-sm w-40 text-small"
+                hx-get="{% url 'search:results' %}"
+                hx-include="#search-sort-form"
+                hx-target="#category-results" hx-swap="innerHTML" hx-push-url="true"
+                hx-indicator="#results-indicator">
+          <option value="" {% if not filters.sort or filters.sort == 'newest' %}selected{% endif %}>مرتبط‌ترین</option>
+          {% for value, label in sort_choices %}
+            <option value="{{ value }}" {% if filters.sort == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <form id="search-sort-form" class="hidden">
+          <input type="hidden" name="q" value="{{ query }}">
+          {% for name, value in filters.pairs %}
+            {% if name != 'q' %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endif %}
+          {% endfor %}
+        </form>
+        <span id="results-indicator" class="htmx-indicator loading loading-spinner loading-sm" aria-hidden="true"></span>
+      </div>
+    </div>
+
+    <div id="category-results" class="mt-4" aria-live="polite">
+      {% if page_obj.object_list %}
+        {% include "partials/_product_grid.html" with products=page_obj.object_list %}
+        {% include "partials/_pagination.html" with page_obj=page_obj querystring=filters.querystring %}
+      {% else %}
+        {% include "partials/_empty_state.html" with title="نتیجه‌ای پیدا نشد" description="عبارت دیگری را امتحان کنید یا از دسته‌بندی‌ها استفاده کنید." %}
+        {% if popular_categories %}
+          <div class="flex flex-wrap gap-2 justify-center mt-4">
+            {% for category in popular_categories %}
+              <a href="{{ category.url }}" class="badge badge-soft border text-small">{{ category.name }}</a>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="mt-6">
+      {% include "partials/_empty_state.html" with title="عبارت جستجو را بنویسید" description="نام محصول، برند یا کد مدل را وارد کنید." %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

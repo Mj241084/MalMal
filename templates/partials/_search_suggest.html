@@ -1,0 +1,53 @@
+{% load core_tags catalog_tags %}
+<div class="flex flex-col gap-3">
+  {% if products %}
+    <div class="flex flex-col gap-1">
+      <span class="text-label text-ink-3 px-2">محصولات</span>
+      {% for product in products %}
+        <a href="{{ product.get_absolute_url }}" class="flex items-center gap-3 p-2 rounded-field hover:bg-base-300 transition-colors">
+          <span class="w-10 h-10 rounded-md bg-white border overflow-hidden shrink-0 flex items-center justify-center">
+            {% if product.main_image %}
+              <img src="{{ product.main_image|image_url }}" alt="" width="40" height="40" loading="lazy" class="w-full h-full object-contain">
+            {% else %}
+              {% icon "image" size=18 class="text-ink-3" %}
+            {% endif %}
+          </span>
+          <span class="flex flex-col min-w-0">
+            <span class="text-small truncate">{{ product.title|fa_text }}</span>
+            <span class="text-label text-ink-3">{{ product.min_price|toman }} تومان</span>
+          </span>
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if categories %}
+    <div class="flex flex-col gap-1 border-t pt-2">
+      <span class="text-label text-ink-3 px-2">دسته‌بندی‌ها</span>
+      {% for category in categories %}
+        <a href="{{ category.get_absolute_url }}" class="flex items-center gap-2 p-2 rounded-field hover:bg-base-300 transition-colors text-small">
+          {% icon "layout-grid" size=18 class="text-ink-3" %}
+          <span>{{ category.name|fa_text }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if popular_categories %}
+    <div class="flex flex-col gap-2 border-t pt-2 px-2">
+      <span class="text-label text-ink-3">نتیجه‌ای پیدا نشد. دسته‌های پرطرفدار:</span>
+      <div class="flex flex-wrap gap-1">
+        {% for category in popular_categories %}
+          <a href="{{ category.url }}" class="badge badge-soft border text-small">{{ category.name|fa_text }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if products or categories %}
+    <a href="{% url 'search:results' %}?q={{ query|urlencode }}"
+       class="text-small text-brand-ink border-t pt-2 px-2">
+      همه‌ی نتایج برای «{{ query|fa_text }}»
+    </a>
+  {% endif %}
+</div>

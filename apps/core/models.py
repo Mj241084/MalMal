@@ -45,6 +45,13 @@ class SiteSettings(TimeStampedModel):
         default=5,
         verbose_name="آستانه هشدار موجودی کم",
     )
+    shipping_note = models.CharField(
+        max_length=200,
+        blank=True,
+        default="ارسال با تیپاکس به سراسر کشور؛ کرایه هنگام تحویل به پیک پرداخت می‌شود.",
+        verbose_name="متن ارسال در صفحه‌ی محصول",
+        help_text="خالی = نمایش داده نمی‌شود. در P3 از ShippingMethod خوانده می‌شود.",
+    )
 
     otp_ttl_seconds = models.PositiveIntegerField(default=120, verbose_name="مدت اعتبار کد تایید (ثانیه)")
     otp_max_attempts = models.PositiveIntegerField(default=5, verbose_name="حداکثر تلاش کد تایید")

@@ -96,6 +96,7 @@ class TestDatabaseAndInfrastructure:
             "ZARINPAL_MERCHANT_ID",
             "ZARINPAL_SANDBOX",
             "SMS_ADMIN_MOBILES",
+            "TRUSTED_PROXY_IPS",
         ]
         for key in required:
             assert f"{key}=" in env_example
@@ -207,7 +208,10 @@ class TestCoreModelsAndViews:
             assert res.status_code == 200
             html = res.content.decode("utf-8")
             assert "Samsung ۱۲۳ مدل WM-1450" in html
-            assert html.count("btn-primary") == 1
+            assert 'id="mm-dialog"' in html
+            main_match = re.search(r"<main\b[^>]*>(.*?)</main>", html, re.DOTALL)
+            assert main_match is not None
+            assert main_match.group(1).count("btn-primary") == 1
 
         with override_settings(DEBUG=False):
             res = client.get("/_styleguide/")

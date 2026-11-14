@@ -1,0 +1,89 @@
+{% load core_tags catalog_tags %}
+<div id="variant-panel" class="flex flex-col gap-4">
+  {% if variants|length > 1 %}
+    <div class="flex flex-col gap-2">
+      <span class="text-label text-ink-2">انتخاب نوع</span>
+      <div class="flex flex-wrap gap-2">
+        {% for variant in variants %}
+          <button type="button"
+                  class="btn btn-sm {% if variant.pk == active_variant.pk %}bg-base-300 border-base-content{% else %}bg-base-100 border{% endif %}"
+                  hx-get="{% url 'catalog:variant_panel' product.pk variant.pk %}"
+                  hx-target="#variant-panel"
+                  hx-swap="outerHTML"
+                  hx-indicator="#variant-indicator"
+                  hx-disabled-elt="this"
+                  aria-pressed="{% if variant.pk == active_variant.pk %}true{% else %}false{% endif %}">
+            {{ variant.title }}
+          </button>
+        {% endfor %}
+        <span id="variant-indicator" class="htmx-indicator loading loading-spinner loading-sm self-center" aria-hidden="true"></span>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="flex items-baseline gap-2 flex-wrap">
+    {% if active_variant %}
+      <span class="text-title font-medium">{{ active_variant.price|toman }}</span>
+      <span class="text-small text-ink-2">تومان</span>
+      {% if active_variant.compare_at_price and active_variant.compare_at_price > active_variant.price %}
+        <span class="text-small text-ink-3 line-through">{{ active_variant.compare_at_price|toman }}</span>
+        <span class="badge badge-sm bg-base-content text-base-100 border-0">
+          {{ product.discount_pct|fa_digits }}٪ تخفیف
+        </span>
+      {% endif %}
+    {% else %}
+      <span class="text-title text-ink-2">قیمت نامشخص</span>
+    {% endif %}
+  </div>
+
+  <div class="flex flex-col gap-1">
+    <div class="flex items-center gap-2 text-small">
+      {% if active_variant and active_variant.stock > 0 %}
+        {% icon "check" size=18 class="text-success" %}
+        <span>موجود در انبار</span>
+        {% if active_variant.stock <= low_stock_threshold %}
+          <span class="text-ink-2">— تنها {{ active_variant.stock|fa_digits }} عدد باقی مانده</span>
+        {% endif %}
+      {% else %}
+        {% icon "alert-circle" size=18 class="text-ink-3" %}
+        <span class="text-ink-2">ناموجود</span>
+      {% endif %}
+    </div>
+    {% if active_variant and active_variant.max_orderable and active_variant.max_orderable < active_variant.stock %}
+      <span class="text-label text-ink-3 ms-6">
+        حداکثر {{ active_variant.max_orderable|fa_digits }} عدد در هر سفارش
+      </span>
+    {% endif %}
+  </div>
+
+  <div class="flex items-center gap-2">
+    <button type="button" disabled
+            class="btn btn-primary flex-1 h-10 min-h-10 hidden lg:inline-flex disabled:bg-base-300 disabled:text-base-content disabled:border"
+            aria-label="افزودن به سبد خرید">
+      {% icon "shopping-cart" size=18 %}
+      <span>افزودن به سبد</span>
+    </button>
+    <button type="button" disabled
+            class="btn btn-ghost btn-square w-10 h-10 min-h-10 border shrink-0"
+            aria-label="افزودن به علاقه‌مندی‌ها">
+      {% icon "heart" size=18 class="text-ink-2" %}
+    </button>
+  </div>
+
+  {% if shipping_note or trust_items %}
+    <div class="flex flex-col gap-2 text-small text-ink-2 border-t pt-3">
+      {% if shipping_note %}
+        <span class="flex items-start gap-2">
+          {% icon "truck" size=18 class="text-ink-3 shrink-0 mt-0.5" %}
+          <span>{{ shipping_note }}</span>
+        </span>
+      {% endif %}
+      {% for item in trust_items %}
+        <span class="flex items-start gap-2">
+          {% icon item.icon size=18 safe=True class="text-ink-3 shrink-0 mt-0.5" %}
+          <span>{{ item.title }}{% if item.subtitle %} — {{ item.subtitle }}{% endif %}</span>
+        </span>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>

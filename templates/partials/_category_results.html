@@ -1,0 +1,11 @@
+{% load core_tags catalog_tags %}
+<div class="flex flex-col gap-4">
+  <p class="text-small text-ink-2">{{ total|fa_digits }} محصول</p>
+
+  {% if page_obj.object_list %}
+    {% include "partials/_product_grid.html" with products=page_obj.object_list %}
+    {% include "partials/_pagination.html" with page_obj=page_obj querystring=querystring %}
+  {% else %}
+    {% include "partials/_empty_state.html" with title="محصولی با این فیلترها پیدا نشد" description="فیلترها را تغییر دهید یا همه را حذف کنید." %}
+  {% endif %}
+</div>

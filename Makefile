@@ -1,7 +1,19 @@
-.PHONY: run css css-watch sprite favicons test lint format check
+.PHONY: run css css-watch sprite favicons test lint format check seed seed-clear warm search
 
 run:
 	uv run python manage.py runserver
+
+seed:
+	uv run python manage.py seed_demo
+
+seed-clear:
+	uv run python manage.py seed_demo --clear
+
+warm:
+	uv run python manage.py warm_cache
+
+search:
+	uv run python manage.py rebuild_search
 
 css:
 	pnpm run build:css

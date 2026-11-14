@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from config.env import derive_ratelimit_redis_url, get_env, get_env_bool, load_dotenv
+from config.env import derive_ratelimit_redis_url, get_env, get_env_bool, get_env_list, load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 load_dotenv(BASE_DIR)
@@ -18,7 +18,16 @@ INSTALLED_APPS = [
     "apps.core.apps.MalmalStaticFilesConfig",
     "django_htmx",
     "apps.core",
+    "apps.catalog",
+    "apps.search",
+    "apps.marketing",
+    "apps.geo",
+    "apps.accounts",
+    "apps.notifications",
 ]
+
+AUTH_USER_MODEL = "accounts.User"
+LOGIN_URL = "/login/"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -96,7 +105,7 @@ if not ADMIN_URL.endswith("/"):
 
 # External integrations (non-blocking by default per D26)
 SMSIR_API_KEY = get_env("SMSIR_API_KEY")
-SMS_BACKEND = get_env("SMS_BACKEND", "smsir" if SMSIR_API_KEY else "console")
+SMS_BACKEND = get_env("SMS_BACKEND", "console")
 SMSIR_TEMPLATE_ID_OTP = get_env("SMSIR_TEMPLATE_ID_OTP")
 SMSIR_TEMPLATE_ID_ORDER_PAID = get_env("SMSIR_TEMPLATE_ID_ORDER_PAID")
 SMSIR_TEMPLATE_ID_ORDER_SHIPPED = get_env("SMSIR_TEMPLATE_ID_ORDER_SHIPPED")
@@ -110,6 +119,8 @@ SMS_ADMIN_MOBILES = get_env("SMS_ADMIN_MOBILES")
 
 NESHAN_MAP_KEY = get_env("NESHAN_MAP_KEY")
 NESHAN_SERVICE_KEY = get_env("NESHAN_SERVICE_KEY")
+
+TRUSTED_PROXY_IPS = get_env_list("TRUSTED_PROXY_IPS")
 
 ZARINPAL_MERCHANT_ID = get_env("ZARINPAL_MERCHANT_ID")
 ZARINPAL_SANDBOX = get_env_bool("ZARINPAL_SANDBOX", True)

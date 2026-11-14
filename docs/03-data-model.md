@@ -1,4 +1,4 @@
-# ۰۳ — مدل داده، ایندکس، کش و جستجو — نسخه ۰.۳
+# ۰۳ — مدل داده، ایندکس، کش و جستجو — نسخه ۰.۳.۵
 
 مرجع جریان‌ها: `02-spec.md`. نام فیلدها انگلیسی‌اند. همه‌ی مدل‌ها `created_at/updated_at` دارند مگر ذکر شود.
 پول: `BigIntegerField` به **تومان**. زمان: UTC.
@@ -20,7 +20,7 @@
 
 | اپ | مسئولیت |
 |----|---------|
-| `core` | SiteSettings، StaticPage، FooterLink، ابزارهای مشترک (نرمال‌سازی فارسی، قالب‌تگ آیکون، شمسی) |
+| `core` | SiteSettings، StaticPage، FooterLink، ابزارهای مشترک (نرمال‌سازی فارسی، قالب‌تگ آیکون، شمسی، پیوند کوتاه بدون جدول) |
 | `geo` | Province، City |
 | `accounts` | User، OTPChallenge، Address |
 | `catalog` | Brand، Category، Product، Variant، ProductImage، Spec*، StockMovement |
@@ -46,7 +46,7 @@
 - `is_active`, `is_staff`, `is_superuser`, `date_joined`, `last_login`
 - `get_session_auth_hash` شامل `session_version`. کاربران مشتری رمز ندارند.
 
-**OTPChallenge** (یک ردیف فعال برای هر شماره)
+**OTPChallenge** (یک ردیف فعال برای هر شماره؛ نگه‌داری ۱ روز پس از انقضا طبق D33 و پاک‌سازی از ادمین یا job دوره‌ای P6)
 - `mobile` (unique)، `code_hmac`، `expires_at`، `last_sent_at`، `attempts` int، `max_attempts` default 5، `locked_until` null، `consumed_at` null، `ip`
 - چالش **فعال**: `consumed_at IS NULL AND expires_at > now AND (locked_until IS NULL OR locked_until < now)`.
 - محدودیت نرخ در **Redis** نه DB: `mm:rl:otp:mobile:{m}:h`، `...:d`، `mm:rl:otp:ip:{ip}:h` با `INCR` + `EXPIRE`.
@@ -93,7 +93,9 @@
 
 **Variant** (SKU، واحد خرید)
 - `product` FK، `sku` unique، `title` (مثلاً «سفید، ۱۲ ماه گارانتی»)، `options` JSON (`{"color":"سفید","model":"..."}`)
-- `price`, `compare_at_price` null، `stock` int ≥ 0، `weight_g`، `max_per_order`، `is_active`, `sort`
+- `price`, `compare_at_price` null، `stock` int ≥ 0، `weight_g`، `is_active`, `sort`
+- `max_per_order` (`PositiveSmallIntegerField`، null/blank): سقف تعداد هر مشتری در هر سفارش. خالی یا ۰ = تا سقف موجودی (D29).
+- property `max_orderable`: `0` اگر `stock <= 0`؛ وگرنه `stock` وقتی `max_per_order` خالی/۰ است، در غیر این صورت `min(stock, max_per_order)`. سبد و checkout از همین استفاده می‌کنند.
 - محصول ساده: دقیقاً یک variant پیش‌فرض (در ادمین به‌طور خودکار ساخته می‌شود).
 - ایندکس: `(product, is_active)`, `sku`.
 - تغییر `price/stock/is_active` ← `Product.refresh_aggregates()` (بخش ۵).
@@ -120,7 +122,7 @@
 ### core
 **SiteSettings** (singleton): نام، لوگو (روشن/تاریک)، تلفن، آدرس، ساعات کاری، لینک‌های اجتماعی، آستانه‌ی ارسال رایگان، آستانه‌ی «موجودی کم»، پارامترهای OTP، ساعت مجاز ارسال «موجود شد» (پیش‌فرض ۸ تا ۲۱)، `trust_marks_html` (قطعه‌ی HTML نماد اعتماد/اینماد؛ فقط ادمین؛ خالی = نمایش داده نمی‌شود).
 - **مشخصات فروشنده (برای فاکتور، C7):** `legal_name`، `economic_code`، `national_id` (شناسه‌ی ملی)، `registration_no`، `legal_address`، `legal_postal_code`، `legal_phone`. خالی مجاز؛ فاکتور فیلدهای خالی را نشان نمی‌دهد.
-**StaticPage**: `slug`, `title`, `body`, `is_active`, `needs_review` bool (پیش‌فرض `False`؛ متن پیش‌نویسی مثل صفحه‌ی ارسال `True` می‌شود و فروشنده در ادمین خاموشش می‌کند؛ `check_launch` هشدار می‌دهد). **FooterLink**: `group`, `title`, `url`, `sort`.
+**StaticPage**: `slug`, `title`, `body`, `is_active`, `needs_review` bool (پیش‌فرض `False`؛ متن پیش‌نویسی مثل صفحه‌ی ارسال `True` می‌شود و فروشنده در ادمین خاموشش می‌کند؛ `check_launch` هشدار می‌دهد). **FooterLink**: `group`, `title`, `url`, `sort`. پیوند کوتاه پیامک بدون جدول است و از `core/shortlinks.py` (`r/<kind><pk base36>`) تولید می‌شود (D32).
 
 ### cart
 **Cart**: `user` OneToOne. **CartItem**: `cart`, `variant`, `qty`. unique `(cart, variant)`. قیمت ذخیره نمی‌شود.
@@ -151,7 +153,7 @@
 **StockSubscription** `[DECIDED]` (فاز P6): `user`, `variant`, `notified_at` null، `created_at`. unique `(user, variant)` برای اشتراک **باز** (`notified_at IS NULL`)؛ بعد از ارسال پیامک `notified_at` ثبت و اشتراک بسته می‌شود و کاربر می‌تواند دوباره مشترک شود. ایندکس `(variant, notified_at)`. جزئیات در `02` بخش ۱۳.
 
 ### notifications
-**SmsLog**: `mobile`, `kind` (کلید قالب در `05`)، `provider_message_id`, `status`, `error`, `created_at`. بدون مقدار کد OTP.
+**SmsLog**: `mobile`, `kind` (کلید قالب در `05`)، `provider_message_id`, `status`, `error`, `created_at`. بدون مقدار کد OTP. نگه‌داری ۹۰ روز طبق D33 و پاک‌سازی از ادمین یا job دوره‌ای P6.
 
 ---
 
@@ -308,5 +310,9 @@ CREATE VIRTUAL TABLE product_fts USING fts5(
 
 ## ۱۱. تغییرات
 
+- ۰.۳.۵ (اصلاحی P2-ب) — حذف مدل `ShortLink` از `core` (جایگزینی با کدهای بدون جدول `r/<kind><pk base36>`، D32) و افزودن یادداشت نگه‌داری داده روی `OTPChallenge` (۱ روز پس از انقضا) و `SmsLog` (۹۰ روز) طبق D33.
+- ۰.۳.۴ (اصلاح P2) — افزودن مدل `ShortLink` (کد یکتا، مسیر مقصد یکتا) در اپ `core` برای پیوندهای کوتاه پیامک sms.ir (`#LINK#`).
+- ۰.۳.۳ (P1) — `Variant.max_per_order` به `null=True/blank=True` تغییر کرد (خالی/۰ = تا سقف موجودی) و property `max_orderable` اضافه شد (D29). تغییر فیلدهای DETAIL هر variant (`title`، `options`، `max_per_order`، `weight_g`) حالا `Product.rev` را بالا می‌برد تا کش جزئیات به‌روز شود. `TrustItem` (اپ `marketing`) با چهار ردیف `is_placeholder=True` در مهاجرت داده ساخته می‌شود و `trust_rev` بخشی از کلید کش جزئیات محصول است.
+- ۰.۳.۲ (P1) — `bm25` در SQLite به تعداد ستون‌ها وزن می‌خواهد؛ ستون `UNINDEXED` با وزن ۰ و وزن‌های سند به‌صورت `bm25(product_fts, 0, 10, 5, 3, 8, 1)` اعمال شد. `StockMovement.order_item` در P1 موقتاً `order_item_id` عددی است (اپ `orders` در P3 ساخته می‌شود و آن‌وقت به FK تبدیل می‌شود). تصاویر: چند اندازه‌ی WebP (۴۰۰/۸۰۰/۱۲۰۰) هنگام آپلود در `ProductImage.save()` ساخته و در `widths` ذخیره می‌شود؛ `srcset` از همان. کش: TTLهای امنیتی `detail/card` ۱۲ ساعت، لیست دسته ۶ ساعت، منو ۲۴ ساعت، suggest ۶۰ ثانیه. `search_text` از عنوان، برند (fa/en/aliases)، زنجیره‌ی دسته، SKU و گزینه‌های variant ساخته می‌شود. حذف محصول با سیگنال `post_delete` ردیف FTS را پاک می‌کند.
 - ۰.۳.۱ (P0) — تایید `transaction_mode="IMMEDIATE"`، FTS5 startup check و `RedisCache` روی Django 5.2.19.
 
