@@ -1,0 +1,36 @@
+{% load core_tags %}
+{% with count=block.banners|length %}
+<section aria-label="پیشنهادهای فروشگاه" aria-roledescription="carousel" data-slider data-autoplay="6000">
+  <div class="relative">
+    <div data-slider-track tabindex="0" class="carousel w-full rounded-box border bg-base-100">
+      {% for banner in block.banners %}
+        <div class="carousel-item w-full" role="group" aria-roledescription="slide"
+             aria-label="{{ forloop.counter|fa_digits }} از {{ count|fa_digits }}">
+          {% include "partials/_banner.html" with banner=banner priority=forloop.first w=800 h=600 ratio="aspect-4/3 md:aspect-3/1" %}
+        </div>
+      {% endfor %}
+    </div>
+    {% if count > 1 %}
+      <button type="button" data-slider-prev aria-label="اسلاید قبلی"
+              class="hidden md:inline-flex btn btn-circle bg-base-100 border absolute start-3 top-1/2 -translate-y-1/2 w-10 h-10 min-h-10">
+        {% icon "chevron-left" size=18 flip=True %}
+      </button>
+      <button type="button" data-slider-next aria-label="اسلاید بعدی"
+              class="hidden md:inline-flex btn btn-circle bg-base-100 border absolute end-3 top-1/2 -translate-y-1/2 w-10 h-10 min-h-10">
+        {% icon "chevron-right" size=18 flip=True %}
+      </button>
+    {% endif %}
+  </div>
+  {% if count > 1 %}
+    <div class="flex items-center justify-center gap-1 mt-2">
+      {% for banner in block.banners %}
+        <button type="button" data-slider-dot aria-label="اسلاید {{ forloop.counter|fa_digits }}"
+                aria-current="{% if forloop.first %}true{% else %}false{% endif %}"
+                class="w-6 h-6 flex items-center justify-center">
+          <span class="block w-2 h-2 rounded-selector {% if forloop.first %}bg-base-content{% else %}bg-base-300{% endif %}"></span>
+        </button>
+      {% endfor %}
+    </div>
+  {% endif %}
+</section>
+{% endwith %}

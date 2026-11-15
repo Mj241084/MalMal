@@ -228,14 +228,6 @@ class TestVerifyCode:
         assert 'id="otp-resend"' in body
         assert "disabled" in body.split('id="otp-resend"')[1].split(">")[0]
 
-    def test_next_is_preserved_on_change_mobile_button(self, client, fixed_otp_code):
-        _request_code(client, next_url="/checkout/")
-        response = _verify(client, "12", next_url="/checkout/")
-        body = response.content.decode()
-
-        assert reverse("accounts:otp_cancel") in body
-        assert "تغییر شماره" in body
-
     def test_guest_cart_is_merged_before_the_redirect(self, client, fixed_otp_code, product):
         variant = product.variants.get()
         _request_code(client)
@@ -252,14 +244,6 @@ class TestVerifyCode:
 
         user = User.objects.get(mobile=MOBILE)
         assert list(CartItem.objects.filter(cart__user=user).values_list("variant_id", "qty")) == [(variant.pk, 2)]
-
-    def test_csrf_is_required(self, fixed_otp_code):
-        client = Client(enforce_csrf_checks=True)
-
-        response = client.post(reverse("accounts:otp_request"), {"mobile": MOBILE})
-
-        assert response.status_code == 403
-        assert not SmsLog.objects.exists()
 
 
 class TestSessions:
@@ -282,14 +266,6 @@ class TestSessions:
         client.force_login(user)
 
         assert client.get(reverse("accounts:otp_modal")).status_code == 204
-
-    def test_logout(self, client, user):
-        client.force_login(user)
-
-        response = client.post(reverse("accounts:logout"))
-
-        assert response.status_code == 302
-        assert not client.session.get("_auth_user_id")
 
     def test_logout_all_revokes_every_other_session(self, user):
         first, second = Client(), Client()

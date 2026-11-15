@@ -1,4 +1,4 @@
-"""Marketing application: site-wide trust items (banners/collections land in P5)."""
+"""Marketing application: trust items, banners, collections and home page blocks."""
 
 from __future__ import annotations
 
@@ -9,3 +9,6 @@ class MarketingConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.marketing"
     verbose_name = "بازاریابی"
+
+    def ready(self) -> None:
+        from apps.marketing import signals  # noqa: F401

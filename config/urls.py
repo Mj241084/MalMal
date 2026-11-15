@@ -22,10 +22,12 @@ urlpatterns = [
     ),
     path("", include("apps.core.urls")),
     path("", include("apps.catalog.urls")),
+    path("", include("apps.marketing.urls")),
     path("", include("apps.search.urls")),
     path("", include("apps.accounts.urls")),
     path("", include("apps.cart.urls")),
     path("", include("apps.orders.urls")),
+    path("", include("apps.engagement.urls")),
     path("payments/", include("apps.payments.urls")),
     path("geo/", include("apps.geo.urls")),
 ]

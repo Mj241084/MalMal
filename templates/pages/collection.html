@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}{{ collection.seo_title|default:collection.title|fa_text }} — {{ site_settings.store_name }}{% endblock %}
+{% block meta_description %}{{ collection.seo_description|default:collection.description|truncatechars:160 }}{% endblock %}
+{% block extra_head %}
+  <link rel="canonical" href="{{ canonical_url }}">
+  {% if collection.cover %}<meta property="og:image" content="{{ site_url }}{{ collection.cover.url }}">{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 lg:py-8">
+  {% include "partials/_breadcrumbs.html" with breadcrumbs=breadcrumbs %}
+  <header class="mt-4 flex flex-col gap-2">
+    <div class="flex items-center gap-3">
+      <span class="inline-flex items-center gap-1 shrink-0" aria-hidden="true">
+        <span class="w-0.5 h-4 bg-base-content inline-block"></span>
+        <span class="w-0.5 h-4 bg-base-content inline-block"></span>
+      </span>
+      <h1 class="text-title font-medium">{{ collection.title|fa_text }}</h1>
+    </div>
+    {% if collection.description %}<p class="text-small text-ink-2 max-w-2xl">{{ collection.description|fa_text }}</p>{% endif %}
+  </header>
+
+  <form id="collection-filters" class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2"
+        hx-get="{{ request.path }}" hx-target="#category-results" hx-swap="innerHTML"
+        hx-push-url="true" hx-trigger="change" hx-indicator="#results-indicator">
+    <label class="flex items-center gap-2 text-small text-ink-2">
+      مرتب‌سازی
+      <select name="sort" class="select select-sm w-40 text-small">
+        <option value="" {% if not sort_explicit %}selected{% endif %}>پیش‌فرض مجموعه</option>
+        {% for value, label in sort_choices %}
+          <option value="{{ value }}" {% if sort_explicit and filters.sort == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="flex items-center gap-2 cursor-pointer min-h-10">
+      <input type="checkbox" name="in_stock" value="1" class="checkbox checkbox-sm" {% if filters.in_stock %}checked{% endif %}>
+      <span class="text-small">فقط کالاهای موجود</span>
+    </label>
+    <label class="flex items-center gap-2 cursor-pointer min-h-10">
+      <input type="checkbox" name="discounted" value="1" class="checkbox checkbox-sm" {% if filters.discounted %}checked{% endif %}>
+      <span class="text-small">فقط تخفیف‌دار</span>
+    </label>
+    <span id="results-indicator" class="htmx-indicator loading loading-spinner loading-sm" aria-hidden="true"></span>
+  </form>
+
+  <div id="category-results" class="mt-4" aria-live="polite">{{ results_html }}</div>
+</div>
+{% endblock %}

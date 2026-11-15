@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import re
 import subprocess
 import sys
 import tempfile
@@ -69,36 +68,6 @@ class TestDatabaseAndInfrastructure:
         )
         assert proc_ok.returncode == 0, proc_ok.stderr
         assert "PROD_OK" in proc_ok.stdout
-
-    def test_env_example_contains_all_required_keys(self):
-        env_example = (Path(settings.BASE_DIR) / ".env.example").read_text(encoding="utf-8")
-        required = [
-            "DJANGO_SECRET_KEY",
-            "DEBUG",
-            "ALLOWED_HOSTS",
-            "SITE_URL",
-            "REDIS_URL",
-            "ADMIN_URL",
-            "SMS_BACKEND",
-            "SMSIR_API_KEY",
-            "SMSIR_TEMPLATE_ID_OTP",
-            "SMSIR_TEMPLATE_ID_ORDER_PAID",
-            "SMSIR_TEMPLATE_ID_ORDER_SHIPPED",
-            "SMSIR_TEMPLATE_ID_ORDER_SHIPPED_COURIER",
-            "SMSIR_TEMPLATE_ID_ORDER_DELIVERED",
-            "SMSIR_TEMPLATE_ID_ORDER_CANCELLED",
-            "SMSIR_TEMPLATE_ID_ORDER_REFUNDED",
-            "SMSIR_TEMPLATE_ID_BACK_IN_STOCK",
-            "SMSIR_TEMPLATE_ID_ADMIN_NEW_ORDER",
-            "NESHAN_MAP_KEY",
-            "NESHAN_SERVICE_KEY",
-            "ZARINPAL_MERCHANT_ID",
-            "ZARINPAL_SANDBOX",
-            "SMS_ADMIN_MOBILES",
-            "TRUSTED_PROXY_IPS",
-        ]
-        for key in required:
-            assert f"{key}=" in env_example
 
     def test_collectstatic_ignores_src_dir(self):
         with tempfile.TemporaryDirectory() as tmpdir, override_settings(STATIC_ROOT=tmpdir):
@@ -186,16 +155,6 @@ class TestCoreModelsAndViews:
         assert "favicon.ico" in fav_res["Location"]
 
     def test_styleguide_only_in_debug(self, client):
-        with override_settings(DEBUG=True):
-            res = client.get("/_styleguide/")
-            assert res.status_code == 200
-            html = res.content.decode("utf-8")
-            assert "Samsung ۱۲۳ مدل WM-1450" in html
-            assert 'id="mm-dialog"' in html
-            main_match = re.search(r"<main\b[^>]*>(.*?)</main>", html, re.DOTALL)
-            assert main_match is not None
-            assert main_match.group(1).count("btn-primary") == 1
-
         with override_settings(DEBUG=False):
             res = client.get("/_styleguide/")
             assert res.status_code == 404

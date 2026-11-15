@@ -13,7 +13,9 @@ from apps.core.models import StaticPage
 
 @require_GET
 def home_view(request: HttpRequest) -> HttpResponse:
-    return render(request, "pages/home.html")
+    from apps.marketing.services import home_context
+
+    return render(request, "pages/home.html", home_context())
 
 
 @require_GET

@@ -1,0 +1,20 @@
+{% load core_tags %}
+<section class="flex flex-col gap-4">
+  {% include "partials/_section_heading.html" with title=block.title %}
+  <ul class="flex gap-3 overflow-x-auto no-scrollbar snap-x md:grid md:grid-cols-4 lg:grid-cols-8 md:overflow-visible">
+    {% for item in block.items %}
+      <li class="snap-start shrink-0 w-24 md:w-auto">
+        <a href="{{ item.url }}" class="flex flex-col items-center gap-2 p-2 rounded-box border bg-base-100 hover:bg-base-300 transition-colors">
+          <span class="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-white border flex items-center justify-center overflow-hidden">
+            {% if item.logo %}
+              <img src="{{ item.logo }}" alt="" width="64" height="64" loading="lazy" class="w-full h-full object-contain p-1">
+            {% else %}
+              <span class="text-ink-3">{% icon "layout-grid" size=18 %}</span>
+            {% endif %}
+          </span>
+          <span class="text-small text-center leading-6 line-clamp-2">{{ item.name|fa_text }}</span>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+</section>

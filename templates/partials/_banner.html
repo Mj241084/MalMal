@@ -1,0 +1,8 @@
+{% if banner.href %}<a href="{{ banner.href }}" class="block w-full">{% else %}<div class="block w-full">{% endif %}
+  <picture>
+    <source media="(min-width: 768px)" srcset="{{ banner.desktop }}">
+    <img src="{{ banner.mobile }}" alt="{{ banner.alt }}" width="{{ w }}" height="{{ h }}"
+         {% if priority %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async"
+         class="block w-full object-cover {{ ratio }}">
+  </picture>
+{% if banner.href %}</a>{% else %}</div>{% endif %}

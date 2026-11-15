@@ -1,0 +1,7 @@
+<div class="flex flex-col gap-3">
+  {% for banner in block.banners %}
+    <div class="rounded-box border overflow-hidden bg-base-100">
+      {% include "partials/_banner.html" with banner=banner priority=False w=800 h=267 ratio="aspect-3/1 md:aspect-8/1" %}
+    </div>
+  {% endfor %}
+</div>

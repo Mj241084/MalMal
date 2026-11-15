@@ -1,21 +1,22 @@
 {% extends "base.html" %}
-{% load core_tags %}
+{% load static %}
 
 {% block title %}{{ site_settings.store_name }} — فروشگاه آنلاین لوازم خانگی{% endblock %}
 
 {% block content %}
-<section class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8 lg:py-12">
-  <div class="bg-base-100 border rounded-box p-6 md:p-8 flex flex-col gap-4">
-    <div class="flex items-center gap-3">
-      <span class="inline-flex items-center gap-1 shrink-0" aria-hidden="true">
-        <span class="w-0.5 h-4 bg-base-content inline-block"></span>
-        <span class="w-0.5 h-4 bg-base-content inline-block"></span>
-      </span>
-      <h1>{% include "partials/_brand_name.html" with brand_class="text-display leading-tight" %}</h1>
-    </div>
-    <p class="text-body text-ink-2 max-w-2xl">
-      پوسته‌ی پایه‌ی فروشگاه آنلاین لوازم خانگی {{ site_settings.store_name }} آماده است. کاتالوگ محصولات در فاز بعدی اضافه می‌شود.
-    </p>
-  </div>
-</section>
+<h1 class="sr-only">{{ site_settings.store_name }} — فروشگاه آنلاین لوازم خانگی</h1>
+<div class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 lg:py-8 flex flex-col gap-10 lg:gap-16">
+  {% for block in home_blocks %}
+    {% if block.kind == "hero" %}{% include "partials/_home_hero.html" %}
+    {% elif block.kind == "banner_strip" %}{% include "partials/_home_strip.html" %}
+    {% elif block.kind == "tiles" %}{% include "partials/_home_tiles.html" %}
+    {% elif block.kind == "rail" %}{{ block.html }}
+    {% elif block.kind == "trust" %}{% include "partials/_home_trust.html" %}
+    {% endif %}
+  {% empty %}
+    {% include "partials/_empty_state.html" with title="محصولات به‌زودی اضافه می‌شود" description="بعداً دوباره سر بزنید." %}
+  {% endfor %}
+</div>
 {% endblock %}
+
+{% block extra_js %}<script src="{% static 'js/mm/slider.js' %}" defer></script>{% endblock %}

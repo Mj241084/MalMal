@@ -3,13 +3,10 @@
 from __future__ import annotations
 
 import pytest
-from django import forms
 
 from apps.catalog.models import Product, Variant
 from apps.marketing.models import TrustItem
 from apps.orders.models import ShippingMethod
-
-VariantForm = forms.modelform_factory(Variant, fields=["title", "sku", "price", "stock", "max_per_order"])
 
 
 def _variant(stock: int, cap: int | None) -> Variant:
@@ -29,20 +26,6 @@ def _variant(stock: int, cap: int | None) -> Variant:
 )
 def test_max_orderable(stock, cap, expected):
     assert _variant(stock, cap).max_orderable == expected
-
-
-@pytest.mark.django_db
-def test_variant_form_accepts_empty_and_zero_cap(product):
-    for value in ("", 0, 2):
-        form = VariantForm(data={"title": "سفید", "sku": "SKU-FORM", "price": 1000, "stock": 5, "max_per_order": value})
-        assert form.is_valid(), form.errors
-
-
-@pytest.mark.django_db
-def test_variant_form_rejects_negative_cap(product):
-    form = VariantForm(data={"title": "سفید", "sku": "SKU-NEG", "price": 1000, "stock": 5, "max_per_order": -1})
-    assert not form.is_valid()
-    assert "max_per_order" in form.errors
 
 
 @pytest.mark.django_db

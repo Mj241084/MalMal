@@ -22,8 +22,10 @@ from apps.catalog.models import (
     ProductImage,
     ProductSpecValue,
     SpecAttribute,
+    StockMovement,
     Variant,
 )
+from apps.marketing import demo as marketing_demo
 
 BRANDS = [
     ("اسنوا", "Snowa", "اسنوا، Snowa"),
@@ -91,13 +93,18 @@ class Command(BaseCommand):
             categories = self._categories()
             attributes = self._attributes(categories)
             created = self._products(brands, categories, attributes, options["products"])
+            marketing_demo.seed_marketing()
 
         self.stdout.write(self.style.SUCCESS(f"{created} demo product(s) created. Remove with --clear."))
 
     # --- builders ----------------------------------------------------------
 
     def _clear(self) -> None:
+        marketing_demo.clear_marketing()
         product_count = Product.objects.filter(is_demo=True).count()
+        # StockMovement.variant is PROTECT: a ledger row from an earlier checkout on demo stock
+        # would otherwise keep the demo product alive. Dev-only rows, so they go with the rest.
+        StockMovement.objects.filter(variant__is_demo=True).delete()
         Product.objects.filter(is_demo=True).delete()
         Variant.objects.filter(is_demo=True).delete()
         # Category.parent is PROTECT: remove leaves before their parents.
