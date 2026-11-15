@@ -27,6 +27,7 @@
               <li><a href="{% url 'accounts:profile' %}" class="text-small">{{ user.get_short_name|fa_text }}</a></li>
               <li><a href="{% url 'accounts:addresses' %}" class="text-small text-ink-2">آدرس‌های من</a></li>
               <li><a href="{% url 'orders:list' %}" class="text-small text-ink-2">سفارش‌های من</a></li>
+              <li><a href="{% url 'engagement:wishlist' %}" class="text-small text-ink-2">علاقه‌مندی‌ها</a></li>
               <li>
                 <form method="post" action="{% url 'accounts:logout' %}">
                   {% csrf_token %}
@@ -99,7 +100,7 @@
               <li><a href="{% url 'accounts:profile' %}" class="text-small">اطلاعات حساب</a></li>
               <li><a href="{% url 'accounts:addresses' %}" class="text-small text-ink-2">آدرس‌های من</a></li>
               <li><a href="{% url 'orders:list' %}" class="text-small text-ink-2">سفارش‌های من</a></li>
-              <li><a href="#wishlist" class="text-small text-ink-2">علاقه‌مندی‌ها</a></li>
+              <li><a href="{% url 'engagement:wishlist' %}" class="text-small text-ink-2">علاقه‌مندی‌ها</a></li>
               <li class="border-t mt-1 pt-1">
                 <form method="post" action="{% url 'accounts:logout' %}">
                   {% csrf_token %}
@@ -116,7 +117,7 @@
                    class="text-small">ورود یا ثبت‌نام</a>
               </li>
               <li><a href="{% url 'orders:list' %}" class="text-small text-ink-2">سفارش‌های من</a></li>
-              <li><a href="#wishlist" class="text-small text-ink-2">علاقه‌مندی‌ها</a></li>
+              <li><a href="{% url 'engagement:wishlist' %}" class="text-small text-ink-2">علاقه‌مندی‌ها</a></li>
             {% endif %}
             <li class="border-t mt-1 pt-1">
               <div class="flex items-center justify-between gap-2 px-2 py-1 hover:bg-transparent">

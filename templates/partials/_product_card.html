@@ -1,35 +1,36 @@
 {% load core_tags catalog_tags %}
 <article class="card bg-base-100 border rounded-box overflow-hidden transition-colors hover:bg-base-300">
-  <a href="{{ product.get_absolute_url }}" class="block p-2" tabindex="-1" aria-hidden="true">
-    <div class="relative aspect-square bg-white rounded-lg border overflow-hidden">
-      {% if product.main_image %}
-        <img
-          src="{{ product.main_image|image_url }}"
-          srcset="{{ product.main_image|srcset }}"
-          sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-          width="400" height="400"
-          alt="{{ product.main_image.alt|default:product.title }}"
-          {% if priority %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async"
-          class="w-full h-full object-contain{% if not product.in_stock %} opacity-60{% endif %}">
-      {% else %}
-        <div class="w-full h-full flex items-center justify-center text-ink-3">
-          {% icon "image" size=40 %}
-        </div>
-      {% endif %}
+  <div class="relative p-2">
+    <a href="{{ product.get_absolute_url }}" class="block" tabindex="-1" aria-hidden="true">
+      <div class="relative aspect-square bg-white rounded-lg border overflow-hidden">
+        {% if product.main_image %}
+          <img
+            src="{{ product.main_image|image_url }}"
+            srcset="{{ product.main_image|srcset }}"
+            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+            width="400" height="400"
+            alt="{{ product.main_image.alt|default:product.title }}"
+            {% if priority %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async"
+            class="w-full h-full object-contain{% if not product.in_stock %} opacity-60{% endif %}">
+        {% else %}
+          <div class="w-full h-full flex items-center justify-center text-ink-3">
+            {% icon "image" size=40 %}
+          </div>
+        {% endif %}
 
-      {% if product.discount_pct %}
-        <span class="badge badge-sm bg-base-content text-base-100 border-0 absolute start-2 top-2">
-          {{ product.discount_pct|fa_digits }}٪
-        </span>
-      {% endif %}
+        {% if product.discount_pct %}
+          <span class="badge badge-sm bg-base-content text-base-100 border-0 absolute start-2 top-2">
+            {{ product.discount_pct|fa_digits }}٪
+          </span>
+        {% endif %}
+      </div>
+    </a>
 
-      <button type="button" disabled
-              class="btn btn-ghost btn-circle btn-sm w-10 h-10 min-h-10 bg-base-100 border absolute end-2 top-2"
-              aria-label="افزودن به علاقه‌مندی‌ها">
-        {% icon "heart" size=18 class="text-ink-2" %}
-      </button>
+    {# state-less on purpose: this markup is cached and shared; likes.js loads the viewer's hearts #}
+    <div class="absolute end-4 top-4">
+      {% include "partials/_like_button.html" with product_id=product.pk liked=False %}
     </div>
-  </a>
+  </div>
 
   <div class="px-3 pb-3 pt-1 flex flex-col gap-1">
     {% if product.brand %}

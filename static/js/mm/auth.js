@@ -33,6 +33,14 @@
     }
   });
 
+  /* Open the login modal for a visitor who has no link to click (e.g. a guest pressing a heart). */
+  function openWithNext(next) {
+    var url = "/auth/otp/modal/?next=" + encodeURIComponent(next || window.location.pathname + window.location.search);
+    open();
+    window.htmx.ajax("GET", url, { target: "#" + BODY, swap: "innerHTML" });
+  }
+  MM.auth = { open: openWithNext };
+
   MM.init("auth", function (root) {
     MM.each(root, "#" + DIALOG, function (dialog) {
       if (dialog.dataset.authReady === "1") return;

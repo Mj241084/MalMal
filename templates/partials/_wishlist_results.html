@@ -1,0 +1,7 @@
+{% if products %}
+  {% include "partials/_product_grid.html" with products=products %}
+  {% include "partials/_pagination.html" with page_obj=page_obj querystring="" %}
+{% else %}
+  {% url 'core:home' as home_url %}
+  {% include "partials/_empty_state.html" with title="هنوز محصولی را نپسندیده‌اید" description="با زدن قلب روی هر محصول، آن را اینجا پیدا می‌کنید" action_url=home_url action_label="مشاهده‌ی محصولات" %}
+{% endif %}

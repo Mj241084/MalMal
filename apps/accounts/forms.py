@@ -10,6 +10,7 @@ from django.db.models import Q
 from django.urls import reverse_lazy
 
 from apps.accounts.models import Address, User
+from apps.core.forms import FieldErrorAttrsMixin
 from apps.core.text import normalize_digits, normalize_fa
 from apps.core.validators import normalize_iran_mobile, normalize_national_code, validate_national_code
 from apps.core.widgets import FaDigitsInput, FaTextarea, FaTextInput
@@ -22,42 +23,7 @@ IRAN_LNG_MAX = Decimal("64")
 COORD_QUANT = Decimal("0.000001")
 
 
-def _error_class(widget) -> str:
-    if isinstance(widget, forms.Select):
-        return "select-error"
-    if isinstance(widget, forms.Textarea):
-        return "textarea-error"
-    if isinstance(widget, forms.CheckboxInput):
-        return "checkbox-error"
-    return "input-error"
-
-
-class _FieldErrorAttrsMixin:
-    """Attach `aria-invalid="true"` and DaisyUI `*-error` classes on bound form errors."""
-
-    skip_error_class_fields: tuple[str, ...] = ()
-
-    def full_clean(self) -> None:
-        super().full_clean()
-        if not self.is_bound:
-            return
-        for name in self.errors:
-            if name == "__all__":
-                continue
-            field = self.fields.get(name)
-            if field is None:
-                continue
-            attrs = field.widget.attrs
-            attrs["aria-invalid"] = "true"
-            if name in self.skip_error_class_fields:
-                continue
-            err_cls = _error_class(field.widget)
-            existing = attrs.get("class", "").split()
-            if err_cls not in existing:
-                attrs["class"] = " ".join([*existing, err_cls]).strip()
-
-
-class MobileForm(_FieldErrorAttrsMixin, forms.Form):
+class MobileForm(FieldErrorAttrsMixin, forms.Form):
     mobile = forms.CharField(
         max_length=20,
         label="شماره موبایل",
@@ -77,7 +43,7 @@ class MobileForm(_FieldErrorAttrsMixin, forms.Form):
         return (self.cleaned_data.get("next") or "").strip()
 
 
-class OTPCodeForm(_FieldErrorAttrsMixin, forms.Form):
+class OTPCodeForm(FieldErrorAttrsMixin, forms.Form):
     skip_error_class_fields = ("code",)
 
     mobile = forms.CharField(widget=forms.HiddenInput)
@@ -119,7 +85,7 @@ class OTPCodeForm(_FieldErrorAttrsMixin, forms.Form):
         return (self.cleaned_data.get("next") or "").strip()
 
 
-class ProfileForm(_FieldErrorAttrsMixin, forms.ModelForm):
+class ProfileForm(FieldErrorAttrsMixin, forms.ModelForm):
     national_code_confirm = forms.BooleanField(
         required=False,
         label="از درستی کد ملی مطمئن هستم و می‌دانم بعد از ثبت قابل تغییر نیست",
@@ -189,7 +155,7 @@ class ProfileForm(_FieldErrorAttrsMixin, forms.ModelForm):
         return normalize_fa(self.cleaned_data.get("last_name") or "").strip()
 
 
-class AddressForm(_FieldErrorAttrsMixin, forms.ModelForm):
+class AddressForm(FieldErrorAttrsMixin, forms.ModelForm):
     recipient_mobile = forms.CharField(
         max_length=20,
         label="موبایل گیرنده",

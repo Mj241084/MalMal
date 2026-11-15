@@ -1,0 +1,9 @@
+{% load core_tags %}
+<button type="button" data-like="{{ product_id }}"
+        {% if oob %}hx-swap-oob="outerHTML:[data-like='{{ product_id }}']" data-like-seen="1"{% endif %}
+        hx-post="{% url 'engagement:like_set' product_id %}" hx-swap="none" hx-disabled-elt="this"
+        class="btn btn-ghost btn-circle w-10 h-10 min-h-10 bg-base-100 border"
+        aria-pressed="{% if liked %}true{% else %}false{% endif %}"
+        aria-label="{% if liked %}حذف از علاقه‌مندی‌ها{% else %}افزودن به علاقه‌مندی‌ها{% endif %}">
+  {% if liked %}{% icon "heart" size=18 class="text-base-content fill-current" %}{% else %}{% icon "heart" size=18 class="text-ink-2" %}{% endif %}
+</button>

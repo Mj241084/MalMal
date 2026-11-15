@@ -18,6 +18,7 @@ from apps.catalog.models import (
     Variant,
 )
 from apps.catalog.tree import subtree_upper_bound
+from apps.engagement import counters
 
 
 @admin.register(Brand)
@@ -135,7 +136,7 @@ class ProductAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     )
-    actions = ("action_activate", "action_archive")
+    actions = ("action_activate", "action_archive", "action_reconcile_counters")
     fieldsets = (
         (None, {"fields": ("title", "slug", "brand", "category", "status")}),
         ("محتوا", {"fields": ("short_description", "description", "warranty_text")}),
@@ -202,6 +203,11 @@ class ProductAdmin(admin.ModelAdmin):
     def action_archive(self, request, queryset):
         count = queryset.update_tracked(status=Product.STATUS_ARCHIVED)
         self.message_user(request, f"{count} محصول بایگانی شد.", messages.SUCCESS)
+
+    @admin.action(description="بازسازی شمارنده‌های محصولات انتخاب‌شده")
+    def action_reconcile_counters(self, request, queryset):
+        fixed = counters.reconcile(queryset.values_list("pk", flat=True))
+        self.message_user(request, f"شمارنده‌ی {fixed} محصول اصلاح شد.", messages.SUCCESS)
 
 
 @admin.register(SpecAttribute)

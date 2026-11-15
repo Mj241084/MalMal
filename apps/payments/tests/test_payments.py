@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from apps.cart.models import CartItem
 from apps.catalog.models import Product, Variant
+from apps.engagement.models import ProductDailyStat
 from apps.notifications.models import SmsLog
 from apps.orders import services as order_services
 from apps.orders.models import Order
@@ -46,6 +47,7 @@ def test_repeated_callback_pays_the_order_once(
     assert Payment.objects.filter(status=Payment.VERIFIED).count() == 1
     assert SmsLog.objects.filter(kind="order_paid").count() == 1
     assert Product.objects.get(pk=product.pk).purchase_count_total == 2
+    assert ProductDailyStat.objects.get(product=product).purchases == 2
     assert not CartItem.objects.filter(cart__user=buyer).exists()
 
 

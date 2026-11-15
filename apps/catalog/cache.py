@@ -14,6 +14,7 @@ from typing import Any
 from django.db.models import F
 
 from apps.catalog.constants import (
+    FRAGMENT_VERSION,
     LEVEL_LIST,
     TTL_CATEGORY_FACETS,
     TTL_CATEGORY_LIST,
@@ -21,6 +22,7 @@ from apps.catalog.constants import (
     TTL_PRODUCT_CARD,
     TTL_PRODUCT_DETAIL,
     TTL_SEARCH_SUGGEST,
+    TTL_SIMILAR,
 )
 from apps.core.cache import (
     get_or_build,
@@ -49,15 +51,20 @@ def product_detail_key(product) -> str:
     edit of a TrustItem is not masked by a 12h product cache entry."""
     from apps.marketing.cache import trust_revision
 
-    return f"p:{product.pk}:{product.rev}:t{trust_revision()}:detail"
+    return f"p:{product.pk}:{product.rev}:t{trust_revision()}:v{FRAGMENT_VERSION}:detail"
 
 
 def product_card_key(product) -> str:
-    return f"p:{product.pk}:{product.rev}:card"
+    return f"p:{product.pk}:{product.rev}:v{FRAGMENT_VERSION}:card"
 
 
 def category_list_key(category, sort: str, filters_hash: str, page: int) -> str:
-    return f"c:{category.pk}:{category.subtree_rev}:list:{sort}:{filters_hash}:{page}"
+    return f"c:{category.pk}:{category.subtree_rev}:v{FRAGMENT_VERSION}:list:{sort}:{filters_hash}:{page}"
+
+
+def similar_key(product, base_category) -> str:
+    """`base_category.subtree_rev` moves whenever any product in the candidate pool changes (LIST level)."""
+    return f"p:{product.pk}:{product.rev}:{base_category.subtree_rev}:v{FRAGMENT_VERSION}:similar"
 
 
 def category_facets_key(category) -> str:
@@ -147,6 +154,7 @@ __all__ = [
     "TTL_PRODUCT_CARD",
     "TTL_PRODUCT_DETAIL",
     "TTL_SEARCH_SUGGEST",
+    "TTL_SIMILAR",
     "bump_epoch",
     "bump_product_rev",
     "bump_subtree_rev",
@@ -162,4 +170,5 @@ __all__ = [
     "product_card_key",
     "product_detail_key",
     "search_suggest_key",
+    "similar_key",
 ]

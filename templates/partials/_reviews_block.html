@@ -1,0 +1,60 @@
+{% load core_tags %}
+{% if rating %}
+  <div class="flex items-center gap-3 border-b pb-4">
+    <span class="text-display font-medium">{{ rating.text }}</span>
+    <div class="flex flex-col gap-1">
+      {% include "partials/_stars.html" with value=rating.stars %}
+      <span class="text-label text-ink-3">از ۵ — بر اساس {{ rating.count }} نظر</span>
+    </div>
+  </div>
+{% else %}
+  <p class="text-small text-ink-2">هنوز نظری برای این محصول ثبت نشده است</p>
+{% endif %}
+
+<div class="mt-4 flex flex-col gap-4">
+  {% if notice %}
+    <div role="alert" class="alert text-small">
+      {% icon "info" size=18 class="text-ink-2 shrink-0" %}
+      <span>{{ notice }}</span>
+    </div>
+  {% endif %}
+
+  {% if own and not form %}
+    <div class="bg-base-100 border rounded-box p-4 flex flex-col gap-2">
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-small font-medium">نظر شما</span>
+        <span class="flex items-center gap-2 text-label text-ink-2">
+          <span class="status {% if own.status == 'approved' %}status-success{% elif own.status == 'rejected' %}status-error{% else %}status-warning{% endif %}"></span>
+          {{ own.get_status_display }}
+        </span>
+      </div>
+      {% include "partials/_stars.html" with value=own.rating size="xs" %}
+      <p class="text-small leading-7 whitespace-pre-line">{{ own.body|fa_text }}</p>
+      {% if own.status == "pending" %}
+        <p class="text-label text-ink-3">بعد از بررسی نمایش داده می‌شود</p>
+      {% elif own.status == "rejected" %}
+        <p class="text-label text-ink-3">می‌توانید نظر را ویرایش و دوباره ارسال کنید</p>
+      {% endif %}
+      <button type="button" class="btn btn-ghost btn-sm h-10 self-start"
+              hx-get="{% url 'engagement:reviews' product.pk %}?edit=1" hx-target="#reviews-block" hx-swap="innerHTML"
+              hx-disabled-elt="this">ویرایش نظر</button>
+    </div>
+  {% endif %}
+
+  {% if form %}
+    {% include "partials/_review_form.html" %}
+  {% elif not user.is_authenticated %}
+    {% with next=product.get_absolute_url|urlencode %}
+    <div class="flex items-center justify-between gap-3 bg-base-100 border rounded-box p-4">
+      <p class="text-small text-ink-2">برای ثبت نظر وارد حساب خود شوید</p>
+      <a href="{% url 'accounts:login' %}?next={{ next }}" data-auth-open
+         hx-get="{% url 'accounts:otp_modal' %}?next={{ next }}" hx-target="#auth-modal-body" hx-swap="innerHTML"
+         class="btn bg-base-300 border h-11 min-h-11 shrink-0">ورود یا ثبت‌نام</a>
+    </div>
+    {% endwith %}
+  {% endif %}
+
+  <ul id="review-list" class="flex flex-col gap-3">
+    {% include "partials/_review_items.html" %}
+  </ul>
+</div>

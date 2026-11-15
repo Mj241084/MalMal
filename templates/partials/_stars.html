@@ -1,0 +1,4 @@
+{% load core_tags %}
+<div class="rating {% if size == 'xs' %}rating-xs{% else %}rating-sm{% endif %}" role="img" aria-label="امتیاز {{ value|fa_digits }} از ۵">
+  {% for n in "12345" %}<span class="mask mask-star bg-base-content{% if forloop.counter > value %} opacity-20{% else %} opacity-100{% endif %}" aria-hidden="true"></span>{% endfor %}
+</div>

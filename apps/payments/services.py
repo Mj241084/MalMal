@@ -13,7 +13,7 @@ from django.utils import timezone
 
 from apps.cart import services as cart_services
 from apps.cart.models import CartItem
-from apps.catalog import stock
+from apps.engagement import counters
 from apps.notifications import sms
 from apps.orders import services as order_services
 from apps.orders.models import Order
@@ -159,7 +159,7 @@ def _finalize(payment_id: int, result: gateways.VerifyResult) -> str:
         for item in items:
             if item.product_id:
                 per_product[item.product_id] = per_product.get(item.product_id, 0) + item.qty
-        stock.add_purchases(per_product)
+        counters.add_purchases(per_product)
         # Only the purchased variants leave the cart: lines added after checkout started stay.
         CartItem.objects.filter(
             cart__user_id=order.user_id, variant_id__in=[i.variant_id for i in items if i.variant_id]

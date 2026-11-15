@@ -1,0 +1,18 @@
+{% load core_tags jalali_tags %}
+<li class="bg-base-100 border rounded-box p-4 flex flex-col gap-2">
+  <div class="flex items-center justify-between gap-2">
+    <div class="flex items-center gap-2 min-w-0">
+      <span class="text-small font-medium truncate">{% firstof review.user.first_name "کاربر" %}{% if review.user.last_name %} {{ review.user.last_name|slice:":1" }}.{% endif %}</span>
+      {% if review.is_verified_buyer %}<span class="badge badge-sm bg-base-300 border-0 shrink-0">خریدار این محصول</span>{% endif %}
+    </div>
+    <span class="text-label text-ink-3 shrink-0">{{ review.created_at|to_jalali:"%Y/%m/%d" }}</span>
+  </div>
+  {% include "partials/_stars.html" with value=review.rating size="xs" %}
+  <p class="text-small leading-7 whitespace-pre-line">{{ review.body|fa_text }}</p>
+  {% if review.admin_reply %}
+    <div class="bg-base-200 rounded-sm p-3 flex flex-col gap-1">
+      <span class="text-label text-ink-3">پاسخ فروشگاه</span>
+      <p class="text-small leading-7 whitespace-pre-line">{{ review.admin_reply|fa_text }}</p>
+    </div>
+  {% endif %}
+</li>

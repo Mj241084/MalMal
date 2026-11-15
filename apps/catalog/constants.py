@@ -69,6 +69,9 @@ TTL_CATEGORY_LIST = 60 * 60 * 6
 TTL_CATEGORY_FACETS = 60 * 60 * 6
 TTL_MENU = 60 * 60 * 24
 TTL_SEARCH_SUGGEST = 60
+# Bump when the markup of a cached fragment (product detail, cards, category results, similar rail) changes.
+FRAGMENT_VERSION = 1
+TTL_SIMILAR = 60 * 60 * 6
 
 # Image renditions generated on upload.
 IMAGE_WIDTHS = (400, 800, 1200)

@@ -1,0 +1,10 @@
+{% for review in page_obj.object_list %}
+  {% include "partials/_review_item.html" %}
+{% endfor %}
+{% if page_obj.has_next %}
+  <li class="flex justify-center">
+    <button type="button" class="btn bg-base-100 border h-11 min-h-11"
+            hx-get="{% url 'engagement:reviews' product.pk %}?page={{ page_obj.next_page_number }}"
+            hx-target="closest li" hx-swap="outerHTML" hx-disabled-elt="this">نمایش نظرهای بیشتر</button>
+  </li>
+{% endif %}

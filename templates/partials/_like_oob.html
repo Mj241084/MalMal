@@ -1,0 +1,3 @@
+{% for pid in liked_ids %}{% include "partials/_like_button.html" with product_id=pid liked=True oob=True %}{% endfor %}
+{% for pid in unliked_ids %}{% include "partials/_like_button.html" with product_id=pid liked=False oob=True %}{% endfor %}
+{% if with_social %}<div hx-swap-oob="innerHTML:#social-product">{% include "partials/_social_product.html" %}</div>{% endif %}

@@ -35,12 +35,3 @@ def refresh_products(product_ids: Iterable[int]) -> None:
     """Recompute aggregates after stock moves; cache rev only bumps when in_stock flips (docs/03 §5)."""
     for product in Product.objects.filter(pk__in=set(product_ids)):
         product.refresh_aggregates()
-
-
-def add_purchases(qty_by_product: dict[int, int]) -> None:
-    """COUNTER fields: F() writes, no invalidation. P4's recount_purchases owns the 30-day window."""
-    for product_id, qty in qty_by_product.items():
-        Product.objects.filter(pk=product_id).update(
-            purchase_count_total=F("purchase_count_total") + qty,
-            purchase_count_30d=F("purchase_count_30d") + qty,
-        )

@@ -11,6 +11,7 @@ from django_htmx.http import trigger_client_event
 
 from apps.cart import services
 from apps.core.decorators import login_required_htmx
+from apps.engagement import social
 from apps.orders.shipping import default_method
 
 
@@ -21,7 +22,7 @@ def _int(value) -> int:
         return 0
 
 
-def _context(lines, notices, *, guest: bool) -> dict:
+def _context(lines, notices, *, guest: bool, user=None) -> dict:
     return {
         "lines": lines,
         "notices": notices,
@@ -29,6 +30,7 @@ def _context(lines, notices, *, guest: bool) -> dict:
         "method": default_method(),
         "guest": guest,
         "normalized": json.dumps([{"v": line.variant.pk, "q": line.qty} for line in lines]),
+        "social": social.cart_notes(lines, user),
     }
 
 
@@ -41,7 +43,7 @@ def _announce(response, count: int, message: str = "", ok: bool = True):
 def detail_view(request):
     if request.user.is_authenticated:
         lines, notices = services.normalize(services.get_cart(request.user))
-        context = _context(lines, notices, guest=False)
+        context = _context(lines, notices, guest=False, user=request.user)
     else:
         context = {"guest": True}
     return render(request, "pages/cart.html", context)
@@ -76,7 +78,7 @@ def set_view(request):
     except services.CartError as exc:
         message, ok = str(exc), False
     lines, notices = services.normalize(services.get_cart(request.user))
-    response = render(request, "partials/_cart_content.html", _context(lines, notices, guest=False))
+    response = render(request, "partials/_cart_content.html", _context(lines, notices, guest=False, user=request.user))
     return _announce(response, len(lines), message, ok)
 
 

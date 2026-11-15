@@ -1,0 +1,8 @@
+{% if rating %}
+  <label for="tab-reviews" class="inline-flex items-center gap-2 cursor-pointer self-start">
+    {% include "partials/_stars.html" with value=rating.stars size="xs" %}
+    <span class="font-medium text-base-content">{{ rating.text }}</span>
+    <span class="text-ink-2">({{ rating.count }} نظر)</span>
+  </label>
+{% endif %}
+{% for line in lines %}<p>{{ line }}</p>{% endfor %}

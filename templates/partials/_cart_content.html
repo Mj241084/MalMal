@@ -52,6 +52,10 @@
             {% if line.qty >= variant.max_orderable and variant.max_per_order %}
               <span class="text-label text-ink-3">حداکثر {{ variant.max_orderable|fa_digits }} عدد در هر سفارش</span>
             {% endif %}
+
+            {% with notes=social|get_item:variant.pk %}
+              {% for note in notes %}<span class="text-label text-ink-3">{{ note }}</span>{% endfor %}
+            {% endwith %}
           {% else %}
             <div class="flex items-center justify-between gap-3">
               <span class="flex items-center gap-1 text-small text-ink-2">

@@ -1,0 +1,52 @@
+{% load core_tags %}
+<form method="post" action="{% url 'engagement:reviews' product.pk %}"
+      hx-post="{% url 'engagement:reviews' product.pk %}" hx-target="#reviews-block" hx-swap="innerHTML"
+      hx-disabled-elt="find button[type='submit']" hx-indicator="#review-indicator"
+      data-focus-on-swap novalidate
+      class="bg-base-100 border rounded-box p-4 flex flex-col gap-4">
+  {% csrf_token %}
+  <div>
+    <h3 class="text-lead font-medium">{% if own %}ویرایش نظر{% else %}نظر شما{% endif %}</h3>
+    {% if own %}<p class="text-label text-ink-3 mt-1">بعد از ویرایش، نظر دوباره بررسی می‌شود</p>{% endif %}
+  </div>
+
+  {% if form.non_field_errors %}
+    <div role="alert" class="alert alert-error text-small">
+      {% icon "alert-circle" size=18 class="shrink-0" %}
+      {% for error in form.non_field_errors %}<span>{{ error }}</span>{% endfor %}
+    </div>
+  {% endif %}
+
+  <fieldset class="fieldset">
+    <legend class="fieldset-legend text-small font-medium">امتیاز</legend>
+    <div class="rating rating-lg" role="radiogroup" aria-label="امتیاز">
+      {% for n in "12345" %}
+        <input type="radio" name="rating" value="{{ n }}" class="mask mask-star bg-base-content"
+               aria-label="{{ n|fa_digits }} ستاره" {% if form.rating.value|stringformat:"s" == n %}checked{% endif %}>
+      {% endfor %}
+    </div>
+    {% for error in form.rating.errors %}
+      <p class="text-label text-error flex items-center gap-1 mt-1">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ error }}</span></p>
+    {% endfor %}
+  </fieldset>
+
+  <fieldset class="fieldset">
+    <legend class="fieldset-legend text-small font-medium">{{ form.body.label }}</legend>
+    {{ form.body }}
+    {% for error in form.body.errors %}
+      <p class="text-label text-error flex items-center gap-1 mt-1">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ error }}</span></p>
+    {% endfor %}
+  </fieldset>
+
+  {# not btn-primary: the product page already has its one primary action #}
+  <div class="flex items-center gap-2">
+    <button type="submit" class="btn bg-base-300 border h-11 min-h-11">
+      ثبت نظر
+      <span id="review-indicator" class="htmx-indicator loading loading-spinner loading-sm" aria-hidden="true"></span>
+    </button>
+    {% if own %}
+      <button type="button" class="btn btn-ghost h-11 text-ink-2"
+              hx-get="{% url 'engagement:reviews' product.pk %}" hx-target="#reviews-block" hx-swap="innerHTML">انصراف</button>
+    {% endif %}
+  </div>
+</form>

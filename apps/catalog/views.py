@@ -15,13 +15,16 @@ from apps.catalog.cache import (
     TTL_CATEGORY_FACETS,
     TTL_CATEGORY_LIST,
     TTL_PRODUCT_DETAIL,
+    TTL_SIMILAR,
     category_facets_key,
     category_list_key,
     get_or_build,
     product_detail_key,
+    similar_key,
 )
 from apps.catalog.filters import PAGE_SIZE, SORT_CHOICES, ProductFilter
 from apps.catalog.models import Brand, Category, Product, SpecAttribute, Variant
+from apps.catalog.similar import base_category, similar_products
 from apps.catalog.tree import subtree_upper_bound
 from apps.core.html import sanitize_html
 from apps.core.models import SiteSettings
@@ -211,7 +214,7 @@ def product_view(request: HttpRequest, pk: int, slug: str) -> HttpResponse:
     if product.status != Product.STATUS_ACTIVE and not request.user.is_staff:
         raise Http404()
 
-    etag = f'"{product.pk}-{product.rev}-{_viewer_tag(request)}"'
+    etag = f'"{product.pk}-{product.rev}-{product.review_count}-{product.rating_sum}-{_viewer_tag(request)}"'
     if request.headers.get("If-None-Match") == etag:
         response = HttpResponse(status=304)
         response["ETag"] = etag
@@ -239,6 +242,21 @@ def product_view(request: HttpRequest, pk: int, slug: str) -> HttpResponse:
 
 def _render_detail(product: Product) -> str:
     return render_to_string("partials/_product_detail.html", _product_context(product))
+
+
+@require_GET
+def similar_view(request: HttpRequest, pk: int) -> HttpResponse:
+    product = get_object_or_404(Product.objects.select_related("category__parent"), pk=pk)
+    if not product.is_active and not request.user.is_staff:
+        raise Http404()
+    html = get_or_build(
+        similar_key(product, base_category(product)),
+        lambda: render_to_string("partials/_similar.html", {"products": similar_products(product)}),
+        TTL_SIMILAR,
+    )
+    response = HttpResponse(html)
+    response["Cache-Control"] = "private, max-age=300"
+    return response
 
 
 @require_GET

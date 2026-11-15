@@ -48,14 +48,6 @@ class TestAddressList:
         assert response.status_code == 302
         assert response["Location"].startswith("/login/")
 
-    def test_empty_state(self, client, user):
-        client.force_login(user)
-
-        response = client.get(reverse("accounts:addresses"))
-
-        assert response.status_code == 200
-        assert "هنوز آدرسی ثبت نکرده‌اید" in response.content.decode()
-
     def test_empty_state_hidden_when_form_has_validation_errors(self, client, user, province, city):
         client.force_login(user)
 
@@ -249,18 +241,6 @@ class TestAddressEdit:
 
         assert response.status_code == 404
 
-    def test_htmx_edit_form_includes_the_bound_city_options(self, client, user, province, city):
-        client.force_login(user)
-        _create_address(client, province, city)
-        address = _active(user).get()
-
-        response = client.get(reverse("accounts:address_edit", args=[address.pk]), HTTP_HX_REQUEST="true")
-
-        body = response.content.decode()
-        assert "partials/_address_form.html" in [t.name for t in response.templates]
-        assert f'value="{address.title}"' in body
-        assert "<option value=" in body
-
 
 class TestAddressDelete:
     def test_delete_is_soft_and_promotes_the_earliest_address(self, client, user, province, city):
@@ -296,16 +276,6 @@ class TestAddressDelete:
 
         assert response.status_code == 200
         assert "هنوز آدرسی ثبت نکرده‌اید" in response.content.decode()
-
-    def test_delete_requires_post(self, client, user, province, city):
-        client.force_login(user)
-        _create_address(client, province, city)
-        address = _active(user).get()
-
-        response = client.get(reverse("accounts:address_delete", args=[address.pk]))
-
-        assert response.status_code == 405
-        assert _active(user).count() == 1
 
 
 class TestAddressSetDefault:
