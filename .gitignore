@@ -19,6 +19,7 @@ node_modules/
 # Django local runtime
 db.sqlite3
 db.sqlite3-*
+test_db.sqlite3*
 dump.rdb
 media/
 staticfiles/

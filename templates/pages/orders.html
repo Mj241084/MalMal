@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load core_tags jalali_tags %}
+
+{% block title %}سفارش‌های من — {{ site_settings.store_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-6 lg:py-8">
+  <h1 class="text-title font-medium">حساب کاربری</h1>
+  {% include "partials/_account_nav.html" with active="orders" %}
+  <ul class="mt-6 flex flex-col gap-3">
+    {% for order in orders %}
+      <li>
+        <a href="{% url 'orders:detail' order.number %}" class="block bg-base-100 border rounded-box p-4 hover:bg-base-300 transition-colors">
+          <div class="flex items-center justify-between gap-2">
+            <span class="latin text-small font-medium">{{ order.number }}</span>
+            <span class="flex items-center gap-2 text-small"><span class="status {{ order.status_dot }}"></span>{{ order.get_status_display }}</span>
+          </div>
+          <div class="flex items-center justify-between gap-2 mt-2 text-label text-ink-3">
+            <span>{{ order.created_at|to_jalali }} — {{ order.items.all|length|fa_digits }} قلم</span>
+            <span class="text-small text-base-content whitespace-nowrap">{{ order.payable|toman }} تومان</span>
+          </div>
+        </a>
+      </li>
+    {% empty %}
+      <li>{% include "partials/_empty_state.html" with title="هنوز سفارشی ثبت نکرده‌اید" description="سفارش‌های شما بعد از ثبت اینجا دیده می‌شود" %}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

@@ -13,3 +13,6 @@ CACHES = {
         "KEY_PREFIX": "mm:test:rl",
     },
 }
+
+# File-based test DB: concurrency tests need real SQLite locking (in-memory shared cache behaves differently).
+DATABASES = {"default": {**DATABASES["default"], "TEST": {"NAME": BASE_DIR / "test_db.sqlite3"}}}  # noqa: F405

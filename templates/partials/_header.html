@@ -12,7 +12,7 @@
           {% icon "search" size=20 class="text-ink-2" %}
         </a>
 
-        <a href="#cart" class="btn btn-ghost btn-square w-10 h-10 relative" aria-label="سبد خرید">
+        <a href="{% url 'cart:detail' %}" class="btn btn-ghost btn-square w-10 h-10 relative" aria-label="سبد خرید">
           {% icon "shopping-cart" size=20 class="text-ink-2" %}
           <span class="badge badge-sm bg-base-300 text-base-content absolute top-1 end-1 px-1 min-w-4 h-4 text-label{% if not cart_count %} invisible{% endif %}" data-cart-count>{{ cart_count|fa_digits }}</span>
         </a>
@@ -26,7 +26,7 @@
             {% if user.is_authenticated %}
               <li><a href="{% url 'accounts:profile' %}" class="text-small">{{ user.get_short_name|fa_text }}</a></li>
               <li><a href="{% url 'accounts:addresses' %}" class="text-small text-ink-2">آدرس‌های من</a></li>
-              <li><a href="#orders" class="text-small text-ink-2">سفارش‌های من</a></li>
+              <li><a href="{% url 'orders:list' %}" class="text-small text-ink-2">سفارش‌های من</a></li>
               <li>
                 <form method="post" action="{% url 'accounts:logout' %}">
                   {% csrf_token %}
@@ -98,7 +98,7 @@
             {% if user.is_authenticated %}
               <li><a href="{% url 'accounts:profile' %}" class="text-small">اطلاعات حساب</a></li>
               <li><a href="{% url 'accounts:addresses' %}" class="text-small text-ink-2">آدرس‌های من</a></li>
-              <li><a href="#orders" class="text-small text-ink-2">سفارش‌های من</a></li>
+              <li><a href="{% url 'orders:list' %}" class="text-small text-ink-2">سفارش‌های من</a></li>
               <li><a href="#wishlist" class="text-small text-ink-2">علاقه‌مندی‌ها</a></li>
               <li class="border-t mt-1 pt-1">
                 <form method="post" action="{% url 'accounts:logout' %}">
@@ -115,7 +115,7 @@
                    hx-swap="innerHTML"
                    class="text-small">ورود یا ثبت‌نام</a>
               </li>
-              <li><a href="#orders" class="text-small text-ink-2">سفارش‌های من</a></li>
+              <li><a href="{% url 'orders:list' %}" class="text-small text-ink-2">سفارش‌های من</a></li>
               <li><a href="#wishlist" class="text-small text-ink-2">علاقه‌مندی‌ها</a></li>
             {% endif %}
             <li class="border-t mt-1 pt-1">
@@ -131,7 +131,7 @@
           </ul>
         </details>
 
-        <a href="#cart" class="btn btn-ghost h-10 px-3 gap-2 text-small font-normal" aria-label="سبد خرید">
+        <a href="{% url 'cart:detail' %}" class="btn btn-ghost h-10 px-3 gap-2 text-small font-normal" aria-label="سبد خرید">
           {% icon "shopping-cart" size=18 class="text-ink-2" %}
           <span>سبد خرید</span>
           <span class="badge badge-sm bg-base-300 text-base-content{% if not cart_count %} invisible{% endif %}" data-cart-count>{{ cart_count|fa_digits }}</span>

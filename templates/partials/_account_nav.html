@@ -9,5 +9,9 @@
        role="tab"
        class="tab{% if active == 'addresses' %} tab-active{% endif %}"
        {% if active == 'addresses' %}aria-current="page"{% endif %}>آدرس‌ها</a>
+    <a href="{% url 'orders:list' %}"
+       role="tab"
+       class="tab{% if active == 'orders' %} tab-active{% endif %}"
+       {% if active == 'orders' %}aria-current="page"{% endif %}>سفارش‌ها</a>
   </div>
 </nav>

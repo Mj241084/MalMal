@@ -2,9 +2,9 @@
 <form id="address-form"
       data-focus-on-swap
       method="post"
-      action="{% if form.instance.pk %}{% url 'accounts:address_edit' form.instance.pk %}{% else %}{% url 'accounts:address_create' %}{% endif %}"
-      hx-post="{% if form.instance.pk %}{% url 'accounts:address_edit' form.instance.pk %}{% else %}{% url 'accounts:address_create' %}{% endif %}"
-      hx-target="#addresses-section"
+      action="{% if form_action %}{{ form_action }}{% elif form.instance.pk %}{% url 'accounts:address_edit' form.instance.pk %}{% else %}{% url 'accounts:address_create' %}{% endif %}"
+      hx-post="{% if form_action %}{{ form_action }}{% elif form.instance.pk %}{% url 'accounts:address_edit' form.instance.pk %}{% else %}{% url 'accounts:address_create' %}{% endif %}"
+      hx-target="{{ form_target|default:'#addresses-section' }}"
       hx-swap="outerHTML"
       hx-disabled-elt="find button[type='submit']"
       hx-indicator="#address-form-indicator"

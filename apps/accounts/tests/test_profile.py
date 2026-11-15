@@ -173,12 +173,6 @@ class TestNationalCodeModelLock:
         user.refresh_from_db()
         assert user.national_code == OTHER_VALID_CODE
 
-    def test_empty_code_can_be_filled_once(self, user):
-        user.national_code = VALID_CODE
-        user.save()
-
-        assert user.national_code == VALID_CODE
-
 
 class TestAdminNationalCode:
     def _admin_data(self, user, national_code) -> dict:

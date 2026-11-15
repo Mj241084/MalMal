@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}سفارش {{ order.number }} — {{ site_settings.store_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-6 lg:py-8 pb-36 lg:pb-8">
+  <h1 class="text-title font-medium">
+    {% if result %}نتیجه‌ی پرداخت{% else %}سفارش{% endif %} <span class="latin text-ink-2">{{ order.number }}</span>
+  </h1>
+  {% include "partials/_account_nav.html" with active="orders" %}
+
+  {% if result and order.status == "pending_payment" and order.can_pay_now %}
+    <div role="alert" class="alert text-small mt-4">
+      {% icon "info" size=18 class="text-ink-2 shrink-0" %}
+      <span>پرداخت کامل نشد. رزرو کالاها تا ساعت <span class="num">{% load jalali_tags %}{{ order.reserved_until|to_jalali:"%H:%M" }}</span> نگه داشته می‌شود</span>
+    </div>
+  {% endif %}
+
+  <div class="mt-4">{% include "partials/_order_summary.html" %}</div>
+
+  {% if order.can_pay_now and gateways %}
+    <form id="pay-form" method="post" action="{% url 'orders:pay' order.number %}" class="mt-4 bg-base-100 border rounded-box p-4 flex flex-col gap-3">
+      {% csrf_token %}
+      {% if gateways|length > 1 %}
+        {% for gateway in gateways %}
+          <label class="flex items-center gap-3 border rounded-field p-3 cursor-pointer min-h-12">
+            <input type="radio" name="gateway" value="{{ gateway.code }}" class="radio radio-sm" {% if forloop.first %}checked{% endif %}>
+            <span class="text-small">{{ gateway.title }}</span>
+          </label>
+        {% endfor %}
+      {% else %}
+        <input type="hidden" name="gateway" value="{{ gateways.0.code }}">
+      {% endif %}
+      <button type="submit" class="btn btn-primary h-11 min-h-11 hidden lg:inline-flex lg:self-start">پرداخت</button>
+    </form>
+
+    <div class="lg:hidden fixed bottom-16 inset-x-0 z-20 bg-base-100 border-t px-4 py-3">
+      <div class="flex items-center gap-3">
+        <button type="submit" form="pay-form" class="btn btn-primary flex-1 min-w-0 h-11 min-h-11">پرداخت</button>
+        <div class="flex flex-col items-end shrink-0 leading-5">
+          <span class="text-lead font-medium whitespace-nowrap tabular-nums">{{ order.payable|toman }}</span>
+          <span class="text-label text-ink-2">تومان</span>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -190,6 +190,9 @@ class ProductAdmin(admin.ModelAdmin):
 
         product.refresh_aggregates()
 
+        if product.variants.filter(is_active=True, weight_g=0).exists():
+            messages.warning(request, "وزن برخی تنوع‌ها صفر است؛ سقف وزن ارسال برای آن‌ها بررسی نمی‌شود.")
+
     @admin.action(description="فعال‌سازی محصولات انتخاب‌شده")
     def action_activate(self, request, queryset):
         count = queryset.update_tracked(status=Product.STATUS_ACTIVE)

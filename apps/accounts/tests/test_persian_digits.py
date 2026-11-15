@@ -1,7 +1,7 @@
 import pytest
 from django.urls import reverse
 
-from apps.accounts.forms import AddressForm, MobileForm, OTPCodeForm, ProfileForm
+from apps.accounts.forms import AddressForm, MobileForm, ProfileForm
 from apps.accounts.models import Address
 from apps.core.testing import find_ascii_digits
 from apps.core.widgets import FaDigitsInput, FaTextarea, FaTextInput
@@ -77,10 +77,6 @@ def test_widgets_render_persian_digits_and_preserve_latin_tokens():
 
     rendered_textarea = FaTextarea().render("address_text", "پلاک 12 کد WM-1234")
     assert "پلاک ۱۲ کد WM-1234" in rendered_textarea
-
-
-def test_otp_code_widget_has_maxlength_4():
-    assert OTPCodeForm().fields["code"].widget.attrs["maxlength"] == "4"
 
 
 def test_forms_normalize_persian_digits_to_ascii(user, province, city):

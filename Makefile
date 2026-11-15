@@ -1,4 +1,4 @@
-.PHONY: run css css-watch sprite favicons test lint format check seed seed-clear warm search
+.PHONY: run css css-watch sprite favicons test lint format check seed seed-clear warm search expire
 
 run:
 	uv run python manage.py runserver
@@ -14,6 +14,9 @@ warm:
 
 search:
 	uv run python manage.py rebuild_search
+
+expire:
+	uv run python manage.py expire_orders
 
 css:
 	pnpm run build:css

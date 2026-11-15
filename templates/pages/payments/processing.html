@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load core_tags %}
+{% block title %}بررسی پرداخت — {{ site_settings.store_name }}{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-12 text-center">
+  <div class="bg-base-100 border rounded-box p-6 flex flex-col items-center gap-3">
+    {% icon "info" size=40 class="text-ink-3" %}
+    <h1 class="text-title font-medium">پرداخت در حال بررسی است</h1>
+    <p class="text-small text-ink-2">چند لحظه بعد دوباره بررسی کنید. مبلغ فقط یک بار از شما دریافت می‌شود</p>
+    <a href="{{ retry_url }}" class="btn btn-primary h-11 mt-2">بررسی دوباره</a>
+    <a href="{% url 'orders:list' %}" class="btn btn-ghost h-10 text-ink-2">سفارش‌های من</a>
+  </div>
+</div>
+{% endblock %}

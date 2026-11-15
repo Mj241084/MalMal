@@ -10,6 +10,7 @@ ALLOWED_FILES = {
     "apps/catalog/cache.py",
     "apps/catalog/tree.py",
     "apps/catalog/models.py",
+    "apps/catalog/stock.py",
 }
 PATTERN = re.compile(r"(Product|Variant|Category)\.objects[^\n]*?\.update\(")
 

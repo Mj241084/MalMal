@@ -149,6 +149,7 @@ def category_view(request: HttpRequest, pk: int, slug: str) -> HttpResponse:
 
 def _product_context(product: Product) -> dict:
     from apps.marketing.cache import trust_items
+    from apps.orders.shipping import product_page_note
 
     images = list(product.images.all())
     variants = list(product.variants.filter(is_active=True))
@@ -162,7 +163,7 @@ def _product_context(product: Product) -> dict:
         "active_variant": default_variant,
         "specs": specs,
         "low_stock_threshold": SiteSettings.get_solo().low_stock_threshold,
-        "shipping_note": SiteSettings.get_solo().shipping_note,
+        "shipping_note": product_page_note(),
         "trust_items": trust_items(limit=2),
         "description_html": sanitize_html(product.description),
         "breadcrumbs": _crumbs(*product.category.ancestors(), product.category, product),
@@ -243,6 +244,7 @@ def _render_detail(product: Product) -> str:
 @require_GET
 def variant_panel_view(request: HttpRequest, pk: int, variant_id: int) -> HttpResponse:
     from apps.marketing.cache import trust_items
+    from apps.orders.shipping import product_page_note
 
     product = get_object_or_404(Product.objects.select_related("brand", "category"), pk=pk)
     variant = get_object_or_404(Variant, pk=variant_id, product=product, is_active=True)
@@ -254,7 +256,7 @@ def variant_panel_view(request: HttpRequest, pk: int, variant_id: int) -> HttpRe
             "variants": list(product.variants.filter(is_active=True)),
             "active_variant": variant,
             "low_stock_threshold": SiteSettings.get_solo().low_stock_threshold,
-            "shipping_note": SiteSettings.get_solo().shipping_note,
+            "shipping_note": product_page_note(),
             "trust_items": trust_items(limit=2),
         },
     )

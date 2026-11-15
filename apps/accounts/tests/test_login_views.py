@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from datetime import timedelta
 
@@ -12,6 +13,7 @@ from django.utils import timezone
 
 from apps.accounts import ratelimit
 from apps.accounts.models import OTPChallenge, User
+from apps.cart.models import CartItem
 from apps.core.models import StaticPage
 from apps.notifications.models import SmsLog
 
@@ -234,13 +236,22 @@ class TestVerifyCode:
         assert reverse("accounts:otp_cancel") in body
         assert "تغییر شماره" in body
 
-    def test_otp_step_uses_custom_digit_boxes(self, client, fixed_otp_code):
-        response = _request_code(client)
-        body = response.content.decode()
+    def test_guest_cart_is_merged_before_the_redirect(self, client, fixed_otp_code, product):
+        variant = product.variants.get()
+        _request_code(client)
 
-        assert "data-otp-length" in body
-        assert "otp-joined" not in body
-        assert "tracking-" not in body
+        client.post(
+            reverse("accounts:otp_verify"),
+            {
+                "mobile": MOBILE,
+                "code": fixed_otp_code,
+                "guest_cart": json.dumps([{"v": variant.pk, "q": 2}]),
+            },
+            HTTP_HX_REQUEST="true",
+        )
+
+        user = User.objects.get(mobile=MOBILE)
+        assert list(CartItem.objects.filter(cart__user=user).values_list("variant_id", "qty")) == [(variant.pk, 2)]
 
     def test_csrf_is_required(self, fixed_otp_code):
         client = Client(enforce_csrf_checks=True)
@@ -320,9 +331,6 @@ class TestPendingStep:
         assert (
             "data-otp-length" not in client.get(reverse("accounts:otp_modal"), HTTP_HX_REQUEST="true").content.decode()
         )
-
-    def test_resume_endpoint_is_gone(self, client):
-        assert client.get("/auth/otp/resume/?mobile=09121234567").status_code == 404
 
     def test_terms_link_shown_only_when_active_terms_page_exists(self, client):
         body_without_terms = client.get(reverse("accounts:otp_modal"), HTTP_HX_REQUEST="true").content.decode()

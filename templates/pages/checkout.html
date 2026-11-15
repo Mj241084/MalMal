@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load static core_tags %}
+
+{% block title %}ثبت سفارش — {{ site_settings.store_name }}{% endblock %}
+
+{% block extra_head %}
+  {% if neshan_map_key %}<link rel="stylesheet" href="https://static.neshan.org/sdk/maplibre/5.24.3/neshan-maplibre-sdk.css">{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-6 lg:py-8 pb-36 lg:pb-8">
+  {% include "partials/_section_heading.html" with title="ثبت سفارش" %}
+
+  {# Fields live outside this form (the address form is a nested HTMX form), tied to it with form="checkout-form". #}
+  <form id="checkout-form" method="post" action="{% url 'orders:place' %}" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="fingerprint" value="{{ fingerprint }}">
+  </form>
+
+  <div class="mt-4 flex flex-col gap-2">
+    {% for notice in notices %}
+      <div role="alert" class="alert text-small">{% icon "info" size=18 class="text-ink-2 shrink-0" %}<span>{{ notice }}</span></div>
+    {% endfor %}
+    {% for error in errors %}
+      <div role="alert" class="alert alert-error text-small">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ error }}</span></div>
+    {% endfor %}
+  </div>
+
+  <div class="mt-6 lg:grid lg:grid-cols-[1fr_340px] lg:gap-8 items-start">
+    <div class="flex flex-col gap-4">
+
+      {% if buyer_form %}
+      <section class="bg-base-100 border rounded-box p-4 flex flex-col gap-4" aria-labelledby="buyer-title">
+        <div>
+          <h2 id="buyer-title" class="text-lead font-medium">مشخصات خریدار</h2>
+          <p class="text-small text-ink-2 mt-1">فقط موارد تکمیل‌نشده‌ی پروفایل پرسیده می‌شود</p>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4">
+          {% for field in buyer_form.visible_fields %}
+            {% if field.name != "national_code_confirm" %}
+            <fieldset class="fieldset{% if field.name == 'national_code' %} sm:col-span-2{% endif %}">
+              <legend class="fieldset-legend text-small font-medium">{{ field.label }}</legend>
+              {{ field }}
+              {% for error in field.errors %}
+                <p class="text-label text-error flex items-center gap-1 mt-1">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ error }}</span></p>
+              {% endfor %}
+              {% if field.name == "national_code" %}
+                <div role="alert" class="alert text-small mt-2 items-start">
+                  {% icon "info" size=18 class="text-ink-2 shrink-0 mt-0.5" %}
+                  <div class="flex flex-col gap-2">
+                    <span>کد ملی بعد از ثبت قابل تغییر نیست. از درستی آن مطمئن شوید</span>
+                    <label class="flex items-start gap-2 cursor-pointer">
+                      {{ buyer_form.national_code_confirm }}
+                      <span class="text-label text-ink-2 leading-5">{{ buyer_form.national_code_confirm.label }}</span>
+                    </label>
+                  </div>
+                </div>
+              {% endif %}
+            </fieldset>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
+
+      <section class="bg-base-100 border rounded-box p-4 flex flex-col gap-3" aria-labelledby="address-title">
+        <h2 id="address-title" class="text-lead font-medium">آدرس و گیرنده</h2>
+        <p class="text-small text-ink-2">گیرنده همان نامی است که در آدرس ثبت شده؛ برای گیرنده‌ی دیگر یک آدرس جدید بسازید</p>
+        {% include "partials/_checkout_addresses.html" %}
+      </section>
+
+      <section class="bg-base-100 border rounded-box p-4 flex flex-col gap-3" aria-labelledby="shipping-title">
+        <h2 id="shipping-title" class="text-lead font-medium">روش ارسال</h2>
+        {% if method %}
+          <div class="flex items-start gap-3">
+            {% icon "truck" size=20 class="text-ink-2 shrink-0 mt-0.5" %}
+            <div>
+              <p class="text-small font-medium">{{ method.title }}</p>
+              <p class="text-label text-ink-3 mt-1 leading-5">{{ method.checkout_note }}</p>
+            </div>
+          </div>
+        {% else %}
+          <div role="alert" class="alert alert-error text-small">{% icon "alert-circle" size=18 class="shrink-0" %}<span>ارسال در حال حاضر ممکن نیست</span></div>
+        {% endif %}
+      </section>
+
+      <section class="bg-base-100 border rounded-box p-4 flex flex-col gap-3" aria-labelledby="payment-title">
+        <h2 id="payment-title" class="text-lead font-medium">روش پرداخت</h2>
+        {% for gateway in gateways %}
+          <label class="flex items-center gap-3 border rounded-field p-3 cursor-pointer min-h-12">
+            <input type="radio" name="gateway" value="{{ gateway.code }}" form="checkout-form" class="radio radio-sm"
+                   {% if gateway.code == selected_gateway %}checked{% endif %}>
+            {% if gateway.logo %}
+              <img src="{{ gateway.logo.url }}" alt="" width="32" height="32" class="h-8 w-auto">
+            {% else %}
+              {% icon "credit-card" size=20 class="text-ink-2" %}
+            {% endif %}
+            <span class="text-small">{{ gateway.title }}</span>
+          </label>
+        {% empty %}
+          <div role="alert" class="alert alert-error text-small">{% icon "alert-circle" size=18 class="shrink-0" %}<span>پرداخت برای این مبلغ در حال حاضر ممکن نیست</span></div>
+        {% endfor %}
+      </section>
+    </div>
+
+    <aside class="bg-base-100 border rounded-box p-4 flex flex-col gap-3 mt-4 lg:mt-0 lg:sticky lg:top-32">
+      <h2 class="text-lead font-medium">خلاصه‌ی سفارش</h2>
+      <ul class="flex flex-col gap-2 border-b pb-3">
+        {% for line in lines %}
+          <li class="flex items-start justify-between gap-2 text-small">
+            <span class="min-w-0 truncate">{{ line.variant.product.title|fa_text }} <span class="text-ink-3">× {{ line.qty|fa_digits }}</span></span>
+            <span class="whitespace-nowrap shrink-0">{{ line.total|toman }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+      <div class="flex items-center justify-between text-small">
+        <span class="text-ink-2">جمع کالاها</span><span class="whitespace-nowrap">{{ summary.items_total|toman }} تومان</span>
+      </div>
+      <div class="flex items-center justify-between text-small">
+        <span class="text-ink-2">ارسال</span><span class="text-ink-2">پس‌کرایه</span>
+      </div>
+      <div class="flex items-center justify-between border-t pt-3">
+        <span class="text-small font-medium">مبلغ قابل پرداخت</span>
+        <span class="text-lead font-medium whitespace-nowrap">{{ summary.items_total|toman }} <span class="text-small text-ink-2 font-normal">تومان</span></span>
+      </div>
+      {% if too_heavy %}
+        <div role="alert" class="alert alert-error text-small">
+          {% icon "alert-circle" size=18 class="shrink-0" %}
+          <span>برای ارسال این سفارش لطفاً با پشتیبانی تماس بگیرید{% if site_settings.phone %}: <span class="num">{{ site_settings.phone|fa_digits }}</span>{% endif %}</span>
+        </div>
+      {% endif %}
+      <button type="submit" form="checkout-form" class="btn btn-primary w-full h-11 min-h-11 hidden lg:inline-flex"
+              {% if not gateways or too_heavy or not method %}disabled{% endif %}>پرداخت</button>
+      <a href="{% url 'cart:detail' %}" class="btn btn-ghost h-10 text-ink-2 hidden lg:inline-flex">بازگشت به سبد</a>
+    </aside>
+  </div>
+</div>
+
+{# D28 #}
+<div class="lg:hidden fixed bottom-16 inset-x-0 z-20 bg-base-100 border-t px-4 py-3">
+  <div class="flex items-center gap-3">
+    <button type="submit" form="checkout-form" class="btn btn-primary flex-1 min-w-0 h-11 min-h-11"
+            {% if not gateways or too_heavy or not method %}disabled{% endif %}>پرداخت</button>
+    <div class="flex flex-col items-end shrink-0 leading-5">
+      <span class="text-lead font-medium whitespace-nowrap tabular-nums">{{ summary.items_total|toman }}</span>
+      <span class="text-label text-ink-2">تومان</span>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'js/mm/addresses.js' %}" defer></script>
+  {% if neshan_map_key %}
+    <script src="https://static.neshan.org/sdk/maplibre/5.24.3/neshan-maplibre-sdk.umd.js" defer></script>
+    <script src="{% static 'js/mm/neshan.js' %}" defer></script>
+  {% endif %}
+{% endblock %}

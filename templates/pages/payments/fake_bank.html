@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}درگاه آزمایشی{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-8">
+  <div class="bg-base-100 border rounded-box p-5 flex flex-col gap-4">
+    <h1 class="text-title font-medium">درگاه آزمایشی</h1>
+    <p class="text-small text-ink-2">فقط در حالت توسعه دیده می‌شود. نتیجه‌ی پرداخت را انتخاب کنید</p>
+    <div class="flex items-center gap-2 border-t pt-4">
+      <a href="{{ callback }}?Authority={{ authority }}&amp;Status=OK" class="btn btn-primary flex-1 h-11">پرداخت موفق</a>
+      <a href="{{ callback }}?Authority={{ authority }}&amp;Status=NOK" class="btn btn-ghost h-11 text-ink-2">انصراف</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

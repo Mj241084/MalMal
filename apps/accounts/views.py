@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import math
 
 from django.conf import settings
@@ -22,7 +23,12 @@ from django_htmx.http import HttpResponseClientRedirect, trigger_client_event
 from apps.accounts import otp
 from apps.accounts.forms import AddressForm, MobileForm, OTPCodeForm, ProfileForm
 from apps.accounts.models import Address, OTPChallenge, User
+from apps.accounts.services import save_new_address
+from apps.cart import services as cart_services
+from apps.core.http import client_ip
 from apps.core.validators import normalize_iran_mobile
+
+logger = logging.getLogger(__name__)
 
 
 def _normalize_or_empty(value: str | None) -> str:
@@ -30,21 +36,6 @@ def _normalize_or_empty(value: str | None) -> str:
         return normalize_iran_mobile(value)
     except ValidationError:
         return ""
-
-
-def _client_ip(request: HttpRequest) -> str | None:
-    remote = (request.META.get("REMOTE_ADDR") or "").strip()
-    trusted = getattr(settings, "TRUSTED_PROXY_IPS", ())
-    if remote and remote in trusted:
-        x_real = (request.META.get("HTTP_X_REAL_IP") or "").strip()
-        if x_real:
-            return x_real
-        x_forwarded = request.META.get("HTTP_X_FORWARDED_FOR") or ""
-        if x_forwarded:
-            first = x_forwarded.split(",")[0].strip()
-            if first:
-                return first
-    return remote or None
 
 
 def _safe_next(request: HttpRequest, value: str | None) -> str:
@@ -168,7 +159,7 @@ def otp_request_view(request: HttpRequest) -> HttpResponse:
 
     mobile = form.cleaned_data["mobile"]
     next_url = _safe_next(request, form.cleaned_data["next"])
-    result = otp.request_code(mobile, _client_ip(request))
+    result = otp.request_code(mobile, client_ip(request))
 
     if result.ok:
         _remember_pending(request, mobile, next_url)
@@ -234,7 +225,10 @@ def otp_verify_view(request: HttpRequest) -> HttpResponse:
 
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
     _forget_pending(request)
-    # Cart merge hook lands in P3 (docs/02 §5); nothing to merge until the cart app exists.
+    try:
+        cart_services.merge_guest_items(user, cart_services.parse_items(request.POST.get("guest_cart")))
+    except Exception:  # a cart problem must never block login
+        logger.exception("Guest cart merge failed for user %s", user.pk)
 
     if request.htmx:
         response = HttpResponseClientRedirect(target)
@@ -327,14 +321,7 @@ def address_create(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = AddressForm(request.POST, user=request.user)
         if form.is_valid():
-            address = form.save(commit=False)
-            address.user = request.user
-            with transaction.atomic():
-                has_addresses = _address_queryset(request.user).exists()
-                address.is_default = form.cleaned_data["is_default"] or not has_addresses
-                if address.is_default:
-                    _address_queryset(request.user).update(is_default=False)
-                address.save()
+            save_new_address(request.user, form)
             if request.htmx:
                 return _addresses_section(request)
             return redirect("accounts:addresses")

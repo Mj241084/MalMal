@@ -1,0 +1,32 @@
+{% load core_tags %}
+<div id="checkout-addresses" class="flex flex-col gap-3">
+  {% for address in addresses %}
+    <label class="flex items-start gap-3 border rounded-field p-3 cursor-pointer">
+      <input type="radio" name="address_id" value="{{ address.pk }}" form="checkout-form" class="radio radio-sm mt-1"
+             {% if address.pk == selected_address_id %}checked{% endif %}>
+      <span class="flex flex-col gap-1 min-w-0">
+        <span class="text-small font-medium">{{ address.title|default:address.city.name|fa_text }}
+          {% if address.is_default %}<span class="badge badge-sm bg-base-300 border-0 ms-1">پیش‌فرض</span>{% endif %}
+        </span>
+        <span class="text-small text-ink-2 leading-6">{{ address.province.name }}، {{ address.city.name }}، {{ address.address_text|fa_text }}</span>
+        <span class="text-label text-ink-3">
+          {{ address.recipient_name|fa_text }} — <span class="num">{{ address.recipient_mobile|fa_digits }}</span>
+          — پلاک {{ address.plate|fa_digits }}{% if address.unit %}، واحد {{ address.unit|fa_digits }}{% endif %}
+        </span>
+      </span>
+    </label>
+  {% endfor %}
+
+  <div id="address-form-container">
+    {% if address_form %}{% include "partials/_address_form.html" with form=address_form %}{% endif %}
+  </div>
+
+  <button type="button" data-address-add
+          class="btn bg-base-100 border h-11 min-h-11 self-start{% if address_form %} hidden{% endif %}"
+          hx-get="{% url 'orders:address_new' %}" hx-target="#address-form-container" hx-swap="innerHTML"
+          hx-indicator="#address-indicator" hx-disabled-elt="this">
+    {% icon "plus" size=18 %}
+    <span>{% if addresses %}آدرس تازه{% else %}افزودن آدرس{% endif %}</span>
+    <span id="address-indicator" class="htmx-indicator loading loading-spinner loading-sm" aria-hidden="true"></span>
+  </button>
+</div>

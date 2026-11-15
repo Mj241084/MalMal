@@ -1,0 +1,43 @@
+{% load core_tags jalali_tags %}
+<section class="bg-base-100 border rounded-box p-4 flex flex-col gap-4">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <span class="flex items-center gap-2 text-small">
+      <span class="status {{ order.status_dot }}"></span>{{ order.get_status_display }}
+    </span>
+    <span class="text-label text-ink-3">{{ order.created_at|to_jalali }}</span>
+  </div>
+
+  <ul class="flex flex-col divide-y">
+    {% for item in order.items.all %}
+      <li class="flex items-center gap-3 py-3 first:pt-0">
+        <span class="w-14 h-14 shrink-0 rounded-lg bg-white border overflow-hidden flex items-center justify-center">
+          {% if item.image_url %}<img src="{{ item.image_url }}" alt="" width="56" height="56" loading="lazy" class="w-full h-full object-contain p-1">{% else %}{% icon "image" size=18 class="text-ink-3" %}{% endif %}
+        </span>
+        <span class="min-w-0 flex-1 flex flex-col">
+          <span class="text-small leading-6 line-clamp-2">{{ item.product_title|fa_text }}</span>
+          <span class="text-label text-ink-3">{{ item.variant_title|fa_text }} — {{ item.qty|fa_digits }} عدد</span>
+        </span>
+        <span class="text-small whitespace-nowrap shrink-0">{{ item.line_total|toman }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <div class="flex flex-col gap-2 border-t pt-3 text-small">
+    <div class="flex items-center justify-between"><span class="text-ink-2">جمع کالاها</span><span class="whitespace-nowrap">{{ order.items_total|toman }} تومان</span></div>
+    <div class="flex items-center justify-between"><span class="text-ink-2">ارسال</span><span class="text-ink-2">{% if order.shipping_payment_mode == "collect" %}پس‌کرایه{% else %}{{ order.shipping_cost|toman }} تومان{% endif %}</span></div>
+    <div class="flex items-center justify-between"><span class="font-medium">مبلغ پرداختی</span><span class="text-lead font-medium whitespace-nowrap">{{ order.payable|toman }} تومان</span></div>
+  </div>
+
+  <div class="flex flex-col gap-1 border-t pt-3 text-small">
+    <span class="font-medium">تحویل‌گیرنده</span>
+    <span class="text-ink-2">{{ order.recipient_name|fa_text }} — <span class="num">{{ order.recipient_mobile|fa_digits }}</span></span>
+    <span class="text-ink-2 leading-6">{{ order.province_name }}، {{ order.city_name }}، {{ order.address_text|fa_text }}</span>
+    <span class="text-label text-ink-3">پلاک {{ order.plate|fa_digits }}{% if order.unit %}، واحد {{ order.unit|fa_digits }}{% endif %} — کدپستی <span class="num">{{ order.postal_code|fa_digits }}</span></span>
+  </div>
+
+  <div class="flex flex-col gap-1 border-t pt-3 text-small">
+    <span class="font-medium">{{ order.shipping_method_title }}</span>
+    {% if order.shipping_payment_mode == "collect" %}<span class="text-label text-ink-3 leading-5">کرایه‌ی ارسال هنگام تحویل بار به پیک پرداخت می‌شود و جزو مبلغ این پرداخت نیست</span>{% endif %}
+    {% if order.tracking_code %}<span class="text-ink-2">کد رهگیری: <span class="latin">{{ order.tracking_code }}</span></span>{% endif %}
+  </div>
+</section>

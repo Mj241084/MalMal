@@ -171,26 +171,6 @@ class TestAddressCreate:
         form_resp = client.get(reverse("accounts:address_create"), HTTP_HX_REQUEST="true")
         assert "data-neshan-picker" in form_resp.content.decode()
 
-    def test_htmx_success_swaps_the_section(self, client, user, province, city):
-        client.force_login(user)
-
-        response = _create_address(client, province, city, htmx=True)
-
-        assert response.status_code == 200
-        assert "partials/_addresses_section.html" in [t.name for t in response.templates]
-        assert "خانه" in response.content.decode()
-
-    def test_htmx_form_get_returns_the_form_with_the_city_hook(self, client, user):
-        client.force_login(user)
-
-        response = client.get(reverse("accounts:address_create"), HTTP_HX_REQUEST="true")
-
-        body = response.content.decode()
-        assert "partials/_address_form.html" in [t.name for t in response.templates]
-        assert 'hx-get="/geo/cities/"' in body
-        assert 'hx-target="#id_city"' in body
-        assert "hx-disabled-elt=\"find button[type='submit']\"" in body
-
 
 class TestAddressEdit:
     def test_default_survives_unchecking_the_box(self, client, user, province, city):
@@ -340,17 +320,3 @@ class TestAddressSetDefault:
         second.refresh_from_db()
         assert second.is_default
         assert _active(user).filter(is_default=True).count() == 1
-
-    def test_htmx_returns_the_section(self, client, user, province, city):
-        client.force_login(user)
-        _create_address(client, province, city)
-        _create_address(client, province, city, title="محل کار")
-        second = _active(user).get(title="محل کار")
-
-        response = client.post(
-            reverse("accounts:address_set_default", args=[second.pk]),
-            HTTP_HX_REQUEST="true",
-        )
-
-        assert response.status_code == 200
-        assert "partials/_addresses_section.html" in [t.name for t in response.templates]

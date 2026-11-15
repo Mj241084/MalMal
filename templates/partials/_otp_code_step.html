@@ -51,6 +51,7 @@
   {% endif %}
 
   <form id="otp-verify-form"
+        data-guest-cart
         method="post"
         action="{% url 'accounts:otp_verify' %}"
         hx-post="{% url 'accounts:otp_verify' %}"

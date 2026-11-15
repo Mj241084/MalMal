@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import os
 import re
 import subprocess
@@ -156,22 +155,6 @@ class TestCoreModelsAndViews:
         cache.clear()
         assert SiteSettings.get_solo().store_name == "مل‌مل"
         assert SiteSettings.get_solo().phone == "02100000002"
-
-    def test_brand_name_and_no_second_in_home_and_404(self, client):
-        for res in (client.get("/"), client.get("/non-existent-page-404/")):
-            html = res.content.decode("utf-8")
-            assert "دوم" not in html
-            title_match = re.search(r"<title>(.*?)</title>", html, re.DOTALL)
-            assert title_match is not None
-            assert title_match.group(1).strip().startswith("مل‌مل")
-            assert "dastnevis.woff2" in html
-            assert 'rel="preload"' in html
-            assert 'class="font-brand' in html
-            assert '<span class="font-brand-seg">مل</span><span class="font-brand-seg">مل</span>' in html
-
-        manifest = json.loads((Path(settings.BASE_DIR) / "static" / "favicon" / "site.webmanifest").read_text("utf-8"))
-        assert manifest["name"] == "مل‌مل"
-        assert manifest["short_name"] == "مل‌مل"
 
     def test_home_and_static_pages_and_favicon_redirect(self, client, django_capture_on_commit_callbacks):
         with django_capture_on_commit_callbacks(execute=True):

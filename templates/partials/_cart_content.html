@@ -1,0 +1,108 @@
+{% load core_tags catalog_tags %}
+<div id="cart-state" class="hidden" data-guest="{% if guest %}1{% else %}0{% endif %}" data-normalized="{{ normalized }}"></div>
+
+{% for notice in notices %}
+  <div role="alert" class="alert text-small mb-3">
+    {% icon "info" size=18 class="text-ink-2 shrink-0" %}
+    <span>{{ notice }}</span>
+  </div>
+{% endfor %}
+
+{% if lines %}
+<div class="lg:grid lg:grid-cols-[1fr_320px] lg:gap-8 items-start">
+  <ul class="flex flex-col gap-3">
+    {% for line in lines %}
+      {% with variant=line.variant product=line.variant.product %}
+      <li class="bg-base-100 border rounded-box p-3 flex gap-3">
+        <a href="{{ product.get_absolute_url }}" tabindex="-1" aria-hidden="true"
+           class="w-20 h-20 shrink-0 rounded-lg bg-white border overflow-hidden flex items-center justify-center">
+          {% if product.main_image %}
+            <img src="{{ product.main_image|image_url }}" alt="" width="80" height="80" loading="lazy" class="w-full h-full object-contain p-1{% if not line.available %} opacity-60{% endif %}">
+          {% else %}
+            {% icon "image" size=18 class="text-ink-3" %}
+          {% endif %}
+        </a>
+
+        <div class="min-w-0 flex-1 flex flex-col gap-2">
+          <div class="flex flex-col">
+            <a href="{{ product.get_absolute_url }}" class="text-small font-medium leading-6 line-clamp-2">{{ product.title|fa_text }}</a>
+            <span class="text-label text-ink-3">{{ variant.title|fa_text }}</span>
+          </div>
+
+          {% if line.available %}
+            <div class="flex items-center justify-between gap-3">
+              <div class="join border rounded-field">
+                <button type="button" class="btn btn-ghost join-item w-10 h-10 min-h-10 px-0" data-cart-set
+                        data-variant="{{ variant.pk }}" data-qty="{{ line.qty|add:-1 }}"
+                        aria-label="{% if line.qty == 1 %}حذف از سبد{% else %}کم کردن{% endif %}">
+                  {% if line.qty == 1 %}{% icon "trash-2" size=18 %}{% else %}{% icon "minus" size=18 %}{% endif %}
+                </button>
+                <span class="join-item flex items-center justify-center w-10 text-small num">{{ line.qty|fa_digits }}</span>
+                <button type="button" class="btn btn-ghost join-item w-10 h-10 min-h-10 px-0" data-cart-set
+                        data-variant="{{ variant.pk }}" data-qty="{{ line.qty|add:1 }}"
+                        {% if line.qty >= variant.max_orderable %}disabled{% endif %} aria-label="زیاد کردن">
+                  {% icon "plus" size=18 %}
+                </button>
+              </div>
+              <div class="flex flex-col items-end leading-5">
+                <span class="text-small font-medium whitespace-nowrap">{{ line.total|toman }} <span class="text-ink-2 font-normal">تومان</span></span>
+                {% if line.qty > 1 %}<span class="text-label text-ink-3 whitespace-nowrap">هر عدد {{ variant.price|toman }}</span>{% endif %}
+              </div>
+            </div>
+            {% if line.qty >= variant.max_orderable and variant.max_per_order %}
+              <span class="text-label text-ink-3">حداکثر {{ variant.max_orderable|fa_digits }} عدد در هر سفارش</span>
+            {% endif %}
+          {% else %}
+            <div class="flex items-center justify-between gap-3">
+              <span class="flex items-center gap-1 text-small text-ink-2">
+                {% icon "alert-circle" size=18 class="text-ink-3" %}ناموجود
+              </span>
+              <button type="button" class="btn btn-ghost btn-sm h-10 gap-1" data-cart-set data-variant="{{ variant.pk }}" data-qty="0">
+                {% icon "trash-2" size=18 %}<span>حذف</span>
+              </button>
+            </div>
+          {% endif %}
+        </div>
+      </li>
+      {% endwith %}
+    {% endfor %}
+  </ul>
+
+  <aside class="bg-base-100 border rounded-box p-4 flex flex-col gap-3 mt-4 lg:mt-0 lg:sticky lg:top-32">
+    <div class="flex items-center justify-between text-small">
+      <span class="text-ink-2">جمع کالاها</span>
+      <span class="whitespace-nowrap">{{ summary.items_total|toman }} تومان</span>
+    </div>
+    <div class="flex items-center justify-between text-small">
+      <span class="text-ink-2">ارسال</span>
+      <span class="text-ink-2">پس‌کرایه</span>
+    </div>
+    {% if method.checkout_note %}<p class="text-label text-ink-3 leading-5">{{ method.checkout_note }}</p>{% endif %}
+    <div class="flex items-center justify-between border-t pt-3">
+      <span class="text-small font-medium">مبلغ قابل پرداخت</span>
+      <span class="text-lead font-medium whitespace-nowrap">{{ summary.items_total|toman }} <span class="text-small text-ink-2 font-normal">تومان</span></span>
+    </div>
+    {% if summary.has_unavailable %}
+      <div role="alert" class="alert text-small">
+        {% icon "alert-circle" size=18 class="text-ink-2 shrink-0" %}
+        <span>برای ادامه، کالای ناموجود را از سبد حذف کنید</span>
+      </div>
+    {% endif %}
+    {% include "partials/_cart_continue.html" with btn_class="w-full h-11 min-h-11 hidden lg:inline-flex" %}
+  </aside>
+</div>
+
+{# D28: primary action at the start (right in RTL), total at the end; above the dock #}
+<div class="lg:hidden fixed bottom-16 inset-x-0 z-20 bg-base-100 border-t px-4 py-3">
+  <div class="flex items-center gap-3">
+    {% include "partials/_cart_continue.html" with btn_class="flex-1 min-w-0 h-11 min-h-11" %}
+    <div class="flex flex-col items-end shrink-0 leading-5">
+      <span class="text-lead font-medium whitespace-nowrap tabular-nums">{{ summary.items_total|toman }}</span>
+      <span class="text-label text-ink-2">تومان</span>
+    </div>
+  </div>
+</div>
+{% else %}
+  {% url 'core:home' as home_url %}
+  {% include "partials/_empty_state.html" with title="سبد خرید خالی است" description="برای شروع، محصولات را ببینید" action_url=home_url action_label="مشاهده‌ی محصولات" %}
+{% endif %}

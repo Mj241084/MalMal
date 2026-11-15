@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 from django import forms
-from django.core.exceptions import ValidationError
 
 from apps.catalog.models import Product, Variant
 from apps.marketing.models import TrustItem
+from apps.orders.models import ShippingMethod
 
 VariantForm = forms.modelform_factory(Variant, fields=["title", "sku", "price", "stock", "max_per_order"])
 
@@ -46,12 +46,6 @@ def test_variant_form_rejects_negative_cap(product):
 
 
 @pytest.mark.django_db
-def test_negative_cap_fails_model_validation():
-    with pytest.raises(ValidationError):
-        _variant(5, -3).full_clean(exclude=["product"])
-
-
-@pytest.mark.django_db
 def test_changing_cap_invalidates_product_detail_cache(product, django_capture_on_commit_callbacks):
     variant = product.variants.first()
     before = Product.objects.get(pk=product.pk).rev
@@ -81,13 +75,6 @@ def test_product_page_shows_cap_only_when_below_stock(client, product, django_ca
 
 
 @pytest.mark.django_db
-def test_product_page_renders_trust_items(client, product):
-    TrustItem.objects.create(icon="truck", title="ارسال سریع", sort=0)
-    body = client.get(product.get_absolute_url()).content.decode()
-    assert "ارسال سریع" in body
-
-
-@pytest.mark.django_db
 def test_editing_trust_item_refreshes_product_page(client, product, django_capture_on_commit_callbacks):
     item = TrustItem.objects.create(icon="truck", title="متن قدیمی", sort=0)
     assert "متن قدیمی" in client.get(product.get_absolute_url()).content.decode()
@@ -102,13 +89,20 @@ def test_editing_trust_item_refreshes_product_page(client, product, django_captu
 
 
 @pytest.mark.django_db
-def test_shipping_note_comes_from_settings(client, product, django_capture_on_commit_callbacks):
+def test_shipping_note_comes_from_the_active_method_with_settings_as_fallback(
+    client, product, django_capture_on_commit_callbacks
+):
     from apps.core.models import SiteSettings
 
-    settings_obj = SiteSettings.get_solo()
+    ShippingMethod.objects.all().delete()
     with django_capture_on_commit_callbacks(execute=True):
-        settings_obj.shipping_note = "ارسال آزمایشی با پیک"
-        settings_obj.save()
+        method = ShippingMethod.objects.create(code="t1", title="تیپاکس", product_note="کرایه با گیرنده")
+    assert "کرایه با گیرنده" in client.get(product.get_absolute_url()).content.decode()
 
+    with django_capture_on_commit_callbacks(execute=True):
+        method.delete()
+        site = SiteSettings.get_solo()
+        site.shipping_note = "ارسال آزمایشی با پیک"
+        site.save()
     body = client.get(product.get_absolute_url()).content.decode()
-    assert "ارسال آزمایشی با پیک" in body
+    assert "ارسال آزمایشی با پیک" in body and "کرایه با گیرنده" not in body

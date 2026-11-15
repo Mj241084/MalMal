@@ -8,6 +8,7 @@ from apps.core.models import FooterLink, SiteSettings
 
 
 def site_context(request) -> dict:
+    from apps.cart.services import count as cart_count
     from apps.catalog.menu import featured_categories, menu_categories
 
     return {
@@ -16,6 +17,5 @@ def site_context(request) -> dict:
         "site_url": settings.SITE_URL,
         "nav_categories": menu_categories(),
         "nav_featured": featured_categories(),
-        # Cart lands in P3; the badge stays in the DOM so layout never shifts.
-        "cart_count": 0,
+        "cart_count": cart_count(getattr(request, "user", None)),
     }

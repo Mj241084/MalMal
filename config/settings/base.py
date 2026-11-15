@@ -24,6 +24,9 @@ INSTALLED_APPS = [
     "apps.geo",
     "apps.accounts",
     "apps.notifications",
+    "apps.cart",
+    "apps.orders",
+    "apps.payments",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
