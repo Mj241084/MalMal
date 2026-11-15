@@ -1,4 +1,4 @@
-# ۰۳ — مدل داده، ایندکس، کش و جستجو — نسخه ۰.۳.۵
+# ۰۳ — مدل داده، ایندکس، کش و جستجو — نسخه ۰.۳.۶
 
 مرجع جریان‌ها: `02-spec.md`. نام فیلدها انگلیسی‌اند. همه‌ی مدل‌ها `created_at/updated_at` دارند مگر ذکر شود.
 پول: `BigIntegerField` به **تومان**. زمان: UTC.
@@ -125,26 +125,27 @@
 **StaticPage**: `slug`, `title`, `body`, `is_active`, `needs_review` bool (پیش‌فرض `False`؛ متن پیش‌نویسی مثل صفحه‌ی ارسال `True` می‌شود و فروشنده در ادمین خاموشش می‌کند؛ `check_launch` هشدار می‌دهد). **FooterLink**: `group`, `title`, `url`, `sort`. پیوند کوتاه پیامک بدون جدول است و از `core/shortlinks.py` (`r/<kind><pk base36>`) تولید می‌شود (D32).
 
 ### cart
-**Cart**: `user` OneToOne. **CartItem**: `cart`, `variant`, `qty`. unique `(cart, variant)`. قیمت ذخیره نمی‌شود.
+**Cart**: `user` OneToOne. **CartItem**: `cart`, `variant`, `qty`. unique `(cart, variant)`. قیمت ذخیره نمی‌شود. سقف ۳۰ خط در لایه‌ی سرویس اعمال می‌شود.
 
 ### orders
-**Order**
-- `number` unique (غیرترتیبی)، `user` FK، `status`
-- مبالغ: `items_total`, `shipping_cost`, `discount_total`, `payable`
+**Order** (بدون `placed_at` — همان `created_at`؛ بدون `discount_total` و `customer_note` در v1)
+- `number` unique (غیرترتیبی، `ML-` + ۸ رقم)، `user` FK(PROTECT)، `status`
+- مبالغ: `items_total`, `shipping_cost`, `payable`
 - **snapshot خریدار:** `buyer_name`, `buyer_mobile`, `buyer_national_code`, `buyer_email`
 - **snapshot گیرنده و آدرس:** `recipient_name`, `recipient_mobile`, `province_name`, `city_name`, `address_text`, `plate`, `unit`, `postal_code`, `lat`, `lng`
-- `shipping_method` FK null + `shipping_method_title` + `shipping_payment_mode` (snapshot)، `customer_note`
-- `tracking_code` (خالی مجاز؛ برای روش‌های `has_tracking` هنگام تغییر به `shipped` اجباری)
-- `placed_at`, `paid_at`, `reserved_until`, `cancelled_at`, `cancel_reason`
-- ایندکس: `(user, -placed_at)`, `(status, reserved_until)`, `number`.
+- `shipping_method` FK null + `shipping_method_title` + `shipping_payment_mode` (snapshot)
+- `tracking_code` (خالی مجاز؛ برای روش‌های `has_tracking` هنگام تغییر به `shipped` اجباری — P6)
+- `reserved_until`, `paid_at`, `cancelled_at`, `cancel_reason`
+- ایندکس: `(user, -created_at)`, `(status, reserved_until)`.
 
-**OrderItem**: `order`, `variant` FK(SET_NULL), snapshot: `product_title`, `variant_title`, `sku`, `unit_price`, `qty`, `image_path`، `warranty_text`.
+**OrderItem**: `order`, `product`/`variant` FK(SET_NULL)، snapshot: `product_title`, `variant_title`, `sku`, `unit_price`, `qty`, `image_path`، `warranty_text`.
 **OrderStatusLog**: `order`, `from_status`, `to_status`, `by_user` null, `note`, `created_at`.
-**ShippingMethod**: `title`, `code`, `base_cost`, `per_kg_cost`, `free_over` null, `eta_min_days`, `eta_max_days`, `provinces` M2M (خالی = همه)، `has_tracking` bool (با کد رهگیری؟)، `payment_mode` (`prepaid` = کرایه در سایت، `collect` = پس‌کرایه؛ تیپاکس v1: `collect`)، `max_weight_g` null (سقف وزن مرسوله/قلم؛ null = بدون سقف)، `is_active`, `sort`.
+**ShippingMethod** (فقط فیلدهای v1): `code`, `title`, `product_note`, `checkout_note`, `has_tracking`, `payment_mode` (`prepaid`/`collect`؛ تیپاکس v1: `collect`), `max_weight_g` null, `is_active`, `sort`. `base_cost`/`per_kg_cost`/`free_over`/`eta_*`/`provinces` وقتی روش دوم آمد اضافه می‌شوند. ذخیره/حذفش `trust_rev` را بالا می‌برد تا کش جزئیات محصول (متن ارسال) به‌روز شود.
+- **موجودی:** هنگام ساخت سفارش با `reason="order"` اتمیک کم می‌شود و `StockMovement` ثبت می‌شود؛ پرداخت موفق حرکت جدیدی ثبت نمی‌کند (`sale` نداریم). `StockMovement.order_item_id` عدد ساده می‌ماند (بدون FK، برای جلوگیری از وابستگی چرخه‌ای مهاجرت‌ها).
 
 ### payments
-**PaymentGateway**: `code` (`zarinpal`), `title`, `logo`, `is_active`, `sort`, `min_amount`, `max_amount`. اسرار درگاه فقط در env.
-**Payment**: `order`, `gateway_code`, `amount`, `authority`, `ref_id`, `card_pan_masked`, `status` (`initiated/redirected/verified/failed/cancelled`), `request_payload`/`verify_payload` (JSON، بدون اسرار), `verified_at`, `ip`. unique `(gateway_code, authority)`.
+**PaymentGateway**: `code` (`zarinpal` و ردیف `fake` فقط برای DEBUG), `title`, `logo`, `is_active`, `sort`, `min_amount`, `max_amount`. اسرار درگاه فقط در env.
+**Payment**: `order`, `gateway_code`, `amount`, `authority`, `ref_id`, `card_pan_masked`, `status` (`initiated/redirected/verifying/verified/failed/cancelled`), `request_payload`/`verify_payload` (JSON، بدون اسرار), `verified_at`, `ip`. unique `(gateway_code, authority)` وقتی `authority` خالی نیست. `VERIFY_STALE` = ۲ دقیقه (claim گیرکرده با `expire_orders` آزاد می‌شود).
 
 ### engagement
 **Like**: `user`, `product`, `created_at`. unique `(user, product)`، ایندکس `(product)`.
@@ -310,6 +311,7 @@ CREATE VIRTUAL TABLE product_fts USING fts5(
 
 ## ۱۱. تغییرات
 
+- ۰.۳.۶ (P3) — اپ‌های `cart`/`orders`/`payments` با کد واقعی هم‌تراز شدند: `Order` بدون `placed_at`/`discount_total`/`customer_note`، `ShippingMethod` فقط فیلدهای v1، `Payment.status` شامل `verifying`، `PaymentGateway` طبق کد. موجودی هنگام ساخت سفارش با `reason="order"` کم می‌شود و پرداخت حرکت جدیدی ثبت نمی‌کند؛ `StockMovement.order_item_id` عددی ماند. مهاجرت‌های داده: روش ارسال `tipax` و درگاه‌های `zarinpal`/`fake`.
 - ۰.۳.۵ (اصلاحی P2-ب) — حذف مدل `ShortLink` از `core` (جایگزینی با کدهای بدون جدول `r/<kind><pk base36>`، D32) و افزودن یادداشت نگه‌داری داده روی `OTPChallenge` (۱ روز پس از انقضا) و `SmsLog` (۹۰ روز) طبق D33.
 - ۰.۳.۴ (اصلاح P2) — افزودن مدل `ShortLink` (کد یکتا، مسیر مقصد یکتا) در اپ `core` برای پیوندهای کوتاه پیامک sms.ir (`#LINK#`).
 - ۰.۳.۳ (P1) — `Variant.max_per_order` به `null=True/blank=True` تغییر کرد (خالی/۰ = تا سقف موجودی) و property `max_orderable` اضافه شد (D29). تغییر فیلدهای DETAIL هر variant (`title`، `options`، `max_per_order`، `weight_g`) حالا `Product.rev` را بالا می‌برد تا کش جزئیات به‌روز شود. `TrustItem` (اپ `marketing`) با چهار ردیف `is_placeholder=True` در مهاجرت داده ساخته می‌شود و `trust_rev` بخشی از کلید کش جزئیات محصول است.

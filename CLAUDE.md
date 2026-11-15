@@ -114,6 +114,7 @@
 # lint/format:          uv run ruff check .  و  uv run ruff format .
 # ساخت sprite:          uv run python scripts/build_sprite.py
 # ساخت favicon:         uv run python scripts/make_favicons.py static/logo.webp static/favicon
+# انقضای رزرو سفارش:    uv run python manage.py expire_orders  (هر ۵ دقیقه؛ کران در P6)
 # دستورهای مدیریتی:     uv run python manage.py migrate | makemigrations | collectstatic
 ```
 
@@ -122,11 +123,14 @@
 ```
 config/        env.py، settings/ (base/dev/prod)، urls.py، wsgi.py، asgi.py
 apps/core/     مدل‌های پایه (SiteSettings، StaticPage، FooterLink)، jalali، text، validators، templatetags، tests
+apps/cart/     سبد سرور (Cart/CartItem) و rules
+apps/orders/   ShippingMethod، Order/OrderItem/OrderStatusLog، checkout، expire_orders
+apps/payments/ PaymentGateway/Payment، gateways (zarinpal/fake)، callback
 templates/     base.html، 404.html، 500.html، partials/ (_header، _dock، _footer، _logo، _brand_name، _section_heading)، pages/
 static/        fonts/{vazir,inter,dastnevis}/، src/ (input.css، sprite.svg — در collectstatic ignore می‌شود)، css/app.css، js/{htmx.min.js,mm/*.js}، sprite.svg، logo.webp، favicon/
 scripts/       build_sprite.py، make_favicons.py، sync_vendor.mjs
 docs/          اسناد ۰۱ تا ۰۸، phases/، vendors/
-Makefile       میانبرهای run، css، sprite، favicons، test، lint، format، check
+Makefile       میانبرهای run، css، sprite، favicons، test، lint، format، check، expire
 ```
 
 ## ۹. وقتی فاز تمام شد

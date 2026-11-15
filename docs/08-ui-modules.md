@@ -21,6 +21,7 @@
 | auth | `auth.js` | — | `[data-auth-open]`، `#auth-modal`، `#auth-modal-body` |
 | otp | `otp.js` | `MM.otp.build(input)`، `MM.otp.startTimer(el)` | `[data-otp]` + `data-otp-length`، `data-otp-submit`؛ `[data-otp-timer]` + `data-seconds`، `data-otp-resend` |
 | addresses | `addresses.js` | — | `[data-address-add]`، `[data-address-cancel]`، `#address-form-container` |
+| cart | `cart.js` | `MM.cart.read()`، `MM.cart.clear()` | `[data-cart-add]`، `[data-cart-label]`، `[data-cart-set]` + `data-variant`/`data-qty`، `[data-cart-items]`، `[data-guest-cart]`، `#cart-content`، `#cart-state`، `#variant-panel[data-variant-id|data-max|data-orderable|data-price]`، `[data-bar-price]`؛ رویداد `cart:changed` از سرور |
 | neshan | `neshan.js` | — | `[data-neshan-picker]` (فقط وقتی `NESHAN_MAP_KEY` هست) |
 
 ## پروتکل توسعه
@@ -32,4 +33,5 @@
 4. تغییر ناسازگار فقط با grep روی همه‌ی استفاده‌ها و ثبت در «تغییرات».
 
 ## تغییرات
+- ۰.۲ — ردیف `cart`/`cart.js` (سبد مهمان در `localStorage`، افزودن/تغییر تعداد، ادغام هنگام تایید OTP).
 - ۰.۱ — ساخت سند؛ تقسیم `app.js` به ماژول‌ها؛ `MM.ui.confirm/alert`؛ `otp.js`.
