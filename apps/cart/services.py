@@ -15,7 +15,7 @@ from apps.core.text import to_fa_text
 
 MAX_LINES = 30
 MAX_QTY = 999
-COUNT_TTL = 60 * 60 * 24
+COUNT_TTL = 60 * 10
 
 
 class CartError(Exception):

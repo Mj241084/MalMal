@@ -23,6 +23,7 @@ test_db.sqlite3*
 dump.rdb
 media/
 staticfiles/
+.tmp/
 
 # Incoming user assets & screenshots
 assets-incoming/

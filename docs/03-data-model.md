@@ -1,4 +1,4 @@
-# ۰۳ — مدل داده، ایندکس، کش و جستجو — نسخه ۰.۳.۸
+# ۰۳ — مدل داده، ایندکس، کش و جستجو — نسخه ۰.۳.۹
 
 مرجع جریان‌ها: `02-spec.md`. نام فیلدها انگلیسی‌اند. همه‌ی مدل‌ها `created_at/updated_at` دارند مگر ذکر شود.
 پول: `BigIntegerField` به **تومان**. زمان: UTC.
@@ -12,7 +12,7 @@
 - SQLite `select_for_update` را نادیده می‌گیرد. هم‌زمانی با تراکنش‌های `IMMEDIATE` و به‌روزرسانی‌های اتمیک شرطی (`UPDATE ... WHERE`) تامین می‌شود.
 - FTS5 در SQLite هنگام startup در `CoreConfig.ready()` (`verify_sqlite_fts5`) بررسی می‌شود و اگر در بیلد پایتون نبود خطای واضح `ImproperlyConfigured` می‌دهد.
 - نوشتن‌ها کوتاه: هیچ تماس شبکه (پیامک، درگاه) داخل تراکنش نباشد.
-- پشتیبان: `sqlite3 .backup` شبانه به مسیر خارج از پوشه‌ی پروژه (فاز P6).
+- پشتیبان: `manage.py backup_db --with-media` شبانه (API آنلاین SQLite + کپی `media/`) به مسیر `BACKUP_DIR` بیرون از پوشه‌ی پروژه؛ بررسی `integrity_check` روی کپی و نگه‌داری ۱۴ روز. بازیابی در `docs/deploy.md` بخش ۴.
 
 ---
 
@@ -137,6 +137,7 @@
 - `tracking_code` (خالی مجاز؛ برای روش‌های `has_tracking` هنگام تغییر به `shipped` اجباری — P6)
 - `reserved_until`, `paid_at`, `cancelled_at`, `cancel_reason`
 - ایندکس: `(user, -created_at)`, `(status, reserved_until)`.
+- مجوز `orders.manage_order_status`: هر تغییر وضعیت فقط از `apps/orders/workflow.py` (و `services.transition` برای حرکت‌های سیستمی) می‌گذرد؛ `QuerySet.update()` روی `Order` بیرون از `services.py` با تست معماری رد می‌شود.
 
 **OrderItem**: `order`, `product`/`variant` FK(SET_NULL)، snapshot: `product_title`, `variant_title`, `sku`, `unit_price`, `qty`, `image_path`، `warranty_text`.
 **OrderStatusLog**: `order`, `from_status`, `to_status`, `by_user` null, `note`, `created_at`.
@@ -151,7 +152,7 @@
 **Like**: `user`, `product`, `created_at`. unique `(user, product)`، ایندکس `(product)`.
 **Review**: `user`, `product`, `rating` 1–5, `body`, `status`, `is_verified_buyer`, `moderated_by`, `moderated_at`, `rejection_reason` (داخلی، متن آزاد کوتاه), `admin_reply`. بدون `title` (P4). unique `(user, product)`، `CheckConstraint` برای `rating` بین ۱ و ۵، ایندکس `(product, status, -created_at)`.
 **ProductDailyStat**: `product`, `date`, `purchases`. **بدون `views`** (P4). unique `(product, date)`. برای محاسبه‌ی ۳۰ روزه‌ی غلتان.
-**StockSubscription** `[DECIDED]` (فاز P6): `user`, `variant`, `notified_at` null، `created_at`. unique `(user, variant)` برای اشتراک **باز** (`notified_at IS NULL`)؛ بعد از ارسال پیامک `notified_at` ثبت و اشتراک بسته می‌شود و کاربر می‌تواند دوباره مشترک شود. ایندکس `(variant, notified_at)`. جزئیات در `02` بخش ۱۳.
+**StockSubscription** `[DECIDED]` (فاز P6): `user`, `variant`, `restocked_at` null، `notified_at` null، `created_at`. unique `(user, variant)` فقط برای اشتراک **باز** (`notified_at IS NULL`)؛ ایندکس `(variant, notified_at)`. `restocked_at` را تنها موجودشدن واقعی (مسیر `Variant.save()`) می‌گذارد، نه برگشت موجودی از انقضا/لغو رزرو؛ دستور `send_back_in_stock` بعد از ارسال `notified_at` را ثبت می‌کند و اشتراک بسته می‌شود. جزئیات در `02` بخش ۱۳.
 
 ### notifications
 **SmsLog**: `mobile`, `kind` (کلید قالب در `05`)، `provider_message_id`, `status`, `error`, `created_at`. بدون مقدار کد OTP. نگه‌داری ۹۰ روز طبق D33 و پاک‌سازی از ادمین یا job دوره‌ای P6.
@@ -199,6 +200,8 @@ Product.objects.filter(
 
 `rev` و `subtree_rev` ستون **DB** هستند (نه Redis) تا اگر Redis پاک شد، نسخه‌ها برنگردند و کلید قدیمی با محتوای جدید اشتباه نخورد.
 
+**شمارنده‌های `epoch` و `trust_rev` بدون TTL (P7):** این دو کلید با `cache.add(key, int(time.time()), None)` ساخته می‌شوند و هرگز منقضی نمی‌شوند؛ مقدار اولیه `timestamp` است تا اگر کلید به هر دلیلی گم شود (flush یا eviction)، شمارنده از یک عدد بزرگ‌تر ادامه دهد و کلیدهای نسخه‌ی قدیمی دوباره معتبر نشوند. `read_epoch()` در `apps/core/cache.py` تنها خواننده‌ی این کلیدهاست (`current_epoch()` و `trust_revision()`).
+
 ### دسته‌بندی فیلدها (جدول تصمیم)
 
 | گروه | فیلدها | اثر |
@@ -216,8 +219,16 @@ Product.objects.filter(
 
 ### تغییر Variant
 ۱. `Variant.save()/delete()` ← `Product.refresh_aggregates()` (min/max/discount/in_stock/total_stock محاسبه، و فقط اگر مقدار عوض شد ذخیره می‌شود).
-۲. اگر فیلد LIST عوض شد، سطح LIST بالا اعمال می‌شود. در غیر این صورت هیچ.
-۳. **فروش عادی** (کم شدن موجودی) `rev` را عوض نمی‌کند، مگر موجودی از **صفر عبور کند** یا از آستانه‌ی «کم‌موجود» پایین‌تر برود (`in_stock` یا `low_stock` عوض شود).
+۲. اگر فیلد DETAIL عوض شد **و** `refresh_aggregates` خودش سطح LIST را بالا برده باشد، rev دوباره بالا نمی‌رود (تا یک تغییر دو بار باطل‌سازی نکند). فیلدهای DETAIL تنوع (P7): `title`, `options`, `max_per_order`, `weight_g`, `price`, `compare_at_price`, `is_active`, `sort`.
+۳. **فروش عادی** (کم شدن موجودی) `rev` را عوض نمی‌کند، مگر موجودی از **صفر عبور کند**، **در بازه‌ی کم‌موجودی یا سقف سفارش باشد** (شرط `min(stock-before, stock-after) <= max(low_stock_threshold, max_per_order)`) یا `in_stock` عوض شود. تغییر قیمت یک تنوع میانی از ادمین، `rev` جزئیات و (اگر aggregate عوض شود) سطح LIST را بالا می‌برد.
+۴. تخفیف کارت از **ارزان‌ترین** تنوع محاسبه می‌شود (`compare_at_min` فقط از تنوع‌هایی که قیمتشان برابر `min_price` است)؛ پس یک تنوع گران‌تر با تخفیف، بج تخفیف را روشن نمی‌کند.
+
+### باطل‌سازی تغییرات بیرون از `Product.save` (P7)
+دو دستیار در `apps/catalog/cache.py`:
+- `touch_product(product_id, level=LEVEL_LIST)` — برای تغییرهایی که خودشان `Product.save` را صدا نمی‌زنند: مشخصات (`ProductSpecValue`)، تصاویر (`ProductImage`)، حذف تنوع، اکشن‌های ادمین و حرکت موجودی. دسته‌ی محصول را می‌خواند و زنجیره‌ی اجداد را بالا می‌برد.
+- `invalidate_category(category_id, old_path=None)` — تغییر ساختاری دسته؛ زنجیره‌ی **جدید و قدیم** (پس از جابه‌جایی) و `epoch` منو را بالا می‌برد. `Category.save` مسیر قدیم را پاس می‌دهد.
+
+hookهای مدل که خودشان باطل می‌کنند: `ProductImage.save/delete` (سطح DETAIL)، `ProductSpecValue.save/delete` (سطح LIST، چون فیلترها و facets عوض می‌شوند)، `SpecAttribute.save/delete` (`invalidate_category`)، `Category.save` (ساختاری)، و `BrandAdmin.save_model` ← `invalidate_brand` که `search_text` همه‌ی محصولات برند را بازمی‌سازد و سطح LIST را بالا می‌برد. اکشن «بازگشت وجه» هم فقط وضعیت پرداخت را عوض می‌کند (بدون کش).
 
 ### به‌روزرسانی‌های دسته‌جمعی
 `QuerySet.update()` و `bulk_update()` سیگنال ندارند. قواعد:
@@ -233,13 +244,21 @@ Product.objects.filter(
 ### HTTP caching
 `ETag`/`Last-Modified` برای جزئیات محصول و دسته بر پایه‌ی `rev`. بخش‌های شخصی با `Cache-Control: private, no-store` و بدون ETag مشترک.
 
+**اجزای ETag صفحه‌ی محصول (P7):** `"{product_id}-{rev}-{review_count}-{rating_sum}-u{viewer}-c{cart_count}-e{epoch}-t{trust_rev}-v{FRAGMENT_VERSION}"` — شمارنده‌ی سبد، منو (`epoch`)، مزیت‌های فروشگاه (`trust_rev`) و نسخه‌ی قطعه (`FRAGMENT_VERSION`) در بدنه‌ی صفحه دیده می‌شوند، پس باید در تگ باشند؛ وگرنه مرورگر با ۳۰۴ نسخه‌ی کهنه را نشان می‌دهد.
+
 ### Rebuild دوره‌ای (cron)
 | دستور | زمان | کار |
 |-------|------|-----|
 | `expire_orders` | هر ۵ دقیقه | سفارش‌های منقضی‌شده، برگرداندن موجودی |
+| `send_back_in_stock` | هر ۱۰ دقیقه | پیامک «موجود شد» برای variantهایی که واقعاً موجود شده‌اند (فقط در بازه‌ی ساعت مجاز) |
 | `recount_purchases` | شبانه | `purchase_count_30d` از `ProductDailyStat` + حذف ردیف‌های قدیمی‌تر از ۹۰ روز |
 | `reconcile_counters` | شبانه | بازمحاسبه‌ی `like_count/review_count/rating_*` و اصلاح drift |
 | `warm_cache` | بعد از `recount` | پیش‌ساخت پربازدیدها |
+| `purge_otp` | شبانه | حذف چالش‌های OTP منقضی‌شده‌ی قدیمی‌تر از یک روز (D33) |
+| `purge_sms_logs` | شبانه | حذف `SmsLog` قدیمی‌تر از ۹۰ روز (D33) |
+| `backup_db` | شبانه | پشتیبان consistent با API آنلاین SQLite در `BACKUP_DIR` + کپی `media/` با `--with-media` (خط crontab) + بررسی سلامت + نگه‌داری ۱۴ روز |
+
+فایل cron نمونه: `deploy/crontab.example` (D-P6 §11). هیچ‌کدام timer جدا ندارند.
 
 ---
 
@@ -318,6 +337,8 @@ CREATE VIRTUAL TABLE product_fts USING fts5(
 
 ## ۱۱. تغییرات
 
+- ۰.۳.۱۰ (P7) — شمارنده‌های `epoch`/`trust_rev` بدون TTL و با مقدار اولیه‌ی `timestamp` (`read_epoch`) تا پس از flush یا eviction کلید کهنه دوباره معتبر نشود. باطل‌سازی تازه: `touch_product` برای مشخصات/تصاویر/حذف تنوع/ادمین، `invalidate_category(old_path)` برای زنجیره‌ی مبدأ پس از جابه‌جایی، `invalidate_brand` با بازسازی `search_text`، و hookهای `ProductImage`/`ProductSpecValue`/`SpecAttribute`. `VARIANT_DETAIL_FIELDS` شامل `price`/`compare_at_price`/`is_active`/`sort` شد و قاعده‌ی «موجودی در بازه‌ی کم‌موجودی یا سقف، rev را بالا می‌برد» در `apps/catalog/stock.py` آمد. `Product.refresh_aggregates` تخفیف را فقط از ارزان‌ترین تنوع می‌گیرد و `Variant.discount_pct` اضافه شد. `Product.save(update_fields=…)` فیلدهای محاسبه‌شده (`search_text`، `slug`، `category_path`) را هم می‌نویسد. `FRAGMENT_VERSION` به ۳ رفت و اجزای ETag صفحه‌ی محصول کامل شد.
+- ۰.۳.۹ (P6) — `StockSubscription.restocked_at` اضافه شد (فعال‌سازی «موجود شد» فقط با موجودشدن واقعی)، `Order.Meta.permissions` مجوز `orders.manage_order_status` گرفت و `PAID_STATES` در `apps/orders/models.py` تعریف شد (به‌جای تکرار در `engagement/services.py`). `django.contrib.sitemaps` به اپ‌ها و `sitemap.xml`/`robots.txt` به `config/urls.py` اضافه شد (`apps/core/seo.py`). `BACKUP_DIR` در تنظیمات پایه و `STORAGES`/HSTS/`CSRF_TRUSTED_ORIGINS`/`LOGGING` در `prod.py`. دستورهای دوره‌ای جدید در جدول بخش ۵؛ فایل `deploy/crontab.example` مرجع است.
 - ۰.۳.۸ (P5) — جدول `marketing` با کد واقعی هم‌تراز شد: `Banner.alt` اجباری و `image_mobile` اختیاری، `Collection` بدون `rev` و `limit` (و `CollectionQuerySet.live`)، `HomeBlock.limit` تا ۲۴ و قید یکتایی `hero`/`banner_strip`. کلید کش مجموعه به `col:{id}:{epoch}:v{n}:list:{sort}:{filters_hash}:{page}` تغییر کرد و کلید ریل `home:rail:{epoch}:{block_id}:v{n}` اضافه شد؛ پنجره‌ی زمانی داخل داده‌ی کش‌شده و در هر درخواست سنجیده می‌شود. `Brand` هم به لیست STRUCTURAL اضافه شد (لوگویش در بلوک برندها دیده می‌شود).
 
 - ۰.۳.۷ (P4) — اپ `engagement` ساخته شد (`Like`، `Review`، `ProductDailyStat`)؛ `Review` بدون عنوان، با `rejection_reason` داخلی و `CheckConstraint` امتیاز ۱ تا ۵؛ `ProductDailyStat` بدون `views`. همه‌ی نوشتن‌های COUNTER در `apps/engagement/counters.py` (`add_likes`، `add_purchases`، `reconcile`، `recount_purchases`) و `add_purchases` از `stock.py` حذف شد. `FRAGMENT_VERSION` وارد کلیدهای `detail`/`card`/`list`/`similar` شد و کلید مشابه‌ها `p:{id}:{rev}:{base_subtree_rev}:v{n}:similar` است. کش `social:{id}` ساخته نشد؛ قلب‌ها با `GET /likes/state/` و متن اجتماعی با `GET /social/product/<id>/`. ETag صفحه‌ی محصول `review_count`/`rating_sum` را هم دارد.

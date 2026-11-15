@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-
 from django.db.models import Count, Max, Min
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponsePermanentRedirect
 from django.shortcuts import get_object_or_404, render
@@ -18,14 +16,17 @@ from apps.catalog.cache import (
     TTL_SIMILAR,
     category_facets_key,
     category_list_key,
+    current_epoch,
     get_or_build,
     product_detail_key,
     similar_key,
 )
+from apps.catalog.constants import FRAGMENT_VERSION
 from apps.catalog.filters import PAGE_SIZE, SORT_CHOICES, ProductFilter
 from apps.catalog.models import Brand, Category, Product, SpecAttribute, Variant
 from apps.catalog.similar import base_category, similar_products
 from apps.catalog.tree import subtree_upper_bound
+from apps.core import seo
 from apps.core.html import sanitize_html
 from apps.core.models import SiteSettings
 
@@ -65,8 +66,10 @@ def _build_facets(category: Category) -> dict:
     price_range = products.aggregate(low=Min("min_price"), high=Max("max_price"))
 
     attributes = []
-    subtree_categories = category.descendants().values_list("pk", flat=True)
-    for attribute in SpecAttribute.objects.filter(category_id__in=subtree_categories, is_filterable=True).order_by(
+    subtree_ids = list(category.descendants().values_list("pk", flat=True))
+    if category.spec_inherit:  # attributes defined on a parent are inherited by its subtree (docs/03 §4)
+        subtree_ids += [ancestor.pk for ancestor in category.ancestors()]
+    for attribute in SpecAttribute.objects.filter(category_id__in=subtree_ids, is_filterable=True).order_by(
         "sort", "pk"
     ):
         values = (
@@ -110,6 +113,17 @@ def _viewer_tag(request: HttpRequest) -> str:
     return f"u{request.user.pk}" if request.user.is_authenticated else "u0"
 
 
+def _page_tag(request: HttpRequest) -> str:
+    """Everything outside the cached fragment that still shows in the page body (cart badge, menu, trust items)."""
+    from apps.cart import services as cart_services
+    from apps.marketing.cache import trust_revision
+
+    return (
+        f"{_viewer_tag(request)}-c{cart_services.count(request.user)}"
+        f"-e{current_epoch()}-t{trust_revision()}-v{FRAGMENT_VERSION}"
+    )
+
+
 @require_GET
 def category_view(request: HttpRequest, pk: int, slug: str) -> HttpResponse:
     category = get_object_or_404(Category.objects.select_related("parent"), pk=pk, is_active=True)
@@ -128,6 +142,7 @@ def category_view(request: HttpRequest, pk: int, slug: str) -> HttpResponse:
         return response
 
     children = list(category.children.filter(is_active=True).order_by("menu_order", "name"))
+    breadcrumbs = _crumbs(*category.ancestors(), category)
 
     response = render(
         request,
@@ -135,7 +150,8 @@ def category_view(request: HttpRequest, pk: int, slug: str) -> HttpResponse:
         {
             "category": category,
             "children": children,
-            "breadcrumbs": _crumbs(*category.ancestors(), category),
+            "breadcrumbs": breadcrumbs,
+            "breadcrumb_ld": seo.breadcrumb_ld(breadcrumbs),
             "facets": facets,
             "filters": filters,
             "sort_choices": SORT_CHOICES,
@@ -200,7 +216,7 @@ def _json_ld(product: Product, request: HttpRequest) -> str:
             "ratingValue": float(product.rating_avg),
             "reviewCount": product.review_count,
         }
-    return json.dumps(data, ensure_ascii=False)
+    return seo.dumps_ld(data)
 
 
 @require_GET
@@ -214,7 +230,7 @@ def product_view(request: HttpRequest, pk: int, slug: str) -> HttpResponse:
     if product.status != Product.STATUS_ACTIVE and not request.user.is_staff:
         raise Http404()
 
-    etag = f'"{product.pk}-{product.rev}-{product.review_count}-{product.rating_sum}-{_viewer_tag(request)}"'
+    etag = f'"{product.pk}-{product.rev}-{product.review_count}-{product.rating_sum}-{_page_tag(request)}"'
     if request.headers.get("If-None-Match") == etag:
         response = HttpResponse(status=304)
         response["ETag"] = etag
@@ -223,16 +239,21 @@ def product_view(request: HttpRequest, pk: int, slug: str) -> HttpResponse:
 
     detail_html = get_or_build(product_detail_key(product), lambda: _render_detail(product), TTL_PRODUCT_DETAIL)
 
+    breadcrumbs = _crumbs(*product.category.ancestors(), product.category, product)
+    default_variant = product.variants.filter(is_active=True).first()
     response = render(
         request,
         "pages/product.html",
         {
-            **_product_context(product),
+            "product": product,
+            "default_variant": default_variant,
+            "breadcrumbs": breadcrumbs,
             "detail_html": mark_safe(detail_html),
             "canonical_url": request.build_absolute_uri(product.get_absolute_url()),
             "meta_title": product.seo_title or product.title,
             "meta_description": product.seo_description or product.short_description,
             "json_ld": _json_ld(product, request),
+            "breadcrumb_ld": seo.breadcrumb_ld(breadcrumbs),
         },
     )
     response["ETag"] = etag
@@ -265,6 +286,8 @@ def variant_panel_view(request: HttpRequest, pk: int, variant_id: int) -> HttpRe
     from apps.orders.shipping import product_page_note
 
     product = get_object_or_404(Product.objects.select_related("brand", "category"), pk=pk)
+    if not product.is_active and not request.user.is_staff:
+        raise Http404()
     variant = get_object_or_404(Variant, pk=variant_id, product=product, is_active=True)
     response = render(
         request,
@@ -292,19 +315,23 @@ def brand_view(request: HttpRequest, slug: str) -> HttpResponse:
 
     paginator = Paginator(queryset, PAGE_SIZE)
     page_obj = paginator.get_page(filters.page)
+    breadcrumbs = _crumbs(brand)
 
     response = render(
         request,
-        "pages/brand.html",
+        "partials/_listing_results.html" if request.htmx else "pages/brand.html",
         {
             "brand": brand,
             "page_obj": page_obj,
             "filters": filters,
             "sort_choices": SORT_CHOICES,
             "total": paginator.count,
-            "breadcrumbs": _crumbs(brand),
+            "breadcrumbs": breadcrumbs,
+            "breadcrumb_ld": seo.breadcrumb_ld(breadcrumbs),
             "canonical_url": request.build_absolute_uri(),
+            "empty_title": "محصولی از این برند موجود نیست",
+            "empty_description": "به‌زودی محصولات تازه اضافه می‌شود",
         },
     )
-    response["Cache-Control"] = "private, no-cache"
+    response["Cache-Control"] = "private, no-store" if request.htmx else "private, no-cache"
     return response

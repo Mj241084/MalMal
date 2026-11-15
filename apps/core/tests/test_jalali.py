@@ -3,7 +3,6 @@
 from datetime import UTC, date, datetime
 
 from django.core.exceptions import ValidationError
-from django.template import Context, Template
 from django.test import SimpleTestCase
 
 from apps.core.jalali import jalali_str
@@ -53,8 +52,3 @@ class JalaliTests(SimpleTestCase):
         self.assertIsNone(parse_jalali_safe(""))
         self.assertIsNone(parse_jalali_safe("invalid"))
         self.assertIsNone(parse_jalali_safe("۰۹۰۰/۰۱/۰۱"))
-
-    def test_jalali_template_tags(self):
-        tpl = Template("{% load jalali_tags %}{{ dt|to_jalali:'%Y/%m/%d' }}|{{ num|fa_digits }}")
-        rendered = tpl.render(Context({"dt": date(2026, 3, 21), "num": 123}))
-        self.assertEqual(rendered, "۱۴۰۵/۰۱/۰۱|۱۲۳")

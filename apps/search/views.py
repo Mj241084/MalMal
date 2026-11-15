@@ -11,7 +11,7 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_GET
 
 from apps.catalog.cache import TTL_SEARCH_SUGGEST, get_or_build, search_suggest_key
-from apps.catalog.filters import PAGE_SIZE, ProductFilter
+from apps.catalog.filters import PAGE_SIZE, SORT_CHOICES, SORT_ORDERING, ProductFilter
 from apps.catalog.menu import popular_categories
 from apps.catalog.models import Product
 from apps.core.text import normalize_fa
@@ -34,30 +34,33 @@ def search_view(request: HttpRequest) -> HttpResponse:
     raw_query = request.GET.get("q", "").strip()
     query = normalize_fa(raw_query, for_search=True)
     filters = ProductFilter.from_params(request.GET, query=query)
-    relevance_sort = "sort" not in request.GET
+    explicit_sort = request.GET.get("sort") in SORT_ORDERING
 
     ids = search_product_ids(query, limit=RESULT_ID_LIMIT) if query else []
-    queryset = Product.objects.filter(pk__in=ids).with_list_relations()
-    queryset = filters.apply_filters(queryset)
-    queryset = queryset.order_by(_relevance_order(ids)) if relevance_sort else filters.apply(queryset)
+    queryset = Product.objects.published().filter(pk__in=ids).with_list_relations()
+    if explicit_sort:
+        queryset = filters.apply(queryset)
+    else:
+        queryset = filters.apply_filters(queryset).order_by(_relevance_order(ids))
 
     paginator = Paginator(queryset, PAGE_SIZE)
     page_obj = paginator.get_page(filters.page)
-
-    return render(
-        request,
-        "pages/search.html",
-        {
-            "query": query,
-            "raw_query": raw_query,
-            "page_obj": page_obj,
-            "filters": filters,
-            "total": paginator.count,
-            "popular_categories": popular_categories() if query and not paginator.count else [],
-            "breadcrumbs": [],
-            "canonical_url": request.build_absolute_uri(),
-        },
-    )
+    context = {
+        "query": query,
+        "raw_query": raw_query,
+        "page_obj": page_obj,
+        "filters": filters,
+        "sort_choices": SORT_CHOICES,
+        "explicit_sort": explicit_sort,
+        "total": paginator.count,
+        "popular_categories": popular_categories() if query and not paginator.count else [],
+        "breadcrumbs": [],
+        "canonical_url": request.build_absolute_uri(),
+    }
+    response = render(request, "partials/_listing_results.html" if request.htmx else "pages/search.html", context)
+    if request.htmx:
+        response["Cache-Control"] = "private, no-store"
+    return response
 
 
 def _build_suggestions(query: str) -> str:

@@ -1,0 +1,76 @@
+{% load static core_tags jalali_tags %}<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="malmal">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>فاکتور {{ order.number }}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <style>
+    @page { size: A4; margin: 12mm; }
+    @media print { .no-print { display: none !important; } body { background: #fff !important; } .sheet { border: 0 !important; padding: 0 !important; } }
+  </style>
+</head>
+<body class="bg-base-200 text-base-content">
+<main class="sheet max-w-3xl mx-auto my-6 bg-base-100 border rounded-box p-6 flex flex-col gap-6 text-small">
+  <header class="flex items-start justify-between gap-4">
+    <div class="flex flex-col gap-1">
+      <h1 class="text-title font-medium">{{ site_settings.legal_name|default:site_settings.store_name }}</h1>
+      {% if site_settings.economic_code %}<span class="text-ink-2">کد اقتصادی: <span class="latin">{{ site_settings.economic_code }}</span></span>{% endif %}
+      {% if site_settings.national_id %}<span class="text-ink-2">شناسه‌ی ملی: <span class="latin">{{ site_settings.national_id }}</span></span>{% endif %}
+      {% if site_settings.registration_no %}<span class="text-ink-2">شماره‌ی ثبت: <span class="latin">{{ site_settings.registration_no }}</span></span>{% endif %}
+      {% if site_settings.legal_address or site_settings.address %}<span class="text-ink-2">{{ site_settings.legal_address|default:site_settings.address|fa_text }}</span>{% endif %}
+      {% if site_settings.legal_postal_code %}<span class="text-ink-2">کدپستی: <span class="num">{{ site_settings.legal_postal_code|fa_digits }}</span></span>{% endif %}
+      {% if site_settings.legal_phone or site_settings.phone %}<span class="text-ink-2">تلفن: <span class="num">{{ site_settings.legal_phone|default:site_settings.phone|fa_digits }}</span></span>{% endif %}
+    </div>
+    <div class="flex flex-col items-end gap-1">
+      <span class="text-lead font-medium">فاکتور سفارش</span>
+      <span class="latin">{{ order.number }}</span>
+      <span class="text-ink-2">{{ order.paid_at|to_jalali:"%Y/%m/%d" }}</span>
+      <button type="button" data-print class="btn btn-primary h-10 min-h-10 no-print mt-2">
+        {% icon "printer" size=18 %}<span>چاپ</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="grid sm:grid-cols-2 gap-4 border-t pt-4">
+    <div class="flex flex-col gap-1">
+      <span class="font-medium">خریدار</span>
+      <span><bdi>{{ order.buyer_name|fa_text }}</bdi></span>
+      <span class="text-ink-2">موبایل: <span class="num">{{ order.buyer_mobile|fa_digits }}</span> — کد ملی: <span class="num">{{ order.buyer_national_code|fa_digits }}</span></span>
+    </div>
+    <div class="flex flex-col gap-1">
+      <span class="font-medium">تحویل‌گیرنده</span>
+      <span><bdi>{{ order.recipient_name|fa_text }}</bdi> — <span class="num">{{ order.recipient_mobile|fa_digits }}</span></span>
+      <span class="text-ink-2 leading-6">{{ order.province_name }}، {{ order.city_name }}، {{ order.address_text|fa_text }}، پلاک {{ order.plate|fa_digits }}{% if order.unit %}، واحد {{ order.unit|fa_digits }}{% endif %} — کدپستی <span class="num">{{ order.postal_code|fa_digits }}</span></span>
+    </div>
+  </section>
+
+  <table class="table table-sm">
+    <thead><tr><th>ردیف</th><th>کالا</th><th>تعداد</th><th>قیمت واحد (تومان)</th><th>جمع (تومان)</th></tr></thead>
+    <tbody>
+      {% for item in order.items.all %}
+        <tr>
+          <td class="num">{{ forloop.counter|fa_digits }}</td>
+          <td>{{ item.product_title|fa_text }}<span class="block text-label text-ink-3">{{ item.variant_title|fa_text }}</span></td>
+          <td class="num">{{ item.qty|fa_digits }}</td>
+          <td class="whitespace-nowrap">{{ item.unit_price|toman }}</td>
+          <td class="whitespace-nowrap">{{ item.line_total|toman }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <section class="flex flex-col gap-2 border-t pt-4">
+    <div class="flex justify-between"><span class="text-ink-2">جمع کالاها</span><span>{{ order.items_total|toman }} تومان</span></div>
+    <div class="flex justify-between"><span class="text-ink-2">ارسال ({{ order.shipping_method_title }})</span><span>{% if order.shipping_payment_mode == "collect" %}پس‌کرایه، هنگام تحویل به پیک پرداخت می‌شود{% else %}{{ order.shipping_cost|toman }} تومان{% endif %}</span></div>
+    <div class="flex justify-between text-lead font-medium"><span>مبلغ پرداخت‌شده</span><span>{{ order.payable|toman }} تومان</span></div>
+    {% if payment %}<div class="text-label text-ink-3">پرداخت اینترنتی — شماره‌ی تراکنش: <span class="latin">{{ payment.ref_id }}</span>{% if payment.card_pan_masked %} — کارت: <span class="latin">{{ payment.card_pan_masked }}</span>{% endif %}</div>{% endif %}
+    {% if order.tracking_code %}<div class="text-label text-ink-3">کد رهگیری: <span class="latin">{{ order.tracking_code }}</span></div>{% endif %}
+  </section>
+  <p class="text-label text-ink-3 border-t pt-4">این سند رسید سفارش است و فاکتور رسمی مالیاتی نیست.</p>
+</main>
+<script src="{% static 'js/mm/core.js' %}" defer></script>
+<script src="{% static 'js/mm/ui.js' %}" defer></script>
+</body>
+</html>

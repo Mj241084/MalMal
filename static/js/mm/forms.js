@@ -19,6 +19,17 @@
     if (el && el.matches && el.matches("[data-fa-digits]")) convert(el);
   });
 
+  /* The URL and the server only ever see ASCII digits, even for a field the user types into with Persian ones. */
+  document.addEventListener("htmx:configRequest", function (event) {
+    var root = event.detail.elt;
+    if (!root || !root.querySelectorAll) return;
+    var fields = root.matches && root.matches("[data-fa-digits][name]") ? [root] : root.querySelectorAll("[data-fa-digits][name]");
+    Array.prototype.forEach.call(fields, function (field) {
+      var value = event.detail.parameters[field.name];
+      if (typeof value === "string") event.detail.parameters[field.name] = MM.fmt.enDigits(value);
+    });
+  });
+
   function focusFirst(root) {
     if (!root || !root.querySelector) return;
     var target = root.querySelector("[aria-invalid='true'], [data-autofocus]");

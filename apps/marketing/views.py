@@ -8,6 +8,7 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_GET
 
 from apps.catalog.filters import SORT_CHOICES, SORT_ORDERING, ProductFilter
+from apps.core import seo
 from apps.marketing import services
 from apps.marketing.models import Collection
 
@@ -43,6 +44,9 @@ def collection_view(request, slug):
                 {"name": "مجموعه‌ها", "url": "/collections/"},
                 {"name": collection.title, "url": None},
             ],
+            "breadcrumb_ld": seo.breadcrumb_ld(
+                [{"name": "مجموعه‌ها", "url": "/collections/"}, {"name": collection.title, "url": None}]
+            ),
             "canonical_url": request.build_absolute_uri(collection.get_absolute_url()),
         },
     )

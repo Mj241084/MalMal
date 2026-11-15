@@ -79,6 +79,7 @@
     var qty = parseInt(btn.getAttribute("data-qty"), 10);
     if (!(id > 0) || !(qty >= 0)) return;
     btn.disabled = true; /* the server takes an absolute quantity, so a double click is harmless anyway */
+    window.setTimeout(function () { if (btn.isConnected) btn.disabled = false; }, 4000); /* a network error must not lock it */
     if (isAuth()) {
       post("/cart/set/", { variant_id: id, qty: qty }, "#cart-content");
     } else {
@@ -138,6 +139,11 @@
     syncing = true;
     post("/cart/sync/", { items: JSON.stringify(items) });
   }
+
+  /* A failed request leaves the in-flight flag set; clear it or the guest cart never syncs again. */
+  function resetSync() { syncing = false; }
+  document.addEventListener("htmx:responseError", resetSync);
+  document.addEventListener("htmx:sendError", resetSync);
 
   MM.cart = { read: read, clear: clear };
   MM.init("cart", function () {

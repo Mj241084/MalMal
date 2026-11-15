@@ -15,12 +15,13 @@
   <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}">
   <link rel="manifest" href="{% static 'favicon/site.webmanifest' %}">
 
-  <meta property="og:type" content="website">
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}">
   <meta property="og:locale" content="fa_IR">
   <meta property="og:site_name" content="{{ site_settings.store_name }}">
   <meta property="og:title" content="{% block og_title %}{{ site_settings.store_name }}{% endblock %}">
   <meta property="og:description" content="{% block og_description %}فروشگاه آنلاین لوازم خانگی {{ site_settings.store_name }}{% endblock %}">
-  <meta property="og:image" content="{{ site_url }}{% static 'favicon/og-default.png' %}">
+  <meta property="og:image" content="{% block og_image %}{{ site_url }}{% static 'favicon/og-default.png' %}{% endblock %}">
+  {% if canonical_url %}<meta property="og:url" content="{{ canonical_url }}">{% endif %}
   <link rel="preload" href="{% static 'fonts/dastnevis/dastnevis.woff2' %}" as="font" type="font/woff2" crossorigin>
   {% block extra_head %}{% endblock %}
 
@@ -86,16 +87,16 @@
             <li>
               {% if cat.children %}
                 <details>
-                  <summary class="text-small font-medium">{{ cat.name }}</summary>
+                  <summary class="text-small font-medium">{{ cat.name|fa_text }}</summary>
                   <ul>
-                    <li><a href="{{ cat.url }}" class="text-small text-ink-2">همه‌ی {{ cat.name }}</a></li>
+                    <li><a href="{{ cat.url }}" class="text-small text-ink-2">همه‌ی {{ cat.name|fa_text }}</a></li>
                     {% for child in cat.children %}
-                      <li><a href="{{ child.url }}" class="text-small text-ink-2">{{ child.name }}</a></li>
+                      <li><a href="{{ child.url }}" class="text-small text-ink-2">{{ child.name|fa_text }}</a></li>
                     {% endfor %}
                   </ul>
                 </details>
               {% else %}
-                <a href="{{ cat.url }}" class="text-small font-medium">{{ cat.name }}</a>
+                <a href="{{ cat.url }}" class="text-small font-medium">{{ cat.name|fa_text }}</a>
               {% endif %}
             </li>
           {% endfor %}

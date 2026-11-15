@@ -8,14 +8,17 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET
 
 from apps.core import shortlinks
-from apps.core.models import StaticPage
+from apps.core.models import SiteSettings, StaticPage
 
 
 @require_GET
 def home_view(request: HttpRequest) -> HttpResponse:
+    from apps.core import seo
     from apps.marketing.services import home_context
 
-    return render(request, "pages/home.html", home_context())
+    context = home_context()
+    context["organization_ld"] = seo.organization_ld(SiteSettings.get_solo())
+    return render(request, "pages/home.html", context)
 
 
 @require_GET

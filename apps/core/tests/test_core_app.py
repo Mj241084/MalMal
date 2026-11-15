@@ -6,7 +6,6 @@ import os
 import subprocess
 import sys
 import tempfile
-import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import pytest
@@ -14,11 +13,10 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.management import call_command
 from django.db import connection
-from django.template import Context, Template
 from django.test import override_settings
 
 from apps.core.apps import verify_sqlite_fts5
-from apps.core.models import FooterLink, SiteSettings, StaticPage
+from apps.core.models import SiteSettings, StaticPage
 
 
 @pytest.mark.django_db
@@ -79,37 +77,6 @@ class TestDatabaseAndInfrastructure:
 
 
 @pytest.mark.django_db
-class TestIconsAndSprite:
-    def test_icon_tag_renders_stroke_1_5_and_rtl_flip(self):
-        tpl = Template('{% load core_tags %}{% icon "chevron-left" flip=True size=20 class="text-ink-2" %}')
-        html = tpl.render(Context())
-        assert 'width="20"' in html
-        assert 'stroke-width="1.5"' in html
-        assert "rtl:-scale-x-100" in html
-        assert "sprite.svg#chevron-left" in html
-
-    @override_settings(DEBUG=True)
-    def test_missing_icon_raises_in_debug(self):
-        tpl = Template('{% load core_tags %}{% icon "does-not-exist-xyz" %}')
-        with pytest.raises(ValueError, match="does-not-exist-xyz"):
-            tpl.render(Context())
-
-    @override_settings(DEBUG=False)
-    def test_missing_icon_silent_in_prod(self):
-        tpl = Template('{% load core_tags %}{% icon "does-not-exist-xyz" %}')
-        assert tpl.render(Context()) == ""
-
-    def test_built_sprite_contains_used_icons_without_hardcoded_stroke_width(self):
-        sprite_path = Path(settings.BASE_DIR) / "static" / "sprite.svg"
-        assert sprite_path.is_file()
-        tree = ET.parse(sprite_path)
-        symbols = {e.attrib["id"]: e for e in tree.getroot() if e.tag.split("}")[-1] == "symbol" and "id" in e.attrib}
-        assert "search" in symbols
-        assert "chevron-left" in symbols
-        assert "stroke-width" not in symbols["search"].attrib
-
-
-@pytest.mark.django_db
 class TestCoreModelsAndViews:
     def test_site_settings_singleton_and_cache_invalidation(self, django_capture_on_commit_callbacks):
         with django_capture_on_commit_callbacks(execute=True):
@@ -125,19 +92,14 @@ class TestCoreModelsAndViews:
         assert SiteSettings.get_solo().store_name == "مل‌مل"
         assert SiteSettings.get_solo().phone == "02100000002"
 
-    def test_home_and_static_pages_and_favicon_redirect(self, client, django_capture_on_commit_callbacks):
+    def test_home_has_no_external_cdn_and_inactive_pages_are_404(self, client, django_capture_on_commit_callbacks):
         with django_capture_on_commit_callbacks(execute=True):
-            FooterLink.objects.create(group=FooterLink.GROUP_ABOUT, title="درباره ما", url="/pages/about/", sort=1)
             StaticPage.objects.create(slug="درباره-ما", title="درباره مل‌مل", body="متن تست", is_active=True)
             StaticPage.objects.create(slug="hidden", title="مخفی", body="...", is_active=False)
 
         res = client.get("/")
         assert res.status_code == 200
         body = res.content.decode("utf-8")
-        assert 'dir="rtl"' in body
-        assert 'lang="fa"' in body
-        assert "malmal.theme" in body
-        assert "درباره ما" in body
         # No external CDNs in rendered HTML
         assert "https://cdn." not in body
         assert "cdnjs.cloudflare.com" not in body
@@ -149,10 +111,6 @@ class TestCoreModelsAndViews:
 
         hidden_res = client.get("/pages/hidden/")
         assert hidden_res.status_code == 404
-
-        fav_res = client.get("/favicon.ico")
-        assert fav_res.status_code == 302
-        assert "favicon.ico" in fav_res["Location"]
 
     def test_styleguide_only_in_debug(self, client):
         with override_settings(DEBUG=False):

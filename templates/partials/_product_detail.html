@@ -3,7 +3,7 @@
   {# --- gallery --- #}
   <div class="flex flex-col gap-3">
     {% if images %}
-      <div class="carousel w-full rounded-box border bg-white overflow-hidden">
+      <div class="carousel w-full rounded-box border bg-white overflow-y-hidden">
         {% for image in images %}
           <div id="slide-{{ forloop.counter }}" class="carousel-item w-full">
             <img src="{{ image|image_url }}"

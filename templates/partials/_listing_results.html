@@ -1,0 +1,13 @@
+{% if page_obj.object_list %}
+  {% include "partials/_product_grid.html" with products=page_obj.object_list %}
+  {% include "partials/_pagination.html" with page_obj=page_obj querystring=filters.querystring %}
+{% else %}
+  {% include "partials/_empty_state.html" with title=empty_title|default:"نتیجه‌ای پیدا نشد" description=empty_description|default:"عبارت دیگری را امتحان کنید یا از دسته‌بندی‌ها استفاده کنید" %}
+  {% if popular_categories %}
+    <div class="flex flex-wrap gap-2 justify-center mt-4">
+      {% for category in popular_categories %}
+        <a href="{{ category.url }}" class="badge badge-soft border text-small">{{ category.name }}</a>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endif %}

@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from django.contrib import admin, messages
-from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.db.models import Count
 from django.utils.html import format_html
 
+from apps.catalog.cache import invalidate_brand, touch_product
 from apps.catalog.models import (
     Brand,
     Category,
@@ -36,6 +37,11 @@ class BrandAdmin(admin.ModelAdmin):
     def product_count(self, obj) -> int:
         return obj._product_count
 
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if change:
+            transaction.on_commit(lambda: invalidate_brand(obj.pk), robust=True)
+
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -60,11 +66,6 @@ class CategoryAdmin(admin.ModelAdmin):
                 ).values_list("pk", flat=True)
                 kwargs["queryset"] = Category.objects.exclude(pk__in=list(blocked))
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-    def save_model(self, request, obj, form, change):
-        if obj.parent_id and obj.pk and obj.parent.path.startswith(obj.path or "\0"):
-            raise ValidationError("دسته نمی‌تواند زیرمجموعه‌ی خودش باشد.")
-        super().save_model(request, obj, form, change)
 
 
 class VariantInline(admin.StackedInline):
@@ -185,11 +186,14 @@ class ProductAdmin(admin.ModelAdmin):
             messages.info(request, "یک تنوع پیش‌فرض برای محصول ساخته شد.")
 
         first_image = product.images.order_by("sort", "pk").first()
-        if first_image and product.main_image_id != first_image.pk:
+        if first_image and not product.main_image_id:  # a hand-picked main image stays picked
             product.main_image = first_image
             product.save(update_fields=["main_image", "updated_at"])
 
         product.refresh_aggregates()
+        transaction.on_commit(
+            lambda: touch_product(product.pk), robust=True
+        )  # specs/images/variants edited via inlines
 
         if product.variants.filter(is_active=True, weight_g=0).exists():
             messages.warning(request, "وزن برخی تنوع‌ها صفر است؛ سقف وزن ارسال برای آن‌ها بررسی نمی‌شود.")

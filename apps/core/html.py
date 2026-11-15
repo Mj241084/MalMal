@@ -7,12 +7,30 @@ on links are dropped. No third-party dependency is needed for this.
 
 from __future__ import annotations
 
+import re
 from html import escape
 from html.parser import HTMLParser
 
 ALLOWED_TAGS = {"p", "br", "ul", "ol", "li", "strong", "b", "em", "i", "h2", "h3", "h4", "a", "blockquote"}
 VOID_TAGS = {"br"}
 ALLOWED_ATTRS = {"a": {"href"}}
+
+_SCHEME = re.compile(r"^([a-z][a-z0-9+.\-]*):", re.I)
+ALLOWED_SCHEMES = {"http", "https", "mailto", "tel"}
+
+# Every <a> gets these: a link into a product description is never a popup with an opener handle.
+LINK_REL = "noopener noreferrer"
+
+
+def _safe_href(value: str) -> str | None:
+    # browsers ignore tabs, newlines and C0 controls inside a URL, so compare on the compacted value
+    compact = "".join(ch for ch in value if ord(ch) > 32 and ord(ch) != 127)
+    if not compact or compact.startswith("//"):
+        return None
+    match = _SCHEME.match(compact)
+    if match and match.group(1).lower() not in ALLOWED_SCHEMES:
+        return None
+    return compact
 
 
 class _Sanitizer(HTMLParser):
@@ -26,10 +44,15 @@ class _Sanitizer(HTMLParser):
         allowed = ALLOWED_ATTRS.get(tag, set())
         rendered = []
         for name, value in attrs:
-            if name in allowed and value:
-                if name == "href" and value.strip().lower().startswith(("javascript:", "data:")):
+            if name not in allowed or not value:
+                continue
+            if name == "href":
+                value = _safe_href(value)
+                if value is None:
                     continue
-                rendered.append(f' {name}="{escape(value, quote=True)}"')
+            rendered.append(f' {name}="{escape(value, quote=True)}"')
+        if tag == "a":
+            rendered.append(f' rel="{LINK_REL}"')
         self.parts.append(f"<{tag}{''.join(rendered)}>")
 
     def handle_startendtag(self, tag: str, attrs) -> None:

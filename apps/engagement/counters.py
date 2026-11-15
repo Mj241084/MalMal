@@ -45,6 +45,23 @@ def add_purchases(qty_by_product: dict[int, int]) -> None:
             ProductDailyStat.objects.create(product_id=product_id, date=today, purchases=qty)
 
 
+def remove_purchases(qty_by_product: dict[int, int], paid_at) -> None:
+    """A paid order was cancelled or refunded: take its units back out of the counters and the daily ledger."""
+    if paid_at is None:
+        return
+    day = timezone.localtime(paid_at).date()
+    in_window = day >= timezone.localdate() - timedelta(days=WINDOW_DAYS - 1)
+    floor = Value(0)
+    for product_id, qty in qty_by_product.items():
+        fields = {"purchase_count_total": Greatest(F("purchase_count_total") - qty, floor, output_field=IntegerField())}
+        if in_window:
+            fields["purchase_count_30d"] = Greatest(F("purchase_count_30d") - qty, floor, output_field=IntegerField())
+        Product.objects.filter(pk=product_id).update(**fields)
+        ProductDailyStat.objects.filter(product_id=product_id, date=day).update(
+            purchases=Greatest(F("purchases") - qty, floor, output_field=IntegerField())
+        )
+
+
 def reconcile(product_ids: Iterable[int] | None = None) -> int:
     """Recompute like and approved-review counters from the source rows. Idempotent; returns products fixed."""
     ids = None if product_ids is None else list(product_ids)

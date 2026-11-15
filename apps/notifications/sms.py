@@ -217,10 +217,19 @@ def send_template(key: str, mobile: str, params: dict[str, Any] | None = None) -
     )
 
 
+def send_safely(key: str, mobile: str, params: dict[str, Any] | None = None) -> SmsLog | None:
+    """`send_template` for call sites where an SMS problem must never reach the caller (docs/05 §4)."""
+    try:
+        return send_template(key, mobile, params)
+    except Exception:
+        logger.exception("SMS %r to %s raised", key, mobile)
+        return None
+
+
 def send_template_on_commit(key: str, mobile: str, params: dict[str, Any] | None = None) -> None:
     """Schedule `send_template` after the current transaction commits.
 
     Use this from order/payment code so no network call runs while a DB
     transaction is open (docs/02, rule "no network inside transactions").
     """
-    transaction.on_commit(lambda: send_template(key, mobile, params))
+    transaction.on_commit(lambda: send_safely(key, mobile, params))

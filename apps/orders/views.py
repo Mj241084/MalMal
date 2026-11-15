@@ -16,8 +16,9 @@ from apps.core.decorators import login_required_htmx
 from apps.core.http import client_ip
 from apps.orders import services
 from apps.orders.forms import CheckoutBuyerForm
-from apps.orders.models import Order
-from apps.orders.shipping import default_method
+from apps.orders.invoice import render_invoice
+from apps.orders.models import PAID_STATES, Order
+from apps.orders.shipping import default_method, tracking_page
 from apps.payments import gateways
 from apps.payments import services as payment_services
 
@@ -184,8 +185,19 @@ def _order_context(request, number: str, **extra) -> dict:
     return {
         "order": order,
         "gateways": gateways.available(order.payable) if order.can_pay_now else [],
+        "invoice_url": reverse("orders:invoice", args=[order.number]) if order.status in PAID_STATES else "",
+        "tracking_page": tracking_page(order),
         **extra,
     }
+
+
+@login_required_htmx
+@require_GET
+def invoice_view(request, number):
+    order = get_object_or_404(
+        Order.objects.prefetch_related("items"), number=number, user=request.user, status__in=PAID_STATES
+    )
+    return render_invoice(request, order)
 
 
 @login_required_htmx

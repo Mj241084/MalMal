@@ -71,6 +71,11 @@
   MM.init("likes", function (root) {
     if (!isAuth()) return;
     var pending = takePending(); /* only the first call (initial load) finds one */
-    (pending ? applyPending(pending) : Promise.resolve()).then(function () { loadState(root); });
+    (pending ? applyPending(pending) : Promise.resolve()).then(function () {
+      loadState(root);
+      if (pending && pageContext(pending)) {
+        window.htmx.ajax("GET", "/social/product/" + pending + "/", { target: "#social-product", swap: "innerHTML" });
+      }
+    });
   });
 })(window.MM);

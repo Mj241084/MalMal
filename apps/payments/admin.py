@@ -1,5 +1,7 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.utils import timezone
 
+from apps.payments import services
 from apps.payments.models import Payment, PaymentGateway
 
 
@@ -10,10 +12,23 @@ class PaymentGatewayAdmin(admin.ModelAdmin):
     search_fields = ("title", "code")
 
 
+class NeedsRefundFilter(admin.SimpleListFilter):
+    title = "نیازمند بازگشت وجه"
+    parameter_name = "needs_refund"
+
+    def lookups(self, request, model_admin):
+        return [("1", "بله")]
+
+    def queryset(self, request, queryset):
+        if self.value() == "1":
+            return queryset.filter(pk__in=services.refund_candidates().values("pk"))
+        return queryset
+
+
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
     list_display = ("pk", "order", "gateway_code", "amount", "status", "ref_id", "created_at")
-    list_filter = ("status", "gateway_code")
+    list_filter = ("status", "gateway_code", NeedsRefundFilter)
     search_fields = ("order__number", "authority", "ref_id")
     readonly_fields = (
         "order",
@@ -30,6 +45,17 @@ class PaymentAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     )
+
+    actions = ("mark_refunded",)
+
+    def has_manage_permission(self, request) -> bool:
+        return request.user.has_perm("orders.manage_order_status")
+
+    @admin.action(description="ثبت بازگشت وجه انجام‌شد", permissions=["manage"])
+    def mark_refunded(self, request, queryset):
+        ids = list(queryset.filter(pk__in=services.refund_candidates().values("pk")).values_list("pk", flat=True))
+        count = Payment.objects.filter(pk__in=ids).update(status=Payment.REFUNDED, updated_at=timezone.now())
+        self.message_user(request, f"{count} پرداخت به‌عنوان بازگشت‌خورده ثبت شد.", messages.SUCCESS)
 
     def has_add_permission(self, request) -> bool:
         return False

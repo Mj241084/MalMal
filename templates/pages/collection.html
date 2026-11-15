@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% load core_tags %}
+{% load static core_tags %}
 
 {% block title %}{{ collection.seo_title|default:collection.title|fa_text }} — {{ site_settings.store_name }}{% endblock %}
 {% block meta_description %}{{ collection.seo_description|default:collection.description|truncatechars:160 }}{% endblock %}
+{% block og_image %}{% if collection.cover %}{{ site_url }}{{ collection.cover.url }}{% else %}{{ site_url }}{% static 'favicon/og-default.png' %}{% endif %}{% endblock %}
 {% block extra_head %}
   <link rel="canonical" href="{{ canonical_url }}">
-  {% if collection.cover %}<meta property="og:image" content="{{ site_url }}{{ collection.cover.url }}">{% endif %}
+  <script type="application/ld+json">{{ breadcrumb_ld|safe }}</script>
 {% endblock %}
 
 {% block content %}

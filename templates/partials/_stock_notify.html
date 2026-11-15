@@ -1,0 +1,20 @@
+{% load core_tags %}
+{% if error %}<p class="text-label text-error flex items-center gap-1 mb-2">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ error }}</span></p>{% endif %}
+{% if subscribed %}
+  <div class="flex items-center justify-between gap-3">
+    <span class="flex items-center gap-2 text-small text-ink-2">{% icon "check" size=18 class="shrink-0" %}به‌محض موجود شدن پیامک می‌شود</span>
+    <button type="button" class="btn btn-ghost btn-sm h-10" hx-post="{% url 'engagement:stock_notify' variant.pk %}"
+            hx-vals='{"state": "0"}' hx-target="#stock-notify" hx-swap="innerHTML" hx-disabled-elt="this">لغو</button>
+  </div>
+{% elif not user.is_authenticated %}
+  {% with next=variant.product.get_absolute_url|urlencode %}
+    <a href="{% url 'accounts:login' %}?next={{ next }}" data-auth-open
+       hx-get="{% url 'accounts:otp_modal' %}?next={{ next }}" hx-target="#auth-modal-body" hx-swap="innerHTML"
+       class="btn bg-base-300 border h-11 min-h-11 w-full">{% icon "bell" size=18 %}<span>خبرم کن</span></a>
+  {% endwith %}
+{% else %}
+  <button type="button" class="btn bg-base-300 border h-11 min-h-11 w-full" hx-post="{% url 'engagement:stock_notify' variant.pk %}"
+          hx-vals='{"state": "1"}' hx-target="#stock-notify" hx-swap="innerHTML" hx-disabled-elt="this">
+    {% icon "bell" size=18 %}<span>خبرم کن</span>
+  </button>
+{% endif %}

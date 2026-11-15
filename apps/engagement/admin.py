@@ -6,7 +6,7 @@ from django.contrib import admin, messages
 from django.utils import timezone
 
 from apps.engagement import services
-from apps.engagement.models import Like, ProductDailyStat, Review
+from apps.engagement.models import Like, ProductDailyStat, Review, StockSubscription
 
 
 @admin.register(Review)
@@ -95,3 +95,10 @@ class ProductDailyStatAdmin(_ReadOnlyAdmin):
     list_display = ("product", "date", "purchases")
     list_filter = ("date",)
     ordering = ("-date",)
+
+
+@admin.register(StockSubscription)
+class StockSubscriptionAdmin(_ReadOnlyAdmin):
+    list_display = ("variant", "user", "created_at", "restocked_at", "notified_at")
+    list_filter = (("notified_at", admin.EmptyFieldListFilter),)
+    list_select_related = ("variant__product", "user")

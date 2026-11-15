@@ -9,9 +9,9 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from apps.accounts import ratelimit
 from apps.catalog.filters import PAGE_SIZE
-from apps.catalog.models import Product
+from apps.catalog.models import Product, Variant
 from apps.core.decorators import htmx_login_redirect, login_required_htmx
-from apps.engagement import services, social
+from apps.engagement import back_in_stock, services, social
 from apps.engagement.forms import ReviewForm
 from apps.engagement.models import Like, Review
 
@@ -43,7 +43,7 @@ def _parse_ids(raw: str | None) -> list[int]:
     ids: list[int] = []
     for part in (raw or "").split(","):
         part = part.strip()
-        if part.isascii() and part.isdigit() and int(part) not in ids:
+        if part.isascii() and part.isdigit() and len(part) <= 12 and int(part) not in ids:
             ids.append(int(part))
         if len(ids) == MAX_STATE_IDS:
             break
@@ -158,3 +158,31 @@ def reviews_view(request, pk):
     return _private(
         render(request, "partials/_review_items.html" if items_only else "partials/_reviews_block.html", context)
     )
+
+
+# --- back in stock ---------------------------------------------------------
+
+
+@require_http_methods(["GET", "POST"])
+def stock_notify_view(request, variant_id):
+    """«خبرم کن» block of a sold-out variant. State-less in the cached product fragment, loaded here per viewer."""
+    variant = get_object_or_404(
+        Variant.objects.select_related("product"), pk=variant_id, is_active=True, product__status=Product.STATUS_ACTIVE
+    )
+    signed_in = request.user.is_authenticated
+    error = ""
+    if request.method == "POST":
+        if not signed_in:
+            return htmx_login_redirect(request)
+        if request.POST.get("state") == "0":
+            back_in_stock.unsubscribe(request.user, variant.pk)
+        elif variant.stock > 0:
+            error = "این کالا هم‌اکنون موجود است"
+        elif not back_in_stock.subscribe(request.user, variant.pk):
+            error = "حداکثر ۳۰ کالا را می‌توانید دنبال کنید"
+    context = {
+        "variant": variant,
+        "error": error,
+        "subscribed": signed_in and back_in_stock.is_subscribed(request.user, variant.pk),
+    }
+    return _private(render(request, "partials/_stock_notify.html", context))

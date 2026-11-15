@@ -5,9 +5,7 @@ from __future__ import annotations
 from django.utils import timezone
 
 from apps.engagement.models import Like, Review
-from apps.orders.models import Order, OrderItem
-
-PAID_STATES = (Order.PAID, Order.PROCESSING, Order.SHIPPED, Order.DELIVERED)
+from apps.orders.models import PAID_STATES, OrderItem
 
 
 def set_like(user, product_id: int, want: bool) -> bool:

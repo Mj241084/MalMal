@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from decimal import Decimal, InvalidOperation
 
 from django.db.models import Q, QuerySet
 
 from apps.catalog.cache import filters_hash
+from apps.core.text import normalize_digits
+
+MAX_FILTER_NUMBER = 10**12
 
 SORT_NEWEST = "newest"
 SORT_CHEAPEST = "cheapest"
@@ -36,8 +40,22 @@ PAGE_SIZE = 24
 def _int_or_none(value: str | None) -> int | None:
     if not value:
         return None
-    digits = "".join(ch for ch in value if ch.isdigit())
-    return int(digits) if digits else None
+    digits = "".join(ch for ch in normalize_digits(value) if ch in "0123456789")[:15]
+    return min(int(digits), MAX_FILTER_NUMBER) if digits else None
+
+
+def _id_or_none(value: str) -> int | None:
+    value = normalize_digits(value).strip()
+    return int(value) if value.isascii() and value.isdigit() and len(value) <= 12 else None
+
+
+def _decimal_or_none(value: str) -> Decimal | None:
+    try:
+        number = Decimal(normalize_digits(value).strip())
+    except (InvalidOperation, ValueError):
+        return None
+    # ProductSpecValue.value_number is Decimal(12, 2): anything larger would raise inside the DB adapter
+    return number if number.is_finite() and abs(number) < Decimal("1e10") else None
 
 
 @dataclass
@@ -51,24 +69,25 @@ class ProductFilter:
     discounted: bool = False
     specs: dict[int, list[str]] = field(default_factory=dict)
     sort: str = SORT_NEWEST
+    explicit_sort: bool = False
     page: int = 1
     query: str = ""
 
     @classmethod
     def from_params(cls, params, *, query: str = "") -> ProductFilter:
-        brands = [int(value) for value in params.getlist("brand") if value.isdigit()]
+        brands = [b for b in (_id_or_none(v) for v in params.getlist("brand")) if b is not None]
 
         specs: dict[int, list[str]] = {}
         for key in params:
-            if key.startswith("attr_") and key[5:].isdigit():
-                values = [value for value in params.getlist(key) if value]
-                if values:
-                    specs[int(key[5:])] = values
+            if not key.startswith("attr_"):
+                continue
+            attribute_id = _id_or_none(key[5:])
+            values = [value[:100] for value in params.getlist(key) if value]
+            if attribute_id is not None and values:
+                specs[attribute_id] = values
 
-        sort = params.get("sort") or SORT_NEWEST
-        if sort not in SORT_ORDERING:
-            sort = SORT_NEWEST
-
+        raw_sort = params.get("sort")
+        explicit = raw_sort in SORT_ORDERING
         return cls(
             brands=brands,
             min_price=_int_or_none(params.get("min_price")),
@@ -76,7 +95,8 @@ class ProductFilter:
             in_stock=params.get("in_stock") == "1",
             discounted=params.get("discounted") == "1",
             specs=specs,
-            sort=sort,
+            sort=raw_sort if explicit else SORT_NEWEST,
+            explicit_sort=explicit,
             page=max(_int_or_none(params.get("page")) or 1, 1),
             query=query,
         )
@@ -99,9 +119,11 @@ class ProductFilter:
         for attribute_id, values in self.specs.items():
             condition = Q()
             for value in values:
-                condition |= Q(spec_values__attribute_id=attribute_id) & (
-                    Q(spec_values__value_text=value) | Q(spec_values__value_number=value)
-                )
+                match = Q(spec_values__value_text=value)
+                number = _decimal_or_none(value)
+                if number is not None:
+                    match |= Q(spec_values__value_number=number)
+                condition |= Q(spec_values__attribute_id=attribute_id) & match
             queryset = queryset.filter(condition).distinct()
 
         return queryset
@@ -141,7 +163,7 @@ class ProductFilter:
         for attribute_id, values in sorted(self.specs.items()):
             for value in sorted(values):
                 params.append((f"attr_{attribute_id}", value))
-        if self.sort != SORT_NEWEST:
+        if self.sort != SORT_NEWEST or self.explicit_sort:
             params.append(("sort", self.sort))
         if page and page > 1:
             params.append(("page", page))

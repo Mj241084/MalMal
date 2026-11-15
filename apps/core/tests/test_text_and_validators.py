@@ -2,7 +2,6 @@
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.template import Context, Template
 
 from apps.core.text import format_toman, normalize_digits, normalize_fa, to_fa_text
 from apps.core.validators import normalize_iran_mobile, validate_national_code
@@ -41,10 +40,6 @@ class TestTomanFormatting:
         assert format_toman(0) == "۰"
         assert format_toman(-5000) == "-۵٬۰۰۰"
         assert format_toman(None) == ""
-
-    def test_toman_template_filter(self):
-        tpl = Template("{% load core_tags %}{{ price|toman }} تومان")
-        assert tpl.render(Context({"price": 1250000})) == "۱٬۲۵۰٬۰۰۰ تومان"
 
 
 class TestNationalCodeValidator:

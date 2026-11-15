@@ -26,7 +26,7 @@ from apps.catalog.constants import (
 )
 from apps.core.cache import (
     get_or_build,
-    safe_cache_get,
+    read_epoch,
     safe_cache_incr_epoch,
 )
 
@@ -35,8 +35,7 @@ from apps.core.cache import (
 
 def current_epoch() -> int:
     """Global structural counter used by menu/home keys."""
-    value = safe_cache_get("epoch")
-    return int(value) if isinstance(value, int) else 0
+    return read_epoch("epoch")
 
 
 def bump_epoch() -> None:
@@ -136,10 +135,35 @@ def invalidate_product(
     reindex_product(product_id)
 
 
-def invalidate_category(category_id: int) -> None:
-    """Structural category change: subtree caches and the menu epoch move."""
-    bump_subtree_rev(_ancestor_ids(category_id))
+def invalidate_category(category_id: int, old_path: str | None = None) -> None:
+    """Structural category change: the subtree caches (of the old chain too, after a move) and the menu epoch move."""
+    from apps.catalog.tree import ancestor_ids
+
+    ids = _ancestor_ids(category_id)
+    if old_path:
+        ids += ancestor_ids(old_path)
+    bump_subtree_rev(ids)
     bump_epoch()
+
+
+def touch_product(product_id: int, level: str = LEVEL_LIST) -> None:
+    """Invalidate a product (and its category chain) by id, for changes made outside Product.save()."""
+    from apps.catalog.models import Product
+
+    category_id = Product.objects.filter(pk=product_id).values_list("category_id", flat=True).first()
+    if category_id is not None:
+        invalidate_product(product_id, level, category_id, category_id)
+
+
+def invalidate_brand(brand_id: int) -> None:
+    from apps.catalog.models import Product
+    from apps.catalog.search_text import build_search_text
+
+    for product in Product.objects.filter(brand_id=brand_id).select_related("brand", "category"):
+        text = build_search_text(product)
+        if text != product.search_text:
+            Product.objects.filter(pk=product.pk).update(search_text=text)  # allowed file (architecture test)
+        invalidate_product(product.pk, LEVEL_LIST, product.category_id, product.category_id)
 
 
 def invalidate_menu() -> None:
@@ -163,6 +187,7 @@ __all__ = [
     "current_epoch",
     "filters_hash",
     "get_or_build",
+    "invalidate_brand",
     "invalidate_category",
     "invalidate_menu",
     "invalidate_product",
@@ -171,4 +196,5 @@ __all__ = [
     "product_detail_key",
     "search_suggest_key",
     "similar_key",
+    "touch_product",
 ]

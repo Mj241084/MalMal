@@ -6,6 +6,7 @@
 
 {% block extra_head %}
   <link rel="canonical" href="{{ canonical_url }}">
+  <script type="application/ld+json">{{ breadcrumb_ld|safe }}</script>
 {% endblock %}
 
 {% block content %}
@@ -44,12 +45,7 @@
   </div>
 
   <div id="category-results" class="mt-4" aria-live="polite">
-    {% if page_obj.object_list %}
-      {% include "partials/_product_grid.html" with products=page_obj.object_list %}
-      {% include "partials/_pagination.html" with page_obj=page_obj querystring=filters.querystring %}
-    {% else %}
-      {% include "partials/_empty_state.html" with title="محصولی از این برند موجود نیست" description="به‌زودی محصولات تازه اضافه می‌شود." %}
-    {% endif %}
+    {% include "partials/_listing_results.html" %}
   </div>
 </div>
 {% endblock %}

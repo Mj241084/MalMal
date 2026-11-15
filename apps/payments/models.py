@@ -36,6 +36,7 @@ class Payment(TimeStampedModel):
     REDIRECTED = "redirected"
     VERIFYING = "verifying"
     VERIFIED = "verified"
+    REFUNDED = "refunded"
     FAILED = "failed"
     CANCELLED = "cancelled"
     STATUS_CHOICES = [
@@ -43,6 +44,7 @@ class Payment(TimeStampedModel):
         (REDIRECTED, "ارجاع به درگاه"),
         (VERIFYING, "در حال تایید"),
         (VERIFIED, "تاییدشده"),
+        (REFUNDED, "بازگشت وجه شد"),
         (FAILED, "ناموفق"),
         (CANCELLED, "لغوشده"),
     ]

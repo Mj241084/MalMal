@@ -133,3 +133,12 @@ def test_zarinpal_sends_rials_and_accepts_an_already_verified_payment(monkeypatc
     assert sent[0][1]["amount"] == 468_000_000 and sent[0][1]["currency"] == "IRR"
     assert started.redirect_url == "https://sandbox.zarinpal.com/pg/StartPay/S000"
     assert verified.ok and sent[1][1]["amount"] == 468_000_000
+
+
+def test_verified_payment_on_a_dead_order_is_flagged_for_refund(placed_order):
+    payment = Payment.objects.create(order=placed_order, gateway_code="fake", amount=1, status=Payment.VERIFIED)
+    assert not payment_services.refund_candidates().exists()
+
+    Order.objects.filter(pk=placed_order.pk).update(status=Order.EXPIRED)
+
+    assert list(payment_services.refund_candidates()) == [payment]

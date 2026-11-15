@@ -6,19 +6,25 @@
         <span class="w-0.5 h-4 bg-base-content inline-block"></span>
         <span class="w-0.5 h-4 bg-base-content inline-block"></span>
       </span>
-      <h2 id="{{ rail_id }}-title" class="text-title font-medium">{{ title }}</h2>
+      <h2 id="{{ rail_id }}-title" class="text-title font-medium">{{ title|fa_text }}</h2>
     </div>
-    {% if view_all_url %}
-      <a href="{{ view_all_url }}" class="text-small text-brand-ink inline-flex items-center gap-1">
-        <span>همه</span>
-        {% icon "chevron-left" size=18 flip=True %}
-      </a>
-    {% endif %}
+    <div class="flex items-center gap-2">
+      {% if view_all_url %}
+        <a href="{{ view_all_url }}" class="text-small text-brand-ink inline-flex items-center gap-1">
+          <span>همه</span>
+          {% icon "chevron-left" size=18 flip=True %}
+        </a>
+      {% endif %}
+      <div class="hidden md:flex items-center gap-1">
+        <button type="button" data-rail-scroll="-1" data-rail="{{ rail_id }}-track" class="btn btn-ghost btn-circle w-10 h-10 min-h-10" aria-label="قبلی">{% icon "chevron-left" size=18 flip=True %}</button>
+        <button type="button" data-rail-scroll="1" data-rail="{{ rail_id }}-track" class="btn btn-ghost btn-circle w-10 h-10 min-h-10" aria-label="بعدی">{% icon "chevron-right" size=18 flip=True %}</button>
+      </div>
+    </div>
   </div>
 
-  <div class="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-1">
+  <div id="{{ rail_id }}-track" class="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-1">
     {% for product in products %}
-      <div class="snap-start shrink-0 w-40 md:w-48">
+      <div class="snap-start shrink-0 w-40 md:w-48 flex">
         {% product_card product %}
       </div>
     {% endfor %}

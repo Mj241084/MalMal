@@ -1,0 +1,37 @@
+limit_req_zone $binary_remote_addr zone=otp:10m rate=10r/m;
+limit_req_status 429;
+
+server {
+    listen 80;
+    server_name example.ir;
+    return 301 https://example.ir$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name example.ir;
+    # ssl_certificate / ssl_certificate_key: certbot
+    client_max_body_size 20m;
+    gzip on;
+    gzip_types text/css application/javascript image/svg+xml application/json;
+
+    location /static/ { alias /srv/malmal/staticfiles/; expires 1y; add_header Cache-Control "public, immutable"; }
+    location /media/  { alias /srv/malmal/media/; expires 30d; add_header X-Content-Type-Options nosniff; }
+
+    location = /auth/otp/request/ {
+        limit_req zone=otp burst=5 nodelay;
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

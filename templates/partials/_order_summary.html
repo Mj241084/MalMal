@@ -30,7 +30,7 @@
 
   <div class="flex flex-col gap-1 border-t pt-3 text-small">
     <span class="font-medium">تحویل‌گیرنده</span>
-    <span class="text-ink-2">{{ order.recipient_name|fa_text }} — <span class="num">{{ order.recipient_mobile|fa_digits }}</span></span>
+    <span class="text-ink-2"><bdi>{{ order.recipient_name|fa_text }}</bdi> — <span class="num">{{ order.recipient_mobile|fa_digits }}</span></span>
     <span class="text-ink-2 leading-6">{{ order.province_name }}، {{ order.city_name }}، {{ order.address_text|fa_text }}</span>
     <span class="text-label text-ink-3">پلاک {{ order.plate|fa_digits }}{% if order.unit %}، واحد {{ order.unit|fa_digits }}{% endif %} — کدپستی <span class="num">{{ order.postal_code|fa_digits }}</span></span>
   </div>
@@ -38,6 +38,6 @@
   <div class="flex flex-col gap-1 border-t pt-3 text-small">
     <span class="font-medium">{{ order.shipping_method_title }}</span>
     {% if order.shipping_payment_mode == "collect" %}<span class="text-label text-ink-3 leading-5">کرایه‌ی ارسال هنگام تحویل بار به پیک پرداخت می‌شود و جزو مبلغ این پرداخت نیست</span>{% endif %}
-    {% if order.tracking_code %}<span class="text-ink-2">کد رهگیری: <span class="latin">{{ order.tracking_code }}</span></span>{% endif %}
+    {% if order.tracking_code %}<span class="text-ink-2">کد رهگیری: <span class="latin">{{ order.tracking_code }}</span>{% if tracking_page %} — <a href="{{ tracking_page }}" target="_blank" rel="noopener" class="link">رهگیری در سایت تیپاکس</a>{% endif %}</span>{% endif %}
   </div>
 </section>

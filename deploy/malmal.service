@@ -1,0 +1,13 @@
+[Unit]
+Description=Malmal (gunicorn)
+After=network.target redis-server.service
+
+[Service]
+User=malmal
+WorkingDirectory=/srv/malmal
+Environment=DJANGO_SETTINGS_MODULE=config.settings.prod
+ExecStart=/srv/malmal/.venv/bin/gunicorn config.wsgi:application --bind 127.0.0.1:8000 --workers 3 --timeout 30 --max-requests 1000 --max-requests-jitter 100
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

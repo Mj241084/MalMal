@@ -1,5 +1,5 @@
 {% load core_tags catalog_tags %}
-<article class="card bg-base-100 border rounded-box overflow-hidden transition-colors hover:bg-base-300">
+<article class="card bg-base-100 border rounded-box overflow-hidden transition-colors hover:bg-base-300 w-full h-full">
   <div class="relative p-2">
     <a href="{{ product.get_absolute_url }}" class="block" tabindex="-1" aria-hidden="true">
       <div class="relative aspect-square bg-white rounded-lg border overflow-hidden">
@@ -32,27 +32,22 @@
     </div>
   </div>
 
-  <div class="px-3 pb-3 pt-1 flex flex-col gap-1">
-    {% if product.brand %}
-      <span class="text-label text-ink-3">{{ product.brand.name_fa|fa_text }}</span>
-    {% endif %}
-    <h3 class="text-small font-medium leading-6 line-clamp-2">
+  <div class="px-3 pb-3 pt-1 flex flex-col gap-1 flex-1">
+    <span class="block min-h-5 text-label text-ink-3">{% if product.brand %}{{ product.brand.name_fa|fa_text }}{% endif %}</span>
+    <h3 class="text-small font-medium leading-6 line-clamp-2 min-h-12">
       <a href="{{ product.get_absolute_url }}" class="hover:text-brand-ink transition-colors">{{ product.title|fa_text }}</a>
     </h3>
 
-    {% if product.in_stock %}
-      <div class="flex items-baseline gap-2 flex-wrap mt-1">
-        <span class="text-lead font-medium">{{ product.min_price|toman }}</span>
-        <span class="text-label text-ink-2">تومان</span>
-        {% if product.is_discounted %}
-          <span class="text-label text-ink-3 line-through">{{ product.compare_at_min|toman }}</span>
-        {% endif %}
-      </div>
-    {% else %}
-      <div class="mt-1 text-small text-ink-2 flex items-center gap-1">
-        {% icon "package" size=18 class="text-ink-3" %}
-        <span>ناموجود</span>
-      </div>
-    {% endif %}
+    <div class="mt-auto pt-1 min-h-12 flex flex-col">
+      {% if product.in_stock %}
+        <div class="flex items-baseline gap-2">
+          <span class="text-lead font-medium whitespace-nowrap">{{ product.min_price|toman }}</span>
+          <span class="text-label text-ink-2">تومان</span>
+        </div>
+        {% if product.is_discounted %}<span class="text-label text-ink-3 line-through whitespace-nowrap">{{ product.compare_at_min|toman }}</span>{% endif %}
+      {% else %}
+        <div class="text-small text-ink-2 flex items-center gap-1">{% icon "package" size=18 class="text-ink-3" %}<span>ناموجود</span></div>
+      {% endif %}
+    </div>
   </div>
 </article>

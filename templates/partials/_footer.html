@@ -33,12 +33,12 @@
       {# Footer link groups from FooterLink model #}
       {% for group in footer_link_groups %}
         <nav aria-label="{{ group.label }}" class="flex flex-col gap-2">
-          <h3 class="text-small font-medium">{{ group.label }}</h3>
+          <h3 class="text-small font-medium">{{ group.label|fa_text }}</h3>
           <ul class="flex flex-col gap-1">
             {% for link in group.links %}
               <li>
                 <a href="{{ link.url }}" class="text-small text-ink-2 hover:text-base-content transition-colors py-1 inline-block">
-                  {{ link.title }}
+                  {{ link.title|fa_text }}
                 </a>
               </li>
             {% endfor %}

@@ -12,4 +12,5 @@ urlpatterns = [
     path("social/product/<int:pk>/", views.product_social_view, name="product_social"),
     path("reviews/product/<int:pk>/", views.reviews_view, name="reviews"),
     path("account/wishlist/", views.wishlist_view, name="wishlist"),
+    path("stock/<int:variant_id>/notify/", views.stock_notify_view, name="stock_notify"),
 ]

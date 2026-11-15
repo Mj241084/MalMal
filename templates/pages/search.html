@@ -3,6 +3,8 @@
 
 {% block title %}{% if query %}جستجو برای «{{ raw_query|fa_text }}»{% else %}جستجو{% endif %} — {{ site_settings.store_name }}{% endblock %}
 
+{% block extra_head %}<meta name="robots" content="noindex,follow">{% endblock %}
+
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 lg:py-8">
   <header class="flex flex-col gap-2">
@@ -28,15 +30,15 @@
                 hx-include="#search-sort-form"
                 hx-target="#category-results" hx-swap="innerHTML" hx-push-url="true"
                 hx-indicator="#results-indicator">
-          <option value="" {% if not filters.sort or filters.sort == 'newest' %}selected{% endif %}>مرتبط‌ترین</option>
+          <option value="" {% if not explicit_sort %}selected{% endif %}>مرتبط‌ترین</option>
           {% for value, label in sort_choices %}
-            <option value="{{ value }}" {% if filters.sort == value %}selected{% endif %}>{{ label }}</option>
+            <option value="{{ value }}" {% if explicit_sort and filters.sort == value %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
         <form id="search-sort-form" class="hidden">
           <input type="hidden" name="q" value="{{ query }}">
           {% for name, value in filters.pairs %}
-            {% if name != 'q' %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endif %}
+            {% if name != 'q' and name != 'sort' %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endif %}
           {% endfor %}
         </form>
         <span id="results-indicator" class="htmx-indicator loading loading-spinner loading-sm" aria-hidden="true"></span>
@@ -44,19 +46,7 @@
     </div>
 
     <div id="category-results" class="mt-4" aria-live="polite">
-      {% if page_obj.object_list %}
-        {% include "partials/_product_grid.html" with products=page_obj.object_list %}
-        {% include "partials/_pagination.html" with page_obj=page_obj querystring=filters.querystring %}
-      {% else %}
-        {% include "partials/_empty_state.html" with title="نتیجه‌ای پیدا نشد" description="عبارت دیگری را امتحان کنید یا از دسته‌بندی‌ها استفاده کنید." %}
-        {% if popular_categories %}
-          <div class="flex flex-wrap gap-2 justify-center mt-4">
-            {% for category in popular_categories %}
-              <a href="{{ category.url }}" class="badge badge-soft border text-small">{{ category.name }}</a>
-            {% endfor %}
-          </div>
-        {% endif %}
-      {% endif %}
+      {% include "partials/_listing_results.html" %}
     </div>
   {% else %}
     <div class="mt-6">

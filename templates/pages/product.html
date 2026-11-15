@@ -1,17 +1,17 @@
 {% extends "base.html" %}
-{% load core_tags catalog_tags %}
+{% load static core_tags catalog_tags %}
 
 {% block title %}{{ meta_title|default:product.title|fa_text }} — {{ site_settings.store_name }}{% endblock %}
 {% block meta_description %}{{ meta_description|default:product.short_description|truncatechars:160 }}{% endblock %}
+{% block og_type %}product{% endblock %}
 {% block og_title %}{{ product.title|fa_text }}{% endblock %}
+{% block og_description %}{{ meta_description|default:product.short_description|truncatechars:160 }}{% endblock %}
+{% block og_image %}{% if product.main_image %}{{ site_url }}{{ product.main_image|image_url }}{% else %}{{ site_url }}{% static 'favicon/og-default.png' %}{% endif %}{% endblock %}
 
 {% block extra_head %}
   <link rel="canonical" href="{{ canonical_url }}">
-  <meta property="og:type" content="product">
-  {% if product.main_image %}
-    <meta property="og:image" content="{{ site_url }}{{ product.main_image|image_url }}">
-  {% endif %}
   <script type="application/ld+json">{{ json_ld|safe }}</script>
+  <script type="application/ld+json">{{ breadcrumb_ld|safe }}</script>
 {% endblock %}
 
 {% block content %}
@@ -24,7 +24,7 @@
 </div>
 
 {# D28 thumb zone: primary action at the start (right in RTL), price at the end. #}
-<div class="lg:hidden fixed bottom-16 inset-x-0 z-20 bg-base-100 border-t px-4 py-3">
+<div class="lg:hidden fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] inset-x-0 z-20 bg-base-100 border-t px-4 py-3">
   <div class="flex items-center gap-3">
     <button type="button" data-cart-add
             class="btn btn-primary flex-1 min-w-0 h-11 min-h-11 disabled:bg-base-300 disabled:text-base-content disabled:border"
@@ -34,7 +34,7 @@
       <span data-cart-label class="text-small whitespace-nowrap">افزودن به سبد</span>
     </button>
     <div class="flex flex-col items-end shrink-0 leading-5">
-      <span data-bar-price class="text-lead font-medium whitespace-nowrap tabular-nums">{{ product.min_price|toman }}</span>
+      <span data-bar-price class="text-lead font-medium whitespace-nowrap tabular-nums">{% if default_variant %}{{ default_variant.price|toman }}{% else %}{{ product.min_price|toman }}{% endif %}</span>
       <span class="text-label text-ink-2">تومان</span>
     </div>
   </div>

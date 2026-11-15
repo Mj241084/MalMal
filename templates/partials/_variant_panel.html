@@ -17,7 +17,7 @@
                   hx-indicator="#variant-indicator"
                   hx-disabled-elt="this"
                   aria-pressed="{% if variant.pk == active_variant.pk %}true{% else %}false{% endif %}">
-            {{ variant.title }}
+            {{ variant.title|fa_text }}
           </button>
         {% endfor %}
         <span id="variant-indicator" class="htmx-indicator loading loading-spinner loading-sm self-center" aria-hidden="true"></span>
@@ -32,7 +32,7 @@
       {% if active_variant.compare_at_price and active_variant.compare_at_price > active_variant.price %}
         <span class="text-small text-ink-3 line-through">{{ active_variant.compare_at_price|toman }}</span>
         <span class="badge badge-sm bg-base-content text-base-100 border-0">
-          {{ product.discount_pct|fa_digits }}٪ تخفیف
+          {{ active_variant.discount_pct|fa_digits }}٪ تخفیف
         </span>
       {% endif %}
     {% else %}
@@ -58,6 +58,10 @@
         حداکثر {{ active_variant.max_orderable|fa_digits }} عدد در هر سفارش
       </span>
     {% endif %}
+    {% if active_variant and active_variant.stock <= 0 %}
+      <div id="stock-notify" class="min-h-11 mt-1"
+           hx-get="{% url 'engagement:stock_notify' active_variant.pk %}" hx-trigger="load" hx-swap="innerHTML"></div>
+    {% endif %}
   </div>
 
   <div class="flex items-center gap-2">
@@ -75,13 +79,13 @@
       {% if shipping_note %}
         <span class="flex items-start gap-2">
           {% icon "truck" size=18 class="text-ink-3 shrink-0 mt-0.5" %}
-          <span>{{ shipping_note }}</span>
+          <span>{{ shipping_note|fa_text }}</span>
         </span>
       {% endif %}
       {% for item in trust_items %}
         <span class="flex items-start gap-2">
           {% icon item.icon size=18 safe=True class="text-ink-3 shrink-0 mt-0.5" %}
-          <span>{{ item.title }}{% if item.subtitle %} — {{ item.subtitle }}{% endif %}</span>
+          <span>{{ item.title|fa_text }}{% if item.subtitle %} — {{ item.subtitle|fa_text }}{% endif %}</span>
         </span>
       {% endfor %}
     </div>

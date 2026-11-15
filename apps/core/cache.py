@@ -52,13 +52,24 @@ def safe_cache_add(key: str, value: Any, timeout: int | None = None) -> bool:
         return False
 
 
+def read_epoch(key: str = "epoch") -> int:
+    """Revision counters never expire; if one vanishes (flush, eviction) restart from a growing timestamp."""
+    value = safe_cache_get(key)
+    if isinstance(value, int):
+        return value
+    fresh = int(time.time())
+    safe_cache_add(key, fresh, None)
+    value = safe_cache_get(key)
+    return value if isinstance(value, int) else fresh
+
+
 def safe_cache_incr_epoch(key: str = "epoch") -> int | None:
     try:
         try:
             return cache.incr(key)
         except ValueError:
-            cache.set(key, 1)
-            return 1
+            cache.add(key, int(time.time()), None)  # timeout=None: never expires
+            return cache.incr(key)
     except Exception as exc:  # pragma: no cover - defensive fallback if Redis is down
         logger.warning("Redis cache incr failed for %s: %s", key, exc)
         return None

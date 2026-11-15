@@ -64,6 +64,7 @@
 - **هیچ تماس شبکه (پیامک، درگاه، نقشه) داخل تراکنش دیتابیس نباشد.** ارسال‌ها بعد از `transaction.on_commit`.
 - تراکنش‌های نوشتن `IMMEDIATE`؛ کوتاه نگه دار.
 - تغییر مدل‌های کش‌شونده فقط از طریق مسیرهایی که `rev` را بالا می‌برند (`save()`، `update_tracked`، `bulk_update_tracked`). `QuerySet.update()` خام روی آن‌ها ممنوع. (`docs/03` بخش ۵ و ۹)
+- **وضعیت سفارش فقط از `services.transition` (حرکت‌های سیستمی) و `workflow.change_status` (حرکت‌های کارمند) عوض می‌شود.** `Order.objects...update()` بیرون از `apps/orders/services.py` ممنوع (تست معماری در `apps/catalog/tests/test_architecture.py`).
 - نوشتن شمارنده‌ها (لایک، نظر، خرید) فقط از `apps/engagement/counters.py`.
 - هر تغییر در مارک‌آپ قالب‌های کش‌شونده (`_product_card`، `_product_detail`، `_category_results`، `_similar`) = `FRAGMENT_VERSION` در `apps/catalog/constants.py` را +۱ کن.
 
@@ -118,11 +119,18 @@
 # lint/format:          uv run ruff check .  و  uv run ruff format .
 # ساخت sprite:          uv run python scripts/build_sprite.py
 # ساخت favicon:         uv run python scripts/make_favicons.py static/logo.webp static/favicon
-# انقضای رزرو سفارش:    uv run python manage.py expire_orders  (هر ۵ دقیقه؛ کران در P6)
-# بازسازی خرید ۳۰ روزه:  uv run python manage.py recount_purchases  (شبانه؛ کران در P6)
-# بازسازی شمارنده‌ها:    uv run python manage.py reconcile_counters  (شبانه؛ کران در P6)
+# انقضای رزرو سفارش:    uv run python manage.py expire_orders  (هر ۵ دقیقه)
+# پیامک «موجود شد»:      uv run python manage.py send_back_in_stock  (هر ۱۰ دقیقه؛ بازه‌ی ساعت در SiteSettings)
+# بازسازی خرید ۳۰ روزه:  uv run python manage.py recount_purchases  (شبانه)
+# بازسازی شمارنده‌ها:    uv run python manage.py reconcile_counters  (شبانه)
+# گیت انتشار:            uv run python manage.py check_launch  (--strict: هشدار هم خطاست)
+# پشتیبان دیتابیس:       uv run python manage.py backup_db --with-media  (شبانه؛ BACKUP_DIR بیرون پروژه)
+# پاک‌سازی نگه‌داری:     uv run python manage.py purge_otp | purge_sms_logs  (شبانه)
+# گروه‌های staff:        uv run python manage.py setup_groups  و  create_staff 0912... --group فروش
 # دستورهای مدیریتی:     uv run python manage.py migrate | makemigrations | collectstatic
 ```
+
+cron سرور در `deploy/crontab.example` است (یک فایل، بدون timer). استقرار و بازیابی: `docs/deploy.md`.
 
 ## ۸. ساختار پوشه‌ها
 
@@ -130,15 +138,17 @@
 config/        env.py، settings/ (base/dev/prod)، urls.py، wsgi.py، asgi.py
 apps/core/     مدل‌های پایه (SiteSettings، StaticPage، FooterLink)، jalali، text، validators، templatetags، tests
 apps/cart/     سبد سرور (Cart/CartItem) و rules
-apps/orders/   ShippingMethod، Order/OrderItem/OrderStatusLog، checkout، expire_orders
-apps/payments/ PaymentGateway/Payment، gateways (zarinpal/fake)، callback
-apps/engagement/ Like/Review/ProductDailyStat، counters.py (تنها نویسنده‌ی شمارنده‌ها)، social.py، wishlist، similar
+apps/orders/   ShippingMethod، Order/OrderItem/OrderStatusLog، checkout، expire_orders، workflow (وضعیت کارمند)، notify، invoice
+apps/payments/ PaymentGateway/Payment، gateways (zarinpal/fake)، callback، refund_candidates
+apps/engagement/ Like/Review/ProductDailyStat/StockSubscription، counters.py (تنها نویسنده‌ی شمارنده‌ها)، social.py، wishlist، similar، back_in_stock
 apps/marketing/ TrustItem، Banner، Collection/CollectionItem، HomeBlock، services (سرهم‌کردن صفحه‌ی اصلی و مجموعه)
-templates/     base.html، 404.html، 500.html، partials/ (_header، _dock، _footer، _logo، _brand_name، _section_heading)، pages/
+apps/notifications/ SmsLog و adapter پیامک (console/smsir)، maintenance
+templates/     base.html، 404.html، 500.html، admin/ (قالب‌های سفارش)، partials/ (_header، _dock، _footer، _logo، _brand_name، _section_heading)، pages/
 static/        fonts/{vazir,inter,dastnevis}/، src/ (input.css، sprite.svg — در collectstatic ignore می‌شود)، css/app.css، js/{htmx.min.js,mm/*.js}، sprite.svg، logo.webp، favicon/
 scripts/       build_sprite.py، make_favicons.py، sync_vendor.mjs
-docs/          اسناد ۰۱ تا ۰۸، phases/، vendors/
-Makefile       میانبرهای run، css، sprite، favicons، test، lint، format، check، expire، recount، reconcile
+deploy/        malmal.service، nginx.conf.example، crontab.example
+docs/          اسناد ۰۱ تا ۰۸، deploy.md، phases/، vendors/
+Makefile       میانبرهای run، css، sprite، favicons، test، lint، format، check، seed، warm، search، expire، recount، reconcile، stock، launch، backup، purge
 ```
 
 ## ۹. وقتی فاز تمام شد

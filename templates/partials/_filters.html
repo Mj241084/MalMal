@@ -24,7 +24,7 @@
         <label class="flex items-center gap-2 cursor-pointer h-9 min-h-9">
           <input type="checkbox" name="brand" value="{{ brand.id }}" class="checkbox checkbox-sm"
                  {% if brand.id in filters.brands %}checked{% endif %}>
-          <span class="text-small">{{ brand.name }}</span>
+          <span class="text-small">{{ brand.name|fa_text }}</span>
           <span class="text-label text-ink-3">{{ brand.count|fa_digits }}</span>
         </label>
       {% endfor %}
@@ -63,13 +63,13 @@
 
   {% for attribute in facets.attributes %}
     <fieldset class="flex flex-col gap-2">
-      <legend class="text-label text-ink-2 mb-1">{{ attribute.name }}</legend>
+      <legend class="text-label text-ink-2 mb-1">{{ attribute.name|fa_text }}</legend>
       {% with selected=filters.specs|get_item:attribute.id %}
         {% for value in attribute.values %}
           <label class="flex items-center gap-2 cursor-pointer min-h-10">
             <input type="checkbox" name="attr_{{ attribute.id }}" value="{{ value }}" class="checkbox checkbox-sm"
                    {% if value in selected %}checked{% endif %}>
-            <span class="text-small">{{ value }}</span>
+            <span class="text-small">{{ value|fa_text }}</span>
           </label>
         {% endfor %}
       {% endwith %}

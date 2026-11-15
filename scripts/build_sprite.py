@@ -77,8 +77,9 @@ def build_sprite(used: set[str] | None = None) -> tuple[Path, int, list[str]]:
         sym = symbol_map.get(name)
         if sym is None:
             continue
-        # Remove hardcoded stroke-width="2" from source symbol so <svg stroke-width="1.5"> controls it.
-        new_attrib = {k: v for k, v in sym.attrib.items() if k != "stroke-width"}
+        # Remove hardcoded stroke-width="2" and fill="none" from the source symbol: the outer <svg>
+        # sets stroke-width="1.5" and fill="none", so a filled state (fill-current) can win.
+        new_attrib = {k: v for k, v in sym.attrib.items() if k not in ("stroke-width", "fill")}
         new_sym = ET.Element(f"{{{SVG_NS}}}symbol", new_attrib)
         for child in sym:
             # Strip comments and copy geometry elements cleanly.

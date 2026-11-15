@@ -19,6 +19,11 @@ from apps.catalog.constants import (
 from apps.core.models import TimeStampedModel
 
 
+def _list_snapshot(product) -> tuple:
+    """Aggregate fields that make a product move between LIST-level caches."""
+    return (product.min_price, product.max_price, product.compare_at_min, product.discount_pct, product.in_stock)
+
+
 class Brand(TimeStampedModel):
     """Manufacturer / brand with search aliases (fa + en)."""
 
@@ -104,6 +109,13 @@ class Category(TimeStampedModel):
     def get_absolute_url(self) -> str:
         return reverse("catalog:category", args=[self.pk, self.slug])
 
+    def clean(self) -> None:
+        from django.core.exceptions import ValidationError
+
+        super().clean()
+        if self.pk and self.parent_id and self.path and self.parent.path.startswith(self.path):
+            raise ValidationError({"parent": "دسته نمی‌تواند زیرمجموعه‌ی خودش باشد."})
+
     # --- tree helpers ------------------------------------------------------
 
     def ancestors(self) -> list[Category]:
@@ -169,7 +181,8 @@ class Category(TimeStampedModel):
 
         if changed or moved:
             category_id = self.pk
-            transaction.on_commit(lambda: invalidate_category(category_id))
+            moved_from = old_path if moved else None
+            transaction.on_commit(lambda: invalidate_category(category_id, moved_from))
 
 
 class ProductQuerySet(models.QuerySet):
@@ -289,20 +302,14 @@ class Product(TimeStampedModel):
 
     def refresh_aggregates(self, *, save: bool = True) -> bool:
         """Recompute price/stock aggregates from active variants. Saves only on change."""
-        from django.db.models import Max, Min, Sum
+        rows = list(self.variants.filter(is_active=True).values_list("price", "compare_at_price", "stock"))
+        min_price = min((r[0] for r in rows), default=0)
+        max_price = max((r[0] for r in rows), default=0)
+        total_stock = sum(r[2] for r in rows)
+        # The discount badge belongs to the cheapest variant, not to any variant that happens to be discounted.
+        cheapest_compare = max((r[1] for r in rows if r[0] == min_price and r[1]), default=None)
+        compare_at_min = cheapest_compare if cheapest_compare and cheapest_compare > min_price else None
 
-        aggregates = self.variants.filter(is_active=True).aggregate(
-            min_price=Min("price"),
-            max_price=Max("price"),
-            total=Sum("stock"),
-            compare=Min("compare_at_price"),
-        )
-        min_price = aggregates["min_price"] or 0
-        max_price = aggregates["max_price"] or 0
-        total_stock = aggregates["total"] or 0
-        compare = aggregates["compare"]
-
-        compare_at_min = compare if compare and compare > min_price else None
         discount_pct = 0
         if compare_at_min:
             discount_pct = round((compare_at_min - min_price) * 100 / compare_at_min)
@@ -373,10 +380,21 @@ class Product(TimeStampedModel):
             self.search_text = build_search_text(self)
             changed.add("search_text")
 
+        path_changed = False
         if self.category_id:
             category_path = Category.objects.filter(pk=self.category_id).values_list("path", flat=True).first()
             if category_path and category_path != self.category_path:
                 self.category_path = category_path
+                path_changed = True
+
+        if kwargs.get("update_fields") is not None:
+            # Computed columns are written above, so a partial save must carry them along or the row goes stale.
+            touched = {"slug"} & changed
+            if "search_text" in changed:
+                touched.add("search_text")
+            if path_changed:
+                touched.add("category_path")
+            kwargs["update_fields"] = [*kwargs["update_fields"], *(touched - set(kwargs["update_fields"]))]
 
         super().save(*args, **kwargs)
         self._snapshot_tracked()
@@ -440,6 +458,12 @@ class Variant(TimeStampedModel):
             return self.stock
         return min(self.stock, self.max_per_order)
 
+    @property
+    def discount_pct(self) -> int:
+        if self.compare_at_price and self.compare_at_price > self.price:
+            return round((self.compare_at_price - self.price) * 100 / self.compare_at_price)
+        return 0
+
     def clean(self) -> None:
         from django.core.exceptions import ValidationError
 
@@ -451,22 +475,35 @@ class Variant(TimeStampedModel):
     def save(self, *args, **kwargs) -> None:
         previous = {}
         if self.pk and not self._state.adding:
-            previous = Variant.objects.filter(pk=self.pk).values(*VARIANT_DETAIL_FIELDS).first() or {}
+            previous = Variant.objects.filter(pk=self.pk).values(*VARIANT_DETAIL_FIELDS, "stock").first() or {}
 
         super().save(*args, **kwargs)
-        self.product.refresh_aggregates()
+
+        product = self.product
+        before = _list_snapshot(product)
+        product.refresh_aggregates()
+        list_moved = before != _list_snapshot(product)  # Product.save already did the LIST invalidation
+
+        if previous.get("stock") == 0 and self.stock > 0 and self.is_active:
+            from apps.engagement import back_in_stock
+
+            variant_id = self.pk
+            transaction.on_commit(lambda: back_in_stock.mark_due(variant_id))
 
         changed = {field for field in VARIANT_DETAIL_FIELDS if previous.get(field) != getattr(self, field)}
-        if changed:
+        if changed and not list_moved:
             from apps.catalog.cache import invalidate_product
 
             product_id = self.product_id
             transaction.on_commit(lambda: invalidate_product(product_id, LEVEL_DETAIL))
 
     def delete(self, *args, **kwargs):
+        from apps.catalog.cache import touch_product
+
         product = self.product
         result = super().delete(*args, **kwargs)
         product.refresh_aggregates()
+        transaction.on_commit(lambda: touch_product(product.pk, LEVEL_DETAIL), robust=True)
         return result
 
 
@@ -491,7 +528,9 @@ class ProductImage(TimeStampedModel):
         return self.alt or f"تصویر {self.product_id}"
 
     def save(self, *args, **kwargs) -> None:
-        generating = not self.widths and bool(self.image)
+        if self.image and not getattr(self.image, "_committed", True):
+            self.widths = {}  # a new file replaced the old one: renditions must be rebuilt
+        generating = bool(self.image) and not self.widths
         super().save(*args, **kwargs)
         if generating:
             from apps.catalog.images import generate_webp_sizes
@@ -505,6 +544,19 @@ class ProductImage(TimeStampedModel):
                 self.widths = {}
             else:
                 super().save(update_fields=["widths"])
+
+        from apps.catalog.cache import touch_product
+
+        product_id = self.product_id
+        transaction.on_commit(lambda: touch_product(product_id, LEVEL_DETAIL), robust=True)
+
+    def delete(self, *args, **kwargs):
+        from apps.catalog.cache import touch_product
+
+        product_id = self.product_id
+        result = super().delete(*args, **kwargs)
+        transaction.on_commit(lambda: touch_product(product_id, LEVEL_DETAIL), robust=True)
+        return result
 
     def srcset(self) -> str:
         from django.conf import settings
@@ -556,6 +608,21 @@ class SpecAttribute(TimeStampedModel):
     def __str__(self) -> str:
         return f"{self.name} ({self.category.name})"
 
+    def save(self, *args, **kwargs) -> None:
+        super().save(*args, **kwargs)
+        from apps.catalog.cache import invalidate_category
+
+        category_id = self.category_id
+        transaction.on_commit(lambda: invalidate_category(category_id), robust=True)
+
+    def delete(self, *args, **kwargs):
+        from apps.catalog.cache import invalidate_category
+
+        category_id = self.category_id
+        result = super().delete(*args, **kwargs)
+        transaction.on_commit(lambda: invalidate_category(category_id), robust=True)
+        return result
+
 
 class ProductSpecValue(TimeStampedModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="spec_values", verbose_name="محصول")
@@ -578,6 +645,21 @@ class ProductSpecValue(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.attribute.name}: {self.value_text or self.value_number}"
+
+    def save(self, *args, **kwargs) -> None:
+        super().save(*args, **kwargs)
+        from apps.catalog.cache import touch_product
+
+        product_id = self.product_id
+        transaction.on_commit(lambda: touch_product(product_id, LEVEL_LIST), robust=True)
+
+    def delete(self, *args, **kwargs):
+        from apps.catalog.cache import touch_product
+
+        product_id = self.product_id
+        result = super().delete(*args, **kwargs)
+        transaction.on_commit(lambda: touch_product(product_id, LEVEL_LIST), robust=True)
+        return result
 
 
 class StockMovement(TimeStampedModel):

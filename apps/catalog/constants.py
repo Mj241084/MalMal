@@ -42,8 +42,11 @@ TRACKED_DETAIL = frozenset(
     }
 )
 
-# Variant fields that only affect the product detail page (docs/03 §5, D29).
-VARIANT_DETAIL_FIELDS = frozenset({"title", "options", "max_per_order", "weight_g"})
+# Variant fields that affect the product detail page (docs/03 §5, D29).
+# price/compare_at_price/is_active/sort also move the LIST aggregates, so their level is decided by the aggregate diff.
+VARIANT_DETAIL_FIELDS = frozenset(
+    {"title", "options", "max_per_order", "weight_g", "price", "compare_at_price", "is_active", "sort"}
+)
 
 # Structural category fields: any change invalidates the menu and subtree caches.
 CATEGORY_STRUCTURAL = frozenset(
@@ -70,7 +73,7 @@ TTL_CATEGORY_FACETS = 60 * 60 * 6
 TTL_MENU = 60 * 60 * 24
 TTL_SEARCH_SUGGEST = 60
 # Bump when the markup of a cached fragment (product detail, cards, category results, similar rail) changes.
-FRAGMENT_VERSION = 1
+FRAGMENT_VERSION = 3
 TTL_SIMILAR = 60 * 60 * 6
 
 # Image renditions generated on upload.

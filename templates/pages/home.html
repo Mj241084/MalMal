@@ -3,6 +3,8 @@
 
 {% block title %}{{ site_settings.store_name }} — فروشگاه آنلاین لوازم خانگی{% endblock %}
 
+{% block extra_head %}<script type="application/ld+json">{{ organization_ld|safe }}</script>{% endblock %}
+
 {% block content %}
 <h1 class="sr-only">{{ site_settings.store_name }} — فروشگاه آنلاین لوازم خانگی</h1>
 <div class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 lg:py-8 flex flex-col gap-10 lg:gap-16">

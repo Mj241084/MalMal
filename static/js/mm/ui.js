@@ -136,4 +136,9 @@
   function transportError() { ui.toast("ارتباط برقرار نشد. دوباره تلاش کنید", { level: "error" }); }
   document.addEventListener("htmx:responseError", transportError);
   document.addEventListener("htmx:sendError", transportError);
+
+  /* [data-print]: the invoice page's print button (no inline JS, D31) */
+  document.addEventListener("click", function (event) {
+    if (event.target.closest && event.target.closest("[data-print]")) window.print();
+  });
 })(window.MM);

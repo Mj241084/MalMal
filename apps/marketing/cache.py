@@ -7,7 +7,7 @@ for the 12h TTL.
 
 from __future__ import annotations
 
-from apps.core.cache import get_or_build, safe_cache_get, safe_cache_incr_epoch
+from apps.core.cache import get_or_build, read_epoch, safe_cache_incr_epoch
 
 TRUST_REV_KEY = "trust_rev"
 TRUST_TTL = 60 * 60 * 24
@@ -15,8 +15,7 @@ TRUST_LIMIT = 3
 
 
 def trust_revision() -> int:
-    value = safe_cache_get(TRUST_REV_KEY)
-    return int(value) if isinstance(value, int) else 0
+    return read_epoch(TRUST_REV_KEY)
 
 
 def bump_trust_revision() -> None:

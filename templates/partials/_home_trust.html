@@ -4,8 +4,8 @@
     <li class="bg-base-100 border rounded-box p-4 flex items-start gap-3">
       {% icon item.icon size=20 safe=True class="text-ink-2 mt-0.5" %}
       <span class="flex flex-col">
-        <span class="text-small font-medium">{{ item.title }}</span>
-        {% if item.subtitle %}<span class="text-label text-ink-3">{{ item.subtitle }}</span>{% endif %}
+        <span class="text-small font-medium">{{ item.title|fa_text }}</span>
+        {% if item.subtitle %}<span class="text-label text-ink-3">{{ item.subtitle|fa_text }}</span>{% endif %}
       </span>
     </li>
   {% endfor %}

@@ -125,6 +125,7 @@ class Order(TimeStampedModel):
         verbose_name = "سفارش"
         verbose_name_plural = "سفارش‌ها"
         ordering = ["-created_at", "-id"]
+        permissions = [("manage_order_status", "Can change an order's status")]
         indexes = [
             models.Index(fields=["user", "-created_at"], name="order_user_created_idx"),
             models.Index(fields=["status", "reserved_until"], name="order_status_reserved_idx"),
@@ -183,3 +184,7 @@ class OrderStatusLog(models.Model):
         verbose_name = "تاریخچه‌ی وضعیت سفارش"
         verbose_name_plural = "تاریخچه‌ی وضعیت سفارش‌ها"
         ordering = ["created_at", "id"]
+
+
+# The states in which the invoice exists and the money was actually taken (docs/02 §7).
+PAID_STATES = (Order.PAID, Order.PROCESSING, Order.SHIPPED, Order.DELIVERED)

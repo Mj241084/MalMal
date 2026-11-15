@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Exists, OuterRef, Q
 from django.urls import reverse
 from django.utils import timezone
 
@@ -15,6 +16,7 @@ from apps.cart import services as cart_services
 from apps.cart.models import CartItem
 from apps.engagement import counters
 from apps.notifications import sms
+from apps.orders import notify as order_notify
 from apps.orders import services as order_services
 from apps.orders.models import Order
 from apps.payments import gateways
@@ -57,6 +59,8 @@ def start(order: Order, gateway_code: str, *, ip: str | None = None) -> str:
     except KeyError as exc:
         raise PaymentStartError(f"unknown gateway {gateway_code!r}") from exc
 
+    # The customer is about to leave for the bank: keep the reservation past their return (capped).
+    order_services.extend_reservation(order.pk)
     payment = Payment.objects.create(order=order, gateway_code=gateway_code, amount=order.payable, ip=ip)
     callback = f"{settings.SITE_URL}{reverse('payments:callback', args=[gateway_code])}"
     try:
@@ -71,13 +75,16 @@ def start(order: Order, gateway_code: str, *, ip: str | None = None) -> str:
         _move(payment.pk, [Payment.INITIATED], status=Payment.FAILED, request_payload={"error": str(exc)})
         logger.warning("Payment %s could not start: %s", payment.pk, exc)
         raise PaymentStartError(str(exc)) from exc
-    _move(
+    if not _move(
         payment.pk,
         [Payment.INITIATED],
         status=Payment.REDIRECTED,
         authority=result.authority,
         request_payload=result.payload,
-    )
+    ):
+        # cancelled meanwhile (superseded): keep the authority so a stray callback stays reconcilable
+        _move(payment.pk, [Payment.CANCELLED], authority=result.authority, request_payload=result.payload)
+        raise PaymentStartError("order changed while the payment was starting")
     return result.redirect_url
 
 
@@ -93,7 +100,7 @@ def handle_callback(gateway_code: str, params) -> Outcome:
     if payment is None:
         return Outcome("unknown")
     order = payment.order
-    if payment.status == Payment.VERIFIED:
+    if payment.status in (Payment.VERIFIED, Payment.REFUNDED):
         return Outcome("paid", order)
     if not reported_ok:
         _move(payment.pk, [Payment.INITIATED, Payment.REDIRECTED], status=Payment.CANCELLED)
@@ -103,7 +110,9 @@ def handle_callback(gateway_code: str, params) -> Outcome:
     # still completes at the bank.
     if not _move(payment.pk, [Payment.REDIRECTED, Payment.CANCELLED], status=Payment.VERIFYING):
         payment.refresh_from_db()
-        state = {Payment.VERIFIED: "paid", Payment.FAILED: "failed"}.get(payment.status, "processing")
+        state = {Payment.VERIFIED: "paid", Payment.REFUNDED: "paid", Payment.FAILED: "failed"}.get(
+            payment.status, "processing"
+        )
         return Outcome(state, order)
 
     result = adapter.verify(authority=authority, amount=payment.amount)  # network: no transaction is open here
@@ -171,7 +180,15 @@ def _finalize(payment_id: int, result: gateways.VerifyResult) -> str:
 
 def _notify_paid(order_id: int) -> None:
     order = Order.objects.get(pk=order_id)
-    try:
-        sms.send_template("order_paid", order.buyer_mobile, {"ORDER": order.number, "AMOUNT": f"{order.payable:,}"})
-    except Exception:  # an SMS problem must never touch the order (docs/05 §4)
-        logger.exception("order_paid SMS failed for %s", order.number)
+    params = {"ORDER": order.number, "AMOUNT": f"{order.payable:,}"}
+    sms.send_safely("order_paid", order.buyer_mobile, params)
+    for mobile in order_notify.admin_mobiles():
+        sms.send_safely("admin_new_order", mobile, params)
+
+
+def refund_candidates():
+    """Verified payments that no longer back a live order, plus any second verified payment of one order."""
+    earlier = Payment.objects.filter(order_id=OuterRef("order_id"), status=Payment.VERIFIED, pk__lt=OuterRef("pk"))
+    return Payment.objects.filter(status=Payment.VERIFIED).filter(
+        Q(order__status__in=[Order.CANCELLED, Order.EXPIRED]) | Exists(earlier)
+    )

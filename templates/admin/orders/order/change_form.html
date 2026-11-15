@@ -1,0 +1,6 @@
+{% extends "admin/change_form.html" %}
+{% block object-tools-items %}
+  {% if can_manage and has_targets %}<li><a href="{% url 'admin:orders_order_status' original.pk %}">تغییر وضعیت</a></li>{% endif %}
+  {% if can_invoice %}<li><a href="{% url 'admin:orders_order_invoice' original.pk %}" target="_blank" rel="noopener">چاپ فاکتور</a></li>{% endif %}
+  {{ block.super }}
+{% endblock %}

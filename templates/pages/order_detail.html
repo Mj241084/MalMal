@@ -19,6 +19,12 @@
 
   <div class="mt-4">{% include "partials/_order_summary.html" %}</div>
 
+  {% if invoice_url %}
+    <a href="{{ invoice_url }}" target="_blank" rel="noopener" class="btn bg-base-100 border h-10 mt-4 gap-2">
+      {% icon "printer" size=18 %}<span>چاپ فاکتور</span>
+    </a>
+  {% endif %}
+
   {% if order.can_pay_now and gateways %}
     <form id="pay-form" method="post" action="{% url 'orders:pay' order.number %}" class="mt-4 bg-base-100 border rounded-box p-4 flex flex-col gap-3">
       {% csrf_token %}
@@ -35,7 +41,7 @@
       <button type="submit" class="btn btn-primary h-11 min-h-11 hidden lg:inline-flex lg:self-start">پرداخت</button>
     </form>
 
-    <div class="lg:hidden fixed bottom-16 inset-x-0 z-20 bg-base-100 border-t px-4 py-3">
+    <div class="lg:hidden fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] inset-x-0 z-20 bg-base-100 border-t px-4 py-3">
       <div class="flex items-center gap-3">
         <button type="submit" form="pay-form" class="btn btn-primary flex-1 min-w-0 h-11 min-h-11">پرداخت</button>
         <div class="flex flex-col items-end shrink-0 leading-5">

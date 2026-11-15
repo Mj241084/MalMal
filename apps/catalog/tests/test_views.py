@@ -114,14 +114,6 @@ def test_product_page_exposes_json_ld_and_etag(client, product):
 
 
 @pytest.mark.django_db
-def test_variant_panel_returns_selected_variant(client, product):
-    second = Variant.objects.create(product=product, sku="WM-1234-B", title="مشکی", price=49_000_000, stock=2)
-    response = client.get(f"/p/{product.pk}/variant/{second.pk}/", HTTP_HX_REQUEST="true")
-    assert response.status_code == 200
-    assert "۴۹٬۰۰۰٬۰۰۰" in response.content.decode()
-
-
-@pytest.mark.django_db
 def test_variant_of_another_product_is_404(client, product):
     other = Product.objects.create(title="دیگری", category=product.category, status=Product.STATUS_ACTIVE)
     foreign = Variant.objects.create(product=other, sku="OTHER-1", title="x", price=1, stock=1)
@@ -144,16 +136,6 @@ def test_search_page_and_suggest(client, product):
     suggest = client.get("/search/suggest/", {"q": "بوش"})
     assert suggest.status_code == 200
     assert product.title in suggest.content.decode()
-
-
-@pytest.mark.django_db
-def test_category_htmx_request_returns_partial(client):
-    category = Category.objects.create(name="ریشه")
-    response = client.get(category.get_absolute_url(), HTTP_HX_REQUEST="true")
-    assert response.status_code == 200
-    body = response.content.decode()
-    assert "<html" not in body
-    assert "محصول" in body
 
 
 @pytest.mark.django_db

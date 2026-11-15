@@ -10,8 +10,11 @@
     <span class="dock-label">دسته‌ها</span>
   </label>
 
-  <a href="{% url 'cart:detail' %}" class="relative">
-    {% icon "shopping-cart" size=20 %}
+  <a href="{% url 'cart:detail' %}">
+    <span class="relative inline-flex">
+      {% icon "shopping-cart" size=20 %}
+      <span class="badge badge-xs bg-base-300 text-base-content absolute -top-1 -end-2 px-1 min-w-4 h-4 text-label{% if not cart_count %} invisible{% endif %}" data-cart-count>{{ cart_count|fa_digits }}</span>
+    </span>
     <span class="dock-label">سبد خرید</span>
   </a>
 </nav>

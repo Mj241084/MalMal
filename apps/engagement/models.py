@@ -83,3 +83,26 @@ class ProductDailyStat(models.Model):
         verbose_name_plural = "آمار روزانه‌ی محصولات"
         constraints = [models.UniqueConstraint(fields=["product", "date"], name="uniq_stat_product_date")]
         indexes = [models.Index(fields=["date"], name="stat_date_idx")]
+
+
+class StockSubscription(models.Model):
+    """«خبرم کن» on a sold-out variant. `restocked_at` is set by a real restock; the command sends after it."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="stock_subscriptions")
+    variant = models.ForeignKey("catalog.Variant", on_delete=models.CASCADE, related_name="stock_subscriptions")
+    restocked_at = models.DateTimeField(null=True, blank=True)
+    notified_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "اشتراک موجود شد"
+        verbose_name_plural = "اشتراک‌های موجود شد"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "variant"], condition=Q(notified_at__isnull=True), name="uniq_open_stock_subscription"
+            )
+        ]
+        indexes = [models.Index(fields=["variant", "notified_at"], name="stocksub_variant_idx")]
+
+    def __str__(self) -> str:
+        return f"{self.user_id} → {self.variant_id}"

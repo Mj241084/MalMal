@@ -1,4 +1,4 @@
-/* MM.shell: cart badge count, search suggestion panel, and styleguide demos. */
+/* MM.shell: cart badge count, search suggestion panel, dropdown menus, rail arrows, styleguide demos. */
 (function (MM) {
   "use strict";
 
@@ -19,12 +19,32 @@
     panel.classList.toggle("hidden", !hasContent);
   }
 
+  /* An open <details class="dropdown"> closes on outside click and on Escape. */
+  function closeDropdowns(except) {
+    document.querySelectorAll("details.dropdown[open]").forEach(function (d) {
+      if (d !== except) d.removeAttribute("open");
+    });
+  }
+
   document.addEventListener("click", function (e) {
     var panel = document.getElementById("search-suggest");
     if (panel && !panel.classList.contains("hidden")) {
       var form = panel.closest("form");
       if (form && !form.contains(e.target)) {
         panel.classList.add("hidden");
+      }
+    }
+
+    closeDropdowns(e.target.closest ? e.target.closest("details.dropdown") : null);
+
+    var rail = e.target.closest ? e.target.closest("[data-rail-scroll]") : null;
+    if (rail) {
+      var track = document.getElementById(rail.getAttribute("data-rail"));
+      if (track) {
+        var rtl = window.getComputedStyle(track).direction === "rtl";
+        var dir = parseInt(rail.getAttribute("data-rail-scroll"), 10) * (rtl ? -1 : 1);
+        var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        track.scrollBy({ left: dir * track.clientWidth * 0.8, behavior: reduced ? "auto" : "smooth" });
       }
     }
 
@@ -55,6 +75,13 @@
     if (e.key !== "Escape") return;
     var panel = document.getElementById("search-suggest");
     if (panel) panel.classList.add("hidden");
+    closeDropdowns(null);
+  });
+
+  /* The suggestion panel is swapped as a child of #search-suggest, so MM.init on the new root misses it. */
+  document.addEventListener("htmx:afterSwap", function (event) {
+    var target = event.detail && event.detail.target;
+    if (target && target.id === "search-suggest") syncSuggestPanel();
   });
 
   MM.init("shell", function (root) {

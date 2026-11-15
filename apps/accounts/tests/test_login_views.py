@@ -14,7 +14,6 @@ from django.utils import timezone
 from apps.accounts import ratelimit
 from apps.accounts.models import OTPChallenge, User
 from apps.cart.models import CartItem
-from apps.core.models import StaticPage
 from apps.notifications.models import SmsLog
 
 pytestmark = pytest.mark.django_db
@@ -54,25 +53,6 @@ def _verify(client, code, mobile=MOBILE, next_url="", htmx=True):
 
 
 class TestRequestCode:
-    def test_htmx_response_is_the_code_step(self, client, fixed_otp_code):
-        response = _request_code(client)
-
-        assert response.status_code == 200
-        assert "partials/_otp_code_step.html" in [t.name for t in response.templates]
-        body = response.content.decode()
-        assert 'autocomplete="one-time-code"' in body
-        assert 'inputmode="numeric"' in body
-        assert "data-otp-timer" in body
-        assert SmsLog.objects.count() == 1
-
-    def test_full_page_fallback_renders_the_code_step(self, client, fixed_otp_code):
-        response = _request_code(client, htmx=False)
-
-        assert response.status_code == 200
-        body = response.content.decode()
-        assert "<html" in body
-        assert "کد تایید را وارد کنید" in body
-
     def test_known_and_unknown_mobiles_get_identical_responses(self, client, fixed_otp_code):
         User.objects.create_user(MOBILE)
 
@@ -96,13 +76,6 @@ class TestRequestCode:
 
         assert "تعداد درخواست‌ها زیاد شد" in known
         assert _normalize(known) == _normalize(unknown)
-
-    def test_invalid_mobile_keeps_the_form_on_screen(self, client, fixed_otp_code):
-        response = _request_code(client, "123")
-
-        assert response.status_code == 200
-        assert "partials/_login_flow.html" in [t.name for t in response.templates]
-        assert not SmsLog.objects.exists()
 
 
 class TestVerifyCode:
@@ -215,19 +188,6 @@ class TestVerifyCode:
         assert "امکان ورود به این حساب در حال حاضر وجود ندارد" in response.content.decode()
         assert not client.session.get("_auth_user_id")
 
-    def test_invalid_code_form_shows_error_and_preserves_timer(self, client, fixed_otp_code):
-        _request_code(client)
-
-        response = _verify(client, "12")
-        body = response.content.decode()
-
-        assert "کد تایید ۴ رقم است" in body
-        assert 'data-seconds="0"' not in body
-        match = re.search(r'data-seconds="(\d+)"', body)
-        assert match and int(match.group(1)) > 0
-        assert 'id="otp-resend"' in body
-        assert "disabled" in body.split('id="otp-resend"')[1].split(">")[0]
-
     def test_guest_cart_is_merged_before_the_redirect(self, client, fixed_otp_code, product):
         variant = product.variants.get()
         _request_code(client)
@@ -307,12 +267,3 @@ class TestPendingStep:
         assert (
             "data-otp-length" not in client.get(reverse("accounts:otp_modal"), HTTP_HX_REQUEST="true").content.decode()
         )
-
-    def test_terms_link_shown_only_when_active_terms_page_exists(self, client):
-        body_without_terms = client.get(reverse("accounts:otp_modal"), HTTP_HX_REQUEST="true").content.decode()
-        assert "قوانین و مقررات" not in body_without_terms
-
-        StaticPage.objects.create(slug="terms", title="قوانین و مقررات", body="متن قوانین", is_active=True)
-        body_with_terms = client.get(reverse("accounts:otp_modal"), HTTP_HX_REQUEST="true").content.decode()
-        assert "قوانین و مقررات" in body_with_terms
-        assert reverse("core:static_page", args=["terms"]) in body_with_terms

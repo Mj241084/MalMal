@@ -15,6 +15,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "django.contrib.sitemaps",
     "apps.core.apps.MalmalStaticFilesConfig",
     "django_htmx",
     "apps.core",
@@ -125,6 +126,9 @@ NESHAN_MAP_KEY = get_env("NESHAN_MAP_KEY")
 NESHAN_SERVICE_KEY = get_env("NESHAN_SERVICE_KEY")
 
 TRUSTED_PROXY_IPS = get_env_list("TRUSTED_PROXY_IPS")
+
+# Nightly SQLite backups land here (outside the project; docs/03 §1).
+BACKUP_DIR = get_env("BACKUP_DIR")
 
 ZARINPAL_MERCHANT_ID = get_env("ZARINPAL_MERCHANT_ID")
 ZARINPAL_SANDBOX = get_env_bool("ZARINPAL_SANDBOX", True)

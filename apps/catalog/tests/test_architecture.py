@@ -27,3 +27,17 @@ def test_no_raw_queryset_update_on_tracked_models():
                 offenders.append(f"{relative}:{number}: {line.strip()}")
 
     assert not offenders, "Use update_tracked()/bulk_update_tracked() instead:\n" + "\n".join(offenders)
+
+
+def test_order_status_only_changes_through_transition():
+    pattern = re.compile(r"\bOrder\.objects[^\n]*\.update\(")
+    offenders = [
+        f"{path.relative_to(APPS_DIR.parent).as_posix()}:{number}"
+        for path in APPS_DIR.rglob("*.py")
+        if "/tests/" not in path.as_posix()
+        and "/migrations/" not in path.as_posix()
+        and path.relative_to(APPS_DIR.parent).as_posix() != "apps/orders/services.py"
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1)
+        if pattern.search(line)
+    ]
+    assert not offenders, "Use services.transition / workflow.change_status:\n" + "\n".join(offenders)
