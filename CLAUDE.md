@@ -64,6 +64,8 @@
 - **هیچ تماس شبکه (پیامک، درگاه، نقشه) داخل تراکنش دیتابیس نباشد.** ارسال‌ها بعد از `transaction.on_commit`.
 - تراکنش‌های نوشتن `IMMEDIATE`؛ کوتاه نگه دار.
 - تغییر مدل‌های کش‌شونده فقط از طریق مسیرهایی که `rev` را بالا می‌برند (`save()`، `update_tracked`، `bulk_update_tracked`). `QuerySet.update()` خام روی آن‌ها ممنوع. (`docs/03` بخش ۵ و ۹)
+- نوشتن شمارنده‌ها (لایک، نظر، خرید) فقط از `apps/engagement/counters.py`.
+- هر تغییر در مارک‌آپ قالب‌های کش‌شونده (`_product_card`، `_product_detail`، `_category_results`، `_similar`) = `FRAGMENT_VERSION` در `apps/catalog/constants.py` را +۱ کن.
 
 **ابزارها (D27)**
 - پایتون فقط با **`uv`**: `pyproject.toml` و `uv.lock`، `uv add`، `uv sync`، `uv run ...`. `pip`، `requirements.txt`، `poetry` و `venv` دستی ممنوع. ابزارهای توسعه در گروه `dev`.
@@ -95,13 +97,15 @@
 | `color-palette` | فقط اگر رنگی به سیستم اضافه می‌شود (`docs/04` بخش ۲). پالت فعلی نهایی است. |
 | `unslop` | هر وقت صفحه‌ی تازه می‌سازی یا ظاهر را بازبینی می‌کنی؛ چک‌لیست انتهای آن را اجرا کن. |
 | `htmx-patterns` | هر فاز با تعامل HTMX (از P1 به بعد). |
+| `image-fetch` | فقط در توسعه، وقتی عکس واقعی از وب لازم است (مثلاً عکس نمونه‌ی محصول یا دسته برای دیدن UI). اجرا: `uv run python skills/image-fetch/scripts/imgfetch.py search "<query>" -n 5 -o <پوشه>`. خروجی برای انتشار نیست (حق نشر) و مدل‌ها `is_demo` می‌مانند. کلیدهای API عمداً داخل اسکریپت‌اند، استثنای قاعده‌ی «سرّی‌ها»، و مالک خودش عوضشان می‌کند. |
 
 ## ۶. تست و کیفیت
 
 - هر فاز با تست و Definition of Done تمام می‌شود، نه با «نوشتم». تست‌ها را اجرا کن و خروجی را بخوان.
 - `uv run pytest` (`pytest-django`). تست رفتار، نه پیاده‌سازی. برای هر قاعده‌ی «همیشه/هرگز» در اسناد یک تست بنویس.
 - `uv run ruff check` و `uv run ruff format`. خروجی بدون خطا.
-- UI: قبل از اعلام پایان هر صفحه، آن را در مرورگر (Playwright در صورت نصب بودن) در دو تم و عرض‌های ۳۲۰ و ۱۲۸۰ ببین و چک‌لیست `docs/04` بخش ۱۳ و grepهای آن را اجرا کن.
+- UI: بررسی چشمی با کاربر است. مرورگر، Playwright و اسکرین‌شات اجرا نکن؛ در پایان هر فاز فهرست «چه چیزی باید دیده شود» را بده. grepهای `docs/04` بخش ۱۳ را خودت اجرا کن.
+- تست فقط برای قاعده‌ی کسب‌وکار، پول و موجودی، امنیت و باطل‌سازی کش. تست رفتار فریم‌ورک و متن یا مارک‌آپ ثابت ننویس.
 - کامیت: پیام انگلیسی، کوچک و مستقل. فقط وقتی کاربر خواست commit کن.
 
 ## ۷. دستورها
@@ -115,6 +119,8 @@
 # ساخت sprite:          uv run python scripts/build_sprite.py
 # ساخت favicon:         uv run python scripts/make_favicons.py static/logo.webp static/favicon
 # انقضای رزرو سفارش:    uv run python manage.py expire_orders  (هر ۵ دقیقه؛ کران در P6)
+# بازسازی خرید ۳۰ روزه:  uv run python manage.py recount_purchases  (شبانه؛ کران در P6)
+# بازسازی شمارنده‌ها:    uv run python manage.py reconcile_counters  (شبانه؛ کران در P6)
 # دستورهای مدیریتی:     uv run python manage.py migrate | makemigrations | collectstatic
 ```
 
@@ -126,16 +132,18 @@ apps/core/     مدل‌های پایه (SiteSettings، StaticPage، FooterLink)
 apps/cart/     سبد سرور (Cart/CartItem) و rules
 apps/orders/   ShippingMethod، Order/OrderItem/OrderStatusLog، checkout، expire_orders
 apps/payments/ PaymentGateway/Payment، gateways (zarinpal/fake)، callback
+apps/engagement/ Like/Review/ProductDailyStat، counters.py (تنها نویسنده‌ی شمارنده‌ها)، social.py، wishlist، similar
+apps/marketing/ TrustItem، Banner، Collection/CollectionItem، HomeBlock، services (سرهم‌کردن صفحه‌ی اصلی و مجموعه)
 templates/     base.html، 404.html، 500.html، partials/ (_header، _dock، _footer، _logo، _brand_name، _section_heading)، pages/
 static/        fonts/{vazir,inter,dastnevis}/، src/ (input.css، sprite.svg — در collectstatic ignore می‌شود)، css/app.css، js/{htmx.min.js,mm/*.js}، sprite.svg، logo.webp، favicon/
 scripts/       build_sprite.py، make_favicons.py، sync_vendor.mjs
 docs/          اسناد ۰۱ تا ۰۸، phases/، vendors/
-Makefile       میانبرهای run، css، sprite، favicons، test، lint، format، check، expire
+Makefile       میانبرهای run، css، sprite، favicons، test، lint، format، check، expire، recount، reconcile
 ```
 
 ## ۹. وقتی فاز تمام شد
 
-1. Definition of Done را یکی‌یکی با شواهد (خروجی تست، اسکرین‌شات) بگذران.
+1. Definition of Done را یکی‌یکی با شواهد (خروجی تست؛ موارد چشمی در فهرست کاربر) بگذران.
 2. اسناد را با واقعیت کد هم‌تراز کن و تغییرات را ثبت کن.
 3. `docs/phases/STATUS.md` را به‌روز کن.
 4. به کاربر در چند خط بگو: چه ساخته شد، چه مواردی `[ASSUMPTION]` یا `[VERIFY]` ماند، چه چیزی از او لازم است، قدم بعد.

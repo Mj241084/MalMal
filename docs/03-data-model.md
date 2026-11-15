@@ -1,4 +1,4 @@
-# ۰۳ — مدل داده، ایندکس، کش و جستجو — نسخه ۰.۳.۶
+# ۰۳ — مدل داده، ایندکس، کش و جستجو — نسخه ۰.۳.۸
 
 مرجع جریان‌ها: `02-spec.md`. نام فیلدها انگلیسی‌اند. همه‌ی مدل‌ها `created_at/updated_at` دارند مگر ذکر شود.
 پول: `BigIntegerField` به **تومان**. زمان: UTC.
@@ -108,14 +108,14 @@
 **StockMovement** (دفتر): `variant`, `delta`, `reason` (`order/cancel/expire/manual/return`), `order_item` null, `note`. فقط افزودنی (append-only).
 
 ### marketing
-**Banner**: `title`, `alt`, `image_desktop`, `image_mobile`, `placement` (`home_hero/home_strip/...`), `target_type` (`none/product/category/collection/url`), `target_product|target_category|target_collection` FK null، `target_url`, `starts_at`, `ends_at` (ذخیره UTC؛ در ادمین با ویجت تقویم شمسی طبق `06`)، `sort`, `is_active`. اعتبارسنجی: دقیقاً یک مقصد متناسب با `target_type`.
+**Banner**: `title` (داخلی)، `alt` (**اجباری**)، `image_desktop` (اجباری)، `image_mobile` (**اختیاری**؛ خالی = همان تصویر دسکتاپ)، `placement` (`home_hero/home_strip`), `target_type` (`none/product/category/collection/url`), `target_product|target_category|target_collection` FK null، `target_url`, `starts_at`, `ends_at` (ذخیره UTC؛ در ادمین با ویجت تقویم شمسی طبق `06`)، `sort`, `is_active`, `is_demo`. اعتبارسنجی: دقیقاً یک مقصد متناسب با `target_type`؛ `target_url` فقط مسیر داخلی (`/…`) یا `https://…`. قالب تصویر WebP/JPG/PNG، سقف ۱ مگابایت. زمان‌بندی با `ScheduledModel` مشترک است (`clean` پایان بعد از شروع، `is_live(now)`).
 
-**Collection**: `title`, `slug`, `description`, `cover`, `mode` (`manual/rule`), `is_active`, `starts_at`, `ends_at` (ویجت شمسی مثل Banner), `seo_*`.
-- قاعده‌ای: `categories` M2M، `brands` M2M، `min_discount_pct`، `min_price`، `max_price`، `only_in_stock`، `sort_by`، `limit`.
-- دستی: **CollectionItem** (`collection`, `product`, `sort`).
-- `rev` (کش).
+**Collection**: `title`, `slug`, `description`, `cover`, `mode` (`manual/rule`), `is_active`, `starts_at`, `ends_at` (ویجت شمسی مثل Banner), `seo_*`, `is_demo`.
+- قاعده‌ای: `categories` M2M، `brands` M2M، `min_discount_pct`، `min_price`، `max_price`، `only_in_stock`، `sort_by`.
+- دستی: **CollectionItem** (`collection`, `product`, `sort`) با unique `(collection, product)`.
+- **`rev` و `limit` ندارد** (P5): کلید کش از `epoch` سراسری می‌آید و سقف تعداد فقط روی `HomeBlock.limit` است. `CollectionQuerySet.live(now)` فعال و درون پنجره را برمی‌گرداند.
 
-**HomeBlock**: `kind` (`hero/categories/product_rail/collection_rail/banner_strip/brands/trust`), `title`, `collection` FK null, `category` FK null, `rail_source` (`best_selling/newest/discounted`), `limit`, `sort`, `is_active`.
+**HomeBlock**: `kind` (`hero/categories/product_rail/collection_rail/banner_strip/brands/trust`), `title`, `collection` FK null, `category` FK null, `rail_source` (`best_selling/newest/discounted`), `limit` (پیش‌فرض ۱۲، **حداکثر ۲۴**), `sort`, `is_active`. اعتبارسنجی: `collection_rail` بدون مجموعه و `product_rail` بدون منبع خطا؛ فقط **یک** `hero` و **یک** `banner_strip`. مهاجرت داده‌ی `0004_default_home_blocks` ترتیب پیش‌فرض را می‌سازد (هشت بلوک: اسلایدر، دسته‌ها، نوار باریک، سه ریل محصول، برندها، مزیت‌ها).
 
 **TrustItem** (مزیت‌های فروشگاه، بلوک `trust`): `icon` (نام نماد در sprite)، `title`، `subtitle`، `is_placeholder` bool (seed اولیه `True`)، `sort`، `is_active`. در ادمین ردیف placeholder با نشان هشدار؛ `manage.py check_launch` تا وقتی placeholder فعال است هشدار می‌دهد.
 
@@ -149,8 +149,8 @@
 
 ### engagement
 **Like**: `user`, `product`, `created_at`. unique `(user, product)`، ایندکس `(product)`.
-**Review**: `user`, `product`, `rating` 1–5, `body`, `status`, `is_verified_buyer`, `moderated_by`, `moderated_at`, `admin_reply`. unique `(user, product)`، ایندکس `(product, status, -created_at)`.
-**ProductDailyStat**: `product`, `date`, `purchases`, `views`. unique `(product, date)`. برای محاسبه‌ی ۳۰ روزه‌ی غلتان.
+**Review**: `user`, `product`, `rating` 1–5, `body`, `status`, `is_verified_buyer`, `moderated_by`, `moderated_at`, `rejection_reason` (داخلی، متن آزاد کوتاه), `admin_reply`. بدون `title` (P4). unique `(user, product)`، `CheckConstraint` برای `rating` بین ۱ و ۵، ایندکس `(product, status, -created_at)`.
+**ProductDailyStat**: `product`, `date`, `purchases`. **بدون `views`** (P4). unique `(product, date)`. برای محاسبه‌ی ۳۰ روزه‌ی غلتان.
 **StockSubscription** `[DECIDED]` (فاز P6): `user`, `variant`, `notified_at` null، `created_at`. unique `(user, variant)` برای اشتراک **باز** (`notified_at IS NULL`)؛ بعد از ارسال پیامک `notified_at` ثبت و اشتراک بسته می‌شود و کاربر می‌تواند دوباره مشترک شود. ایندکس `(variant, notified_at)`. جزئیات در `02` بخش ۱۳.
 
 ### notifications
@@ -183,15 +183,19 @@ Product.objects.filter(
 - **هرگز** `LocMemCache` (با چند worker ناسازگار می‌شود).
 
 ### ایده‌ی اصلی: کلید دارای نسخه (versioned key)
-به‌جای حذف کلیدها، `rev` بالا می‌رود و کلید قدیمی خودش منقضی می‌شود:
-- `mm:v1:p:{id}:{rev}:detail` — بدنه‌ی HTML جزئیات محصول (بدون بخش شخصی)
-- `mm:v1:p:{id}:{rev}:card` — کارت محصول
-- `mm:v1:c:{id}:{subtree_rev}:list:{sort}:{filters_hash}:{page}` — لیست دسته (شامل زیردرخت)
-- `mm:v1:p:{id}:{rev}:{cat_subtree_rev}:similar` — مشابه‌ها
-- `mm:v1:col:{id}:{rev}:{subtree...}` — مجموعه
-- `mm:v1:home:{epoch}` — بلوک‌های صفحه‌ی اصلی. `epoch` یک شمارنده‌ی سراسری در Redis (`INCR`) است.
+به‌جای حذف کلیدها، `rev` بالا می‌رود و کلید قدیمی خودش منقضی می‌شود. `v{n}` همان `FRAGMENT_VERSION` در `apps/catalog/constants.py` است و هر تغییر مارک‌آپ قالب‌های کش‌شونده آن را +۱ می‌کند (P4):
+- `mm:v1:p:{id}:{rev}:t{trust_rev}:v{n}:detail` — بدنه‌ی HTML جزئیات محصول (بدون بخش شخصی)
+- `mm:v1:p:{id}:{rev}:v{n}:card` — کارت محصول
+- `mm:v1:c:{id}:{subtree_rev}:v{n}:list:{sort}:{filters_hash}:{page}` — لیست دسته (شامل زیردرخت)
+- `mm:v1:p:{id}:{rev}:{base_subtree_rev}:v{n}:similar` — مشابه‌ها (`base` = والدِ دسته‌ی محصول؛ برای دسته‌ی ریشه خودش)
+- `mm:v1:col:{id}:{epoch}:v{n}:list:{sort}:{filters_hash}:{page}` — نتایج صفحه‌ی مجموعه (P5: بدون `rev`، با `epoch`)
+- `mm:v1:home:data:{epoch}:v{n}` — داده‌ی مشترک صفحه‌ی اصلی (بلوک‌ها، بنرها، دسته‌ها، برندها). `epoch` یک شمارنده‌ی سراسری در Redis (`INCR`) است.
+- `mm:v1:home:rail:{epoch}:{block_id}:v{n}` — HTML هر ریل صفحه‌ی اصلی (P5)
 - `mm:v1:menu:{epoch}` — منو و دسته‌های برتر
-- `mm:v1:social:{product_id}` — شمارنده‌های لایک/خرید (TTL کوتاه، ۶۰ ثانیه)
+
+**پنجره‌ی زمانی داخل داده‌ی کش‌شده است (P5):** `starts_at/ends_at` بنر و مجموعه جزو کلید نیستند؛ در داده‌ی کش‌شده ذخیره می‌شوند و در هر درخواست با `now` سنجیده می‌شوند. پس نمایش دقیقاً سر وقت شروع/تمام می‌شود بدون `INCR` یا کران. TTL همه‌ی کلیدهای P5، ۱۵ دقیقه است (شمارنده‌ها `epoch` را تکان نمی‌دهند) `[ASSUMPTION]`.
+
+**کش `social:{id}` ساخته نشد** (P4): شمارنده‌ها ستون خود `Product` هستند و خواندن با pk به‌اندازه‌ی Redis ارزان است.
 
 `rev` و `subtree_rev` ستون **DB** هستند (نه Redis) تا اگر Redis پاک شد، نسخه‌ها برنگردند و کلید قدیمی با محتوای جدید اشتباه نخورد.
 
@@ -201,8 +205,8 @@ Product.objects.filter(
 |------|--------|-----|
 | **LIST** (در لیست/کارت/جستجو دیده می‌شود) | `title`, `slug`, `brand`, `category`, `status`, `main_image`, `min_price`, `max_price`, `compare_at_min`, `discount_pct`, `in_stock` | `product.rev++` + `subtree_rev++` برای **همه‌ی اجداد** دسته‌ی جدید و **قدیم** + بازسازی FTS + `epoch++` اگر محصول در بلوک‌های سراسری باشد |
 | **DETAIL** (فقط جزئیات) | `description`, `short_description`, `warranty_text`, مشخصات، تصاویر ثانویه، `seo_*` | فقط `product.rev++` |
-| **COUNTER** | `like_count`, `review_count`, `rating_*`, `purchase_*`, `view_count` | **هیچ باطل‌سازی**. فقط `F()` و TTL کوتاه |
-| **STRUCTURAL** | تغییر دسته (نام/والد/لوگو/ترتیب/منو)، بنر، Collection، HomeBlock، SiteSettings، FooterLink | `epoch++` و `rev/subtree_rev` مناسب |
+| **COUNTER** | `like_count`, `review_count`, `rating_*`, `purchase_*`, `view_count` | **هیچ باطل‌سازی**. فقط `F()` (P4: همه‌ی نوشتن‌ها از `apps/engagement/counters.py`) |
+| **STRUCTURAL** | تغییر دسته (نام/والد/لوگو/ترتیب/منو)، بنر، Collection، CollectionItem، HomeBlock، Brand، SiteSettings، FooterLink | `epoch++` و `rev/subtree_rev` مناسب |
 
 ### تشخیص تغییر
 - در `from_db` مقادیر اولیه‌ی فیلدهای دسته‌بندی‌شده نگه داشته می‌شود (`_loaded_values`).
@@ -219,7 +223,7 @@ Product.objects.filter(
 `QuerySet.update()` و `bulk_update()` سیگنال ندارند. قواعد:
 - متد `ProductQuerySet.update_tracked(**fields)` و `bulk_update_tracked` که همان منطق را روی ردیف‌های تاثیرپذیر اجرا می‌کند.
 - ادمین actions فقط از این متدها استفاده کنند.
-- `update()` خام روی Product/Variant/Category در بقیه‌ی کد ممنوع است (تست معماری با grep/CI).
+- `update()` خام روی Product/Variant/Category در بقیه‌ی کد ممنوع است (تست معماری با grep/CI). **COUNTER:** تنها استثنای ثبت‌شده `apps/catalog/stock.py` و `apps/engagement/counters.py` است (`ALLOWED_FILES` در تست معماری).
 
 ### Rebuild و جلوگیری از stampede
 - حذف همراه با ساخت **lazy**: اولین درخواست بعد از تغییر کلید را می‌سازد، با قفل تک‌پرواز (`cache.add("lock:"+key, 1, 10)`)؛ درخواست‌های همزمان یا stale را می‌خوانند یا چند ده ms صبر می‌کنند.
@@ -241,18 +245,19 @@ Product.objects.filter(
 
 ## ۶. شمارنده‌ها و متن‌های اجتماعی
 
-**نوشتن:** با `F()` هنگام رویداد، داخل همان تراکنش:
-- لایک/آن‌لایک: `Product.like_count ± 1` + ردیف `Like`.
-- نظر تاییدشده/رد: `review_count`, `rating_sum` (و `rating_avg` محاسبه).
-- پرداخت موفق: `purchase_count_total += qty` و `ProductDailyStat.purchases += qty` (upsert).
+**نوشتن:** با `F()` هنگام رویداد، داخل همان تراکنش، **همه از `apps/engagement/counters.py`** (P4):
+- لایک/آن‌لایک: سیگنال `post_save`/`post_delete` روی `Like` → `like_count ± 1` با `Greatest(..., 0)` (هرگز منفی نمی‌شود).
+- نظر: سیگنال `post_save`/`post_delete` روی `Review` → `reconcile([product_id])` که `review_count`، `rating_sum` و `rating_avg` را از **ردیف‌های تاییدشده بازمحاسبه** می‌کند (نه افزایشی؛ هر مسیر ادمین/حذف/cascade درست می‌ماند).
+- پرداخت موفق: `purchase_count_total += qty`، `purchase_count_30d += qty` و `ProductDailyStat.purchases += qty` (upsert) — `counters.add_purchases`، صدازدهنده از `payments.services._finalize` داخل تراکنش.
+- سیگنال‌های `apps.py` با `weak=False` وصل می‌شوند؛ بدون آن receiverهای محلی `ready()` جمع می‌شوند و شمارنده‌ها بی‌صدا از کار می‌افتند.
 
-**خواندن (بدون join):** شمارنده‌ها از ستون‌های خود Product می‌آیند (ارزان). برای کاهش فشار در لیست‌ها از کش `social:{id}` استفاده می‌شود.
+**خواندن (بدون join):** شمارنده‌ها از ستون‌های خود Product می‌آیند (ارزان). کش `social:{id}` وجود ندارد (P4).
 
 **بخش شخصی (lazy، `Cache-Control: private`):**
-- صفحه‌ی محصول: `hx-get="/social/product/<id>/" hx-trigger="load"` ← partial با متن اجتماعی و وضعیت قلب.
-- سبد/checkout: `hx-get="/social/cart/" hx-trigger="load"`.
-- **قلب کارت‌ها:** یک درخواست دسته‌ای برای شناسه‌های صفحه (`hx-get="/likes/state/?ids=1,2,3" hx-trigger="load"`) که پاسخ آن HTML با `hx-swap-oob` برای قلب‌های لایک‌شده است. هیچ درخواستی به‌ازای هر کارت نیست.
-- قلب: `hx-post="/likes/toggle/<id>/"` با پاسخ partial دکمه + به‌روزرسانی متن اجتماعی (OOB).
+- صفحه‌ی محصول: `GET /social/product/<id>/` با `hx-trigger="load"` ← partial با متن اجتماعی و خلاصه‌ی امتیاز (ستاره + میانگین).
+- سبد: متن اجتماعی **داخل خود صفحه** رندر می‌شود (`social.cart_notes`، یک کوئری برای لایک‌های بیننده). مسیر `/social/cart/` وجود ندارد و checkout متن اجتماعی ندارد.
+- **قلب کارت‌ها:** `likes.js` بعد از هر بارگذاری یا هر swap یک درخواست دسته‌ای `GET /likes/state/?ids=1,2,3` (حداکثر ۶۰ شناسه در هر درخواست، یک کوئری) می‌فرستد؛ پاسخ HTML با `hx-swap-oob="outerHTML:[data-like='ID']"` است. هیچ درخواستی به‌ازای هر کارت نیست.
+- قلب: `POST /likes/<id>/` با `state=1|0` (وضعیت مطلق، نه toggle) با پاسخ partial دکمه + به‌روزرسانی متن اجتماعی (OOB).
 
 ---
 
@@ -290,9 +295,11 @@ CREATE VIRTUAL TABLE product_fts USING fts5(
 
 ## ۸. محصولات مشابه
 
-- بدون جدول. محاسبه‌ی lazy و کش با کلید `p:{id}:{rev}:{cat_subtree_rev}:similar`.
+- بدون جدول. محاسبه‌ی lazy و کش با کلید `p:{id}:{rev}:{base_subtree_rev}:v{n}:similar` (TTL ۶ ساعت).
 - امتیاز: هم‌دسته‌ی برگ (+۵)، هم‌برند (+۲)، نزدیکی قیمت (±۳۰٪ → +۲)، مقدار مشترک مشخصات فیلترپذیر (+۱ به‌ازای هر مورد). فقط `active` و `in_stock`. ۱۲ نتیجه.
-- لود با `hx-trigger="revealed"`.
+- استخر کاندید: زیردرخت **والدِ** دسته‌ی محصول (هم‌دسته‌ها و خواهر/برادرها)، سقف ۳۰۰ محصول به ترتیب `-purchase_count_30d`.
+- مسیر `/similar/<id>/` (عمداً با `similar/` شروع می‌شود تا با `p/<id>/<slug>/` تداخل نکند) و لود با `hx-trigger="revealed"` + `hx-swap="outerHTML"`؛ پاسخ خالی یعنی ریل حذف می‌شود.
+- `subtree_rev` دسته‌ی پایه در کلید است، پس هر تغییر محصول در استخر کلید را عوض می‌کند.
 
 ---
 
@@ -311,6 +318,9 @@ CREATE VIRTUAL TABLE product_fts USING fts5(
 
 ## ۱۱. تغییرات
 
+- ۰.۳.۸ (P5) — جدول `marketing` با کد واقعی هم‌تراز شد: `Banner.alt` اجباری و `image_mobile` اختیاری، `Collection` بدون `rev` و `limit` (و `CollectionQuerySet.live`)، `HomeBlock.limit` تا ۲۴ و قید یکتایی `hero`/`banner_strip`. کلید کش مجموعه به `col:{id}:{epoch}:v{n}:list:{sort}:{filters_hash}:{page}` تغییر کرد و کلید ریل `home:rail:{epoch}:{block_id}:v{n}` اضافه شد؛ پنجره‌ی زمانی داخل داده‌ی کش‌شده و در هر درخواست سنجیده می‌شود. `Brand` هم به لیست STRUCTURAL اضافه شد (لوگویش در بلوک برندها دیده می‌شود).
+
+- ۰.۳.۷ (P4) — اپ `engagement` ساخته شد (`Like`، `Review`، `ProductDailyStat`)؛ `Review` بدون عنوان، با `rejection_reason` داخلی و `CheckConstraint` امتیاز ۱ تا ۵؛ `ProductDailyStat` بدون `views`. همه‌ی نوشتن‌های COUNTER در `apps/engagement/counters.py` (`add_likes`، `add_purchases`، `reconcile`، `recount_purchases`) و `add_purchases` از `stock.py` حذف شد. `FRAGMENT_VERSION` وارد کلیدهای `detail`/`card`/`list`/`similar` شد و کلید مشابه‌ها `p:{id}:{rev}:{base_subtree_rev}:v{n}:similar` است. کش `social:{id}` ساخته نشد؛ قلب‌ها با `GET /likes/state/` و متن اجتماعی با `GET /social/product/<id>/`. ETag صفحه‌ی محصول `review_count`/`rating_sum` را هم دارد.
 - ۰.۳.۶ (P3) — اپ‌های `cart`/`orders`/`payments` با کد واقعی هم‌تراز شدند: `Order` بدون `placed_at`/`discount_total`/`customer_note`، `ShippingMethod` فقط فیلدهای v1، `Payment.status` شامل `verifying`، `PaymentGateway` طبق کد. موجودی هنگام ساخت سفارش با `reason="order"` کم می‌شود و پرداخت حرکت جدیدی ثبت نمی‌کند؛ `StockMovement.order_item_id` عددی ماند. مهاجرت‌های داده: روش ارسال `tipax` و درگاه‌های `zarinpal`/`fake`.
 - ۰.۳.۵ (اصلاحی P2-ب) — حذف مدل `ShortLink` از `core` (جایگزینی با کدهای بدون جدول `r/<kind><pk base36>`، D32) و افزودن یادداشت نگه‌داری داده روی `OTPChallenge` (۱ روز پس از انقضا) و `SmsLog` (۹۰ روز) طبق D33.
 - ۰.۳.۴ (اصلاح P2) — افزودن مدل `ShortLink` (کد یکتا، مسیر مقصد یکتا) در اپ `core` برای پیوندهای کوتاه پیامک sms.ir (`#LINK#`).
