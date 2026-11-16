@@ -1,4 +1,4 @@
-# استقرار مل‌مل
+# استقرار مل‌مل — نسخه ۰.۲
 
 این سند مرحله‌به‌مرحله است: از سرور خالی تا سرویس در حال اجرا، و بعد از آن بروزرسانی و پشتیبان/بازیابی.
 فایل‌های همراه: `deploy/malmal.service`، `deploy/nginx.conf.example`، `deploy/crontab.example`.
@@ -159,3 +159,22 @@ uv run python manage.py backup_db --with-media   # db-YYYYMMDD-HHMMSS.sqlite3 + 
 | کد ورود نمی‌رسد | `SMS_BACKEND=smsir`، `SMSIR_API_KEY` و `SMSIR_TEMPLATE_ID_OTP`؛ لاگ پیامک در ادمین |
 | پرداخت خطا می‌دهد | `ZARINPAL_SANDBOX=false`، مرچنت‌کد درست، `SITE_URL` با `https` (callback از آن ساخته می‌شود) |
 | «خبرم کن» پیامک نمی‌فرستد | شناسه‌ی قالب `back_in_stock`، ساعت بین `SiteSettings.back_in_stock_start_hour` و `end_hour`، و کران `send_back_in_stock` |
+
+---
+
+## ۸. پنل مدیریت (از P9)
+
+بخش‌های این قسمت با اجرای فازهای P9 تا P15 معتبر می‌شوند (`docs/09-panel-spec.md`). تا آن موقع کار روزانه در ادمین است.
+
+- **اولین کارمند:** پس از `setup_groups` با `create_staff 0912... --group فروش` (یا گروه دیگر) ساخته می‌شود و از `/panel/login/` وارد می‌شود. مدیر کل همان `createsuperuser` است؛ superuser از پنل ساخته نمی‌شود (D47). شماره‌ی یک مشتری موجود staff نمی‌شود.
+- **`setup_groups` بعد از هر استقرار که مجوز تازه دارد:** دستور idempotent است و مجوزهای تازه‌ی گروه‌ها (مثل `catalog.adjust_stock` در P12) فقط با اجرای آن به گروه‌ها می‌رسند. ترتیب: `migrate` ← `setup_groups` ← `collectstatic` ← restart.
+- **آپلود تصویر:** پنل هر درخواست آپلود را زیر حدود ۱۵ مگابایت نگه می‌دارد و حد nginx ۲۰ مگابایت است (`client_max_body_size`؛ `[VERIFY]` با `deploy/nginx.conf.example`). اگر حد nginx کمتر باشد، آپلود چندتایی عکس محصول با ۴۱۳ شکست می‌خورد.
+- **robots و noindex:** `/panel/` در `robots.txt` می‌آید (`Disallow`) و همه‌ی پاسخ‌های پنل `X-Robots-Tag: noindex, nofollow` و `Cache-Control: private, no-store` دارند (D44). مسیر ادمین همچنان در `robots.txt` نمی‌آید (`02` جدول P6، ردیف ۸).
+- **`ADMIN_URL`** نباید با `panel/` شروع شود؛ `check_launch` از P9 خطا می‌دهد.
+- **بازگشت وجه:** از P10 رسیدگی بخش ۵ در پنل هم انجام می‌شود (پرداخت‌ها ← «نیازمند بازگشت وجه») و با اکشن ادمین یک مسیر مشترک (`record_refund`) دارد.
+
+---
+
+## ۹. تغییرات
+
+- ۰.۲ — بخش ۸ «پنل مدیریت» (اولین کارمند، `setup_groups` پس از مجوز تازه، حد آپلود، robots/noindex، `ADMIN_URL`، بازگشت وجه). این سند تا ۰.۱ بخش «تغییرات» نداشت.

@@ -1,0 +1,18 @@
+<aside class="drawer-side">
+    <label for="sidebar" class="drawer-overlay"></label>
+    <ul class="menu p-4 w-60 bg-base-100 text-base-content border-l">
+        <li class="menu-title"><span class="font-bold">MAL MAL</span></li>
+        {% for group_name, links in groups %}
+            <li class="menu-title mt-4"><span>{{ group_name }}</span></li>
+            {% for link in links %}
+                <li>
+                    <a href="{{ link.url }}" class="{% if link.active %}active{% endif %}">
+                        {% icon link.item.icon %}
+                        {{ link.item.label }}
+                        {% render_badge link.item.badge counts %}
+                    </a>
+                </li>
+            {% endfor %}
+        {% endfor %}
+    </ul>
+</aside>

@@ -12,6 +12,7 @@
 1. این فایل و `docs/00-README.md` را بخوان.
 2. بریف فاز جاری را بخوان: `docs/phases/phase-0X-*.md`. اگر کاربر فاز را نگفت، بپرس (یک سوال کوتاه).
 3. فقط بخش‌هایی از `docs/02` تا `docs/07` را بخوان که بریف فاز به آن‌ها ارجاع داده. کل اسناد را بی‌دلیل نخوان.
+   برای فاز پنل (P9 به بعد) `docs/09-panel-spec.md` و `docs/10-panel-ui.md` را هم بخوان (بخش‌هایی که بریف فاز می‌گوید).
 4. اسکیل‌های `skills/` را طبق نیاز فاز بخوان (بخش ۵).
 5. یک فهرست کار (TaskCreate) از «کارها» و «Definition of Done» بریف بساز.
 
@@ -88,6 +89,14 @@
   - **ارقام (D30):** ذخیره، URL، فیلد hidden و ارتباط سرور ASCII است؛ نمایش و ورودی کاربر فارسی. `|fa_digits` برای عدد خالص، `|fa_text` برای متن آزاد، `.latin` فقط برای رشته‌های لاتین واقعی، `.num` برای اعداد فارسیِ چپ‌به‌راست (موبایل، کدپستی، تایمر).
   - **پنجره‌ها و اعلان‌ها (D31):** `alert()`، `confirm()`، `prompt()` و هر پنجره‌ی بومی مرورگر ممنوع است؛ همه‌چیز فقط از `MM.ui`. قبل از نوشتن JS، سند `docs/08-ui-modules.md` را بخوان.
 
+**پنل مدیریت (P9 به بعد، `docs/09` و `docs/10`)**
+- پنل قانون دامنه را بازنویسی نمی‌کند (D35). هر نوشتن از مسیر موجود می‌گذرد: `workflow.change_status`، `save()`/`update_tracked`، `stock.*`، `engagement.services.moderate`. منطق مشترک تازه در اپ دامنه می‌نشیند و ادمین هم از آن استفاده می‌کند.
+- قالب‌ها در `templates/panel/` هستند (نه داخل اپ) تا grepهای `docs/04` بخش ۱۳ شاملشان شود.
+- هر view پنل مجوز صریح Django دارد؛ ناوبری فقط موارد مجاز را نشان می‌دهد.
+- آیکون‌های `nav.py` و `TrustItem` فقط از sprite ساخته‌شده می‌آیند (`build_sprite.py`).
+- تغییر موجودی فقط از `stock.adjust_manual` (D43). بازگشت وجه فقط از `payments.services.record_refund` (D42).
+- هیچ اپی `apps.panel` را import نمی‌کند (تست معماری).
+
 ## ۵. اسکیل‌ها (`skills/` در ریشه‌ی پروژه)
 
 مسیر اسکیل‌ها `skills/` در ریشه‌ی پروژه است.
@@ -144,11 +153,12 @@ apps/payments/ PaymentGateway/Payment، gateways (zarinpal/fake)، callback، re
 apps/engagement/ Like/Review/ProductDailyStat/StockSubscription، counters.py (تنها نویسنده‌ی شمارنده‌ها)، social.py، wishlist، similar، back_in_stock
 apps/marketing/ TrustItem، Banner، Collection/CollectionItem، HomeBlock، services (سرهم‌کردن صفحه‌ی اصلی و مجموعه)
 apps/notifications/ SmsLog و adapter پیامک (console/smsir)، maintenance
-templates/     base.html، 404.html، 500.html، admin/ (قالب‌های سفارش)، partials/ (_header، _dock، _footer، _logo، _brand_name، _section_heading)، pages/
-static/        fonts/{vazir,inter,dastnevis}/، src/ (input.css، sprite.svg — در collectstatic ignore می‌شود)، css/app.css، js/{htmx.min.js,mm/*.js}، sprite.svg، logo.webp، favicon/
+apps/panel/    پنل مدیریت اختصاصی (P9 به بعد؛ بدون مدل): auth، permissions، nav، search، badges، audit، views/forms/services
+templates/     base.html، 404.html، 500.html، admin/ (قالب‌های سفارش)، partials/ (_header، _dock، _footer، _logo، _brand_name، _section_heading)، pages/، panel/ (پنل، P9 به بعد)
+static/        fonts/{vazir,inter,dastnevis}/، src/ (input.css، sprite.svg — در collectstatic ignore می‌شود)، css/app.css، js/{htmx.min.js,mm/*.js} (از P9: mm/{panel,upload,richtext}.js)، sprite.svg، logo.webp، favicon/
 scripts/       build_sprite.py، make_favicons.py، sync_vendor.mjs
 deploy/        malmal.service، nginx.conf.example، crontab.example
-docs/          اسناد ۰۱ تا ۰۸، deploy.md، phases/، vendors/
+docs/          اسناد ۰۱ تا ۱۰ (۰۹ و ۱۰ = پنل)، deploy.md، phases/، vendors/
 Makefile       میانبرهای run، css، sprite، favicons، test، lint، format، check، geo، warm، search، expire، recount، reconcile، stock، launch، backup، purge
 ```
 

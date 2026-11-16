@@ -1,3 +1,4 @@
+NAV_ICON_RE = re.compile(r"""\bicon\s*=\s*["\']([a-z0-9-]+)["\']""")
 #!/usr/bin/env python3
 """Build an optimized SVG icon sprite from static/src/sprite.svg.
 
@@ -48,7 +49,9 @@ def collect_used_icons() -> set[str]:
                 if "tests" in path.parts or path.name.startswith("test_"):
                     continue
                 text = path.read_text(encoding="utf-8", errors="ignore")
-                names.update(ICON_RE.findall(text))
+                                names.update(ICON_RE.findall(text))
+                if path.suffix == ".py" and "panel" in path.parts:
+                    names.update(NAV_ICON_RE.findall(text))
     return names
 
 
@@ -108,3 +111,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

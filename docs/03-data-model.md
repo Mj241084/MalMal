@@ -1,4 +1,4 @@
-# ۰۳ — مدل داده، ایندکس، کش و جستجو — نسخه ۰.۳.۹
+# ۰۳ — مدل داده، ایندکس، کش و جستجو — نسخه ۰.۳.۱۲
 
 مرجع جریان‌ها: `02-spec.md`. نام فیلدها انگلیسی‌اند. همه‌ی مدل‌ها `created_at/updated_at` دارند مگر ذکر شود.
 پول: `BigIntegerField` به **تومان**. زمان: UTC.
@@ -31,6 +31,7 @@
 | `engagement` | Like، Review، ProductDailyStat، StockSubscription |
 | `search` | ایندکس FTS5 و منطق جستجو |
 | `notifications` | SmsLog، adapter پیامک |
+| `panel` | پنل مدیریت اختصاصی (P9 تا P15، `09-panel-spec.md`). **مدل و مهاجرت ندارد**؛ ممیزی روی `django.contrib.admin.LogEntry` (D38) |
 
 ---
 
@@ -99,6 +100,7 @@
 - محصول ساده: دقیقاً یک variant پیش‌فرض (در ادمین به‌طور خودکار ساخته می‌شود).
 - ایندکس: `(product, is_active)`, `sku`.
 - تغییر `price/stock/is_active` ← `Product.refresh_aggregates()` (بخش ۵).
+- **مجوز `catalog.adjust_stock` (P12، برنامه‌ریزی‌شده):** در `Variant.Meta.permissions`. تغییر دستی موجودی فقط از `stock.adjust_manual` (compare-and-set با `expected_stock` اختیاری، ثبت `StockMovement`، `refresh_products`، و `back_in_stock.mark_due` فقط وقتی موجودی از ۰ به مثبت رفت). جدا از `change_variant` است چون آن مجوز قیمت را هم باز می‌کند (D43، `09` بخش ۲.۵).
 
 **ProductImage**: `product`, `variant` null, `image`, `alt`, `sort`. چند اندازه‌ی WebP تولید می‌شود.
 
@@ -106,6 +108,7 @@
 **ProductSpecValue**: `product`, `attribute`, `value_text`, `value_number` null. ایندکس `(attribute, value_number)`, `(attribute, value_text)`, `(product, attribute)` unique.
 
 **StockMovement** (دفتر): `variant`, `delta`, `reason` (`order/cancel/expire/manual/return`), `order_item` null, `note`. فقط افزودنی (append-only).
+  - **قرارداد `note` برای `reason="manual"` (از P12):** `"<دلیل> — <موبایل کارمند>"`. موجودی اولیه‌ی تنوع تازه‌ی ساخته‌شده در پنل هم یک ردیف `manual` می‌گیرد (`09` ماژول ۴ و ۷).
 
 ### marketing
 **Banner**: `title` (داخلی)، `alt` (**اجباری**)، `image_desktop` (اجباری)، `image_mobile` (**اختیاری**؛ خالی = همان تصویر دسکتاپ)، `placement` (`home_hero/home_strip`), `target_type` (`none/product/category/collection/url`), `target_product|target_category|target_collection` FK null، `target_url`, `starts_at`, `ends_at` (ذخیره UTC؛ در ادمین با ویجت تقویم شمسی طبق `06`)، `sort`, `is_active`. اعتبارسنجی: دقیقاً یک مقصد متناسب با `target_type`؛ `target_url` فقط مسیر داخلی (`/…`) یا `https://…`. قالب تصویر WebP/JPG/PNG، سقف ۱ مگابایت. زمان‌بندی با `ScheduledModel` مشترک است (`clean` پایان بعد از شروع، `is_live(now)`).
@@ -228,7 +231,7 @@ Product.objects.filter(
 - `touch_product(product_id, level=LEVEL_LIST)` — برای تغییرهایی که خودشان `Product.save` را صدا نمی‌زنند: مشخصات (`ProductSpecValue`)، تصاویر (`ProductImage`)، حذف تنوع، اکشن‌های ادمین و حرکت موجودی. دسته‌ی محصول را می‌خواند و زنجیره‌ی اجداد را بالا می‌برد.
 - `invalidate_category(category_id, old_path=None)` — تغییر ساختاری دسته؛ زنجیره‌ی **جدید و قدیم** (پس از جابه‌جایی) و `epoch` منو را بالا می‌برد. `Category.save` مسیر قدیم را پاس می‌دهد.
 
-hookهای مدل که خودشان باطل می‌کنند: `ProductImage.save/delete` (سطح DETAIL)، `ProductSpecValue.save/delete` (سطح LIST، چون فیلترها و facets عوض می‌شوند)، `SpecAttribute.save/delete` (`invalidate_category`)، `Category.save` (ساختاری)، و `BrandAdmin.save_model` ← `invalidate_brand` که `search_text` همه‌ی محصولات برند را بازمی‌سازد و سطح LIST را بالا می‌برد. اکشن «بازگشت وجه» هم فقط وضعیت پرداخت را عوض می‌کند (بدون کش).
+hookهای مدل که خودشان باطل می‌کنند: `ProductImage.save/delete` (سطح DETAIL)، `ProductSpecValue.save/delete` (سطح LIST، چون فیلترها و facets عوض می‌شوند)، `SpecAttribute.save/delete` (`invalidate_category`)، `Category.save` (ساختاری)، و `BrandAdmin.save_model` ← `invalidate_brand` که `search_text` همه‌ی محصولات برند را بازمی‌سازد و سطح LIST را بالا می‌برد. اکشن «بازگشت وجه» هم فقط وضعیت پرداخت را عوض می‌کند (بدون کش). از P10 این اکشن و پنل هر دو به `payments.services.record_refund` وصل می‌شوند که برای سفارش لغو/منقضی/تحویل‌شده وضعیت سفارش را هم از `workflow.change_status` می‌گذراند (D42).
 
 ### به‌روزرسانی‌های دسته‌جمعی
 `QuerySet.update()` و `bulk_update()` سیگنال ندارند. قواعد:
@@ -337,6 +340,7 @@ CREATE VIRTUAL TABLE product_fts USING fts5(
 
 ## ۱۱. تغییرات
 
+- ۰.۳.۱۲ (پنل، برنامه‌ریزی) — اپ `panel` در جدول اپ‌ها (بدون مدل و مهاجرت؛ ممیزی روی `LogEntry`)، مجوز `catalog.adjust_stock` روی `Variant.Meta.permissions` (P12)، قرارداد `StockMovement.note` برای حرکت دستی، و اتصال اکشن بازگشت وجه به `record_refund` (P10). عنوان سند با تاریخچه (۰.۳.۱۱) هم‌تراز شد؛ قبلاً ۰.۳.۹ مانده بود. هیچ‌کدام تا اجرای فاز مربوط در کد نیست.
 - ۰.۳.۱۱ (P8 اصلاحی) — حذف `is_demo` از مدل‌های کاتالوگ و بازاریابی، حذف `is_placeholder` از `TrustItem`، حذف `weight_g` و `max_weight_g`، و افزودن `neshan_id` روی `Province`/`City` برای همگام‌سازی با Region API نشان (`sync_geo` و کش ۷ روزه).
 - ۰.۳.۱۰ (P7) — شمارنده‌های `epoch`/`trust_rev` بدون TTL و با مقدار اولیه‌ی `timestamp` (`read_epoch`) تا پس از flush یا eviction کلید کهنه دوباره معتبر نشود. باطل‌سازی تازه: `touch_product` برای مشخصات/تصاویر/حذف تنوع/ادمین، `invalidate_category(old_path)` برای زنجیره‌ی مبدأ پس از جابه‌جایی، `invalidate_brand` با بازسازی `search_text`، و hookهای `ProductImage`/`ProductSpecValue`/`SpecAttribute`. `VARIANT_DETAIL_FIELDS` شامل `price`/`compare_at_price`/`is_active`/`sort` شد و قاعده‌ی «موجودی در بازه‌ی کم‌موجودی یا سقف، rev را بالا می‌برد» در `apps/catalog/stock.py` آمد. `Product.refresh_aggregates` تخفیف را فقط از ارزان‌ترین تنوع می‌گیرد و `Variant.discount_pct` اضافه شد. `Product.save(update_fields=…)` فیلدهای محاسبه‌شده (`search_text`، `slug`، `category_path`) را هم می‌نویسد. `FRAGMENT_VERSION` به ۳ رفت و اجزای ETag صفحه‌ی محصول کامل شد.
 - ۰.۳.۹ (P6) — `StockSubscription.restocked_at` اضافه شد (فعال‌سازی «موجود شد» فقط با موجودشدن واقعی)، `Order.Meta.permissions` مجوز `orders.manage_order_status` گرفت و `PAID_STATES` در `apps/orders/models.py` تعریف شد (به‌جای تکرار در `engagement/services.py`). `django.contrib.sitemaps` به اپ‌ها و `sitemap.xml`/`robots.txt` به `config/urls.py` اضافه شد (`apps/core/seo.py`). `BACKUP_DIR` در تنظیمات پایه و `STORAGES`/HSTS/`CSRF_TRUSTED_ORIGINS`/`LOGGING` در `prod.py`. دستورهای دوره‌ای جدید در جدول بخش ۵؛ فایل `deploy/crontab.example` مرجع است.

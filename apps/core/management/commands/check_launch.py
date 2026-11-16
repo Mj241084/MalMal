@@ -42,6 +42,9 @@ def _settings():
     site = urlsplit(settings.SITE_URL)
     if site.scheme != "https" or site.hostname in LOCAL_HOSTS:
         yield ERROR, "SITE_URL باید نشانی https واقعی باشد (callback پرداخت و sitemap از آن ساخته می‌شود)"
+    if settings.ADMIN_URL.startswith("panel/"):
+        yield ERROR, "ADMIN_URL ????? ?? panel/ ???? ??? (?? ???? ??? ????? ????)"
+
     if settings.ADMIN_URL == "admin/":
         yield ERROR, "ADMIN_URL هنوز پیش‌فرض (admin/) است"
     if not (settings.SESSION_COOKIE_SECURE and settings.CSRF_COOKIE_SECURE):

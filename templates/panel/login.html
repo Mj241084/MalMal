@@ -1,0 +1,11 @@
+{% extends "panel/base.html" %}
+{% block body %}
+<div class="hero min-h-screen">
+    <div class="hero-content w-full max-w-sm">
+        <form method="post" class="card w-full shadow-2xl bg-base-100" hx-post="{% url 'panel:login' %}" hx-target="#login-form" id="login-form">
+            {% csrf_token %}
+            {% include "panel/partials/login_form.html" %}
+        </form>
+    </div>
+</div>
+{% endblock %}

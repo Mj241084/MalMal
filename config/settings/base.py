@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "apps.orders",
     "apps.payments",
     "apps.engagement",
+    "apps.panel",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -41,9 +42,10 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
+    "apps.panel.middleware.PanelHeadersMiddleware",
 ]
+
 
 ROOT_URLCONF = "config.urls"
 
@@ -160,3 +162,5 @@ def build_caches(redis_url: str) -> dict[str, dict]:
             "TIMEOUT": 60 * 60 * 24,
         },
     }
+
+
