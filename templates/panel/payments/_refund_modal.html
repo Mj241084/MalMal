@@ -1,0 +1,26 @@
+{% load core_tags %}
+<div class="modal" popover id="refund-{{ payment.pk }}">
+  <div class="modal-box max-w-md">
+    <h3 class="text-lead font-medium">ثبت بازگشت وجه</h3>
+    <p class="text-small text-ink-2 mt-2 leading-6">مبلغ <span class="font-medium whitespace-nowrap">{{ payment.amount|toman }} تومان</span> بابت سفارش <span class="latin">{{ payment.order.number }}</span>. ابتدا مبلغ را از پنل زرین‌پال به مشتری برگردانید؛ اینجا فقط ثبت می‌شود. اگر این پرداخت پشتوانه‌ی خود سفارش است، وضعیت سفارش هم «بازگشت وجه» می‌شود و پیامک می‌رود</p>
+    <form method="post" action="{% url 'panel:payment_refund' payment.pk %}"
+          {% if htmx_target %}hx-post="{% url 'panel:payment_refund' payment.pk %}" hx-target="{{ htmx_target }}" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']"{% endif %}
+          class="mt-4 flex flex-col gap-3">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      {% for name, value in hidden %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+      <label class="flex items-start gap-2 cursor-pointer">
+        <input type="checkbox" name="confirm" value="1" required class="checkbox checkbox-sm mt-0.5">
+        <span class="text-small">مبلغ را از پنل زرین‌پال برگردانده‌ام</span>
+      </label>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend text-small font-medium">شماره‌ی پیگیری یا یادداشت</legend>
+        <input type="text" name="note" maxlength="200" required autocomplete="off" class="input w-full">
+      </fieldset>
+      <div class="flex items-center gap-2 border-t pt-3">
+        <button type="submit" class="btn btn-primary flex-1 h-11 min-h-11">ثبت بازگشت وجه</button>
+        <button type="button" popovertarget="refund-{{ payment.pk }}" popovertargetaction="hide" class="btn btn-ghost h-11 text-ink-2">انصراف</button>
+      </div>
+    </form>
+  </div>
+</div>

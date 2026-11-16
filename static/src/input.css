@@ -222,6 +222,14 @@
     direction: ltr;
     unicode-bidi: isolate;
   }
+  .fb-muted {
+    color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+  }
+  .font-technical {
+    font-feature-settings: "tnum" 1;
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
   .font-brand {
     font-synthesis: none;
   }

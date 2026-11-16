@@ -1,0 +1,13 @@
+{% extends "panel/shell.html" %}
+{% load core_tags %}
+{% block title %}سفارش {{ order.number }}{% endblock %}
+{% block content %}
+<div class="flex flex-col gap-4">
+  <div class="flex items-center gap-3 min-w-0">
+    <a href="{% url 'panel:orders' %}" class="btn btn-ghost btn-square w-10 h-10 shrink-0" aria-label="بازگشت به فهرست">{% icon "arrow-left" size=18 flip=True %}</a>
+    <span class="inline-flex items-center gap-1 shrink-0" aria-hidden="true"><span class="w-0.5 h-4 bg-base-content inline-block"></span><span class="w-0.5 h-4 bg-base-content inline-block"></span></span>
+    <h1 class="text-title font-medium truncate">سفارش <span class="latin">{{ order.number }}</span></h1>
+  </div>
+  <div id="order-body">{% include "panel/orders/_detail_body.html" %}</div>
+</div>
+{% endblock %}

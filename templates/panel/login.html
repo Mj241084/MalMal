@@ -1,11 +1,22 @@
 {% extends "panel/base.html" %}
+{% load core_tags %}
+{% block title %}ورود{% endblock %}
 {% block body %}
-<div class="hero min-h-screen">
-    <div class="hero-content w-full max-w-sm">
-        <form method="post" class="card w-full shadow-2xl bg-base-100" hx-post="{% url 'panel:login' %}" hx-target="#login-form" id="login-form">
-            {% csrf_token %}
-            {% include "panel/partials/login_form.html" %}
-        </form>
-    </div>
-</div>
+<main class="min-h-screen flex items-center justify-center px-4 py-8">
+  <form method="post" action="{% url 'panel:login' %}" class="bg-base-100 border rounded-box p-5 w-full max-w-sm flex flex-col gap-4" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <h1 class="text-title font-medium">ورود به پنل</h1>
+    {% if error %}<div role="alert" class="alert alert-error text-small">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ error }}</span></div>{% endif %}
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend text-small font-medium">موبایل</legend>
+      <input type="text" name="mobile" value="{{ mobile }}" dir="ltr" inputmode="numeric" autocomplete="username" data-fa-digits data-autofocus class="input w-full text-end num">
+    </fieldset>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend text-small font-medium">رمز عبور</legend>
+      <input type="password" name="password" autocomplete="current-password" class="input w-full" dir="ltr">
+    </fieldset>
+    <button type="submit" class="btn btn-primary h-11 min-h-11">ورود</button>
+  </form>
+</main>
 {% endblock %}

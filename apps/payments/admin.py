@@ -1,5 +1,4 @@
 from django.contrib import admin, messages
-from django.utils import timezone
 
 from apps.payments import services
 from apps.payments.models import Payment, PaymentGateway
@@ -54,8 +53,20 @@ class PaymentAdmin(admin.ModelAdmin):
     @admin.action(description="ثبت بازگشت وجه انجام‌شد", permissions=["manage"])
     def mark_refunded(self, request, queryset):
         ids = list(queryset.filter(pk__in=services.refund_candidates().values("pk")).values_list("pk", flat=True))
-        count = Payment.objects.filter(pk__in=ids).update(status=Payment.REFUNDED, updated_at=timezone.now())
-        self.message_user(request, f"{count} پرداخت به‌عنوان بازگشت‌خورده ثبت شد.", messages.SUCCESS)
+        done = failed = 0
+        for pk in ids:
+            try:
+                result = services.record_refund(pk, by=request.user, note="ثبت از ادمین")
+            except services.RefundError:
+                failed += 1
+                continue
+            self.log_change(request, result.payment, "بازگشت وجه ثبت شد")
+            done += 1
+        self.message_user(
+            request,
+            f"{done} پرداخت به‌عنوان بازگشت‌خورده ثبت شد، {failed} مورد مجاز نبود.",
+            messages.SUCCESS if not failed else messages.WARNING,
+        )
 
     def has_add_permission(self, request) -> bool:
         return False

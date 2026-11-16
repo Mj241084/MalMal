@@ -51,6 +51,11 @@ class OrderStatusLogInline(_ReadOnlyInline):
     readonly_fields = ("created_at",)
 
 
+def _staff_targets(order) -> list[str]:
+    """Refunds are recorded on the payment (payments.services.record_refund), never as a bare status move."""
+    return [target for target in workflow.allowed_targets(order) if target != Order.REFUNDED]
+
+
 class StatusForm(forms.Form):
     to_status = forms.ChoiceField(label="وضعیت جدید")
     tracking_code = forms.CharField(
@@ -64,7 +69,7 @@ class StatusForm(forms.Form):
     def __init__(self, *args, order, **kwargs):
         super().__init__(*args, **kwargs)
         labels = dict(Order.STATUS_CHOICES)
-        self.fields["to_status"].choices = [(s, labels[s]) for s in workflow.allowed_targets(order)]
+        self.fields["to_status"].choices = [(s, labels[s]) for s in _staff_targets(order)]
         self.fields["tracking_code"].initial = order.tracking_code
 
 
@@ -155,7 +160,7 @@ class OrderAdmin(admin.ModelAdmin):
         order = self.get_object(request, object_id)
         extra = {
             "can_manage": self.has_manage_permission(request),
-            "has_targets": bool(order and workflow.allowed_targets(order)),
+            "has_targets": bool(order and _staff_targets(order)),
             "can_invoice": bool(order and order.status in PAID_STATES),
         }
         return super().change_view(request, object_id, form_url, {**(extra_context or {}), **extra})

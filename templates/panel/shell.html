@@ -1,0 +1,73 @@
+{% extends "panel/base.html" %}
+{% load core_tags panel_tags %}
+{% block body %}
+<div class="drawer lg:drawer-open">
+  <input id="panel-drawer" type="checkbox" class="drawer-toggle">
+  <div class="drawer-content flex flex-col min-w-0">
+    <header class="bg-base-100 border-b sticky top-0 z-30">
+      <div class="h-14 px-4 lg:px-6 flex items-center gap-3">
+        <label for="panel-drawer" class="btn btn-ghost btn-square w-10 h-10 lg:hidden" aria-label="منو">{% icon "menu" size=20 %}</label>
+
+        <div class="relative flex-1 max-w-xl" role="search" data-panel-search>
+          <label class="input h-10 w-full bg-base-200 flex items-center gap-2">
+            {% icon "search" size=18 class="text-ink-3" %}
+            <input type="search" name="q" placeholder="جستجو: سفارش، موبایل، کد رهگیری" class="grow text-small" autocomplete="off"
+                   aria-label="جستجوی سراسری"
+                   hx-get="{% url 'panel:search' %}" hx-trigger="input changed delay:300ms, search"
+                   hx-target="#search-results" hx-swap="innerHTML" hx-indicator="#search-indicator">
+            <span id="search-indicator" class="htmx-indicator loading loading-spinner loading-xs" aria-hidden="true"></span>
+          </label>
+          <div id="search-results" class="hidden absolute top-full start-0 end-0 mt-1 z-50 bg-base-100 border rounded-box surface-float max-h-96 overflow-y-auto" aria-live="polite"></div>
+        </div>
+
+        <a href="{% url 'core:home' %}" target="_blank" rel="noopener" class="btn btn-ghost h-10 px-3 text-small font-normal hidden sm:inline-flex">مشاهده‌ی فروشگاه</a>
+
+        <details class="dropdown dropdown-end">
+          <summary class="btn btn-ghost h-10 px-3 gap-2 text-small font-normal list-none">
+            {% icon "user" size=18 class="text-ink-2" %}
+            <span class="hidden sm:inline">{{ request.user.get_full_name|default:request.user.mobile|fa_text }}</span>
+          </summary>
+          <ul class="dropdown-content menu bg-base-100 rounded-box border surface-float w-56 p-2 mt-2 z-40">
+            <li><a href="{% url 'panel:account' %}" class="text-small">حساب من</a></li>
+            <li>
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-label text-ink-3">پوسته</span>
+                <span class="flex items-center gap-1">
+                  <button type="button" data-theme-choice="light" class="btn btn-ghost btn-xs px-2">روشن</button>
+                  <button type="button" data-theme-choice="dark" class="btn btn-ghost btn-xs px-2">تاریک</button>
+                  <button type="button" data-theme-choice="system" class="btn btn-ghost btn-xs px-2">سیستم</button>
+                </span>
+              </div>
+            </li>
+            <li>
+              <form method="post" action="{% url 'panel:logout' %}">{% csrf_token %}
+                <button type="submit" class="text-small w-full text-start">خروج</button>
+              </form>
+            </li>
+          </ul>
+        </details>
+      </div>
+    </header>
+
+    <main id="main-content" class="flex-1 w-full max-w-7xl mx-auto px-4 lg:px-6 py-6 pb-28 lg:pb-6">
+      {% for message in messages %}
+        <div role="alert" class="alert {% if message.tags == 'error' %}alert-error{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %} text-small mb-4"><span>{{ message }}</span></div>
+      {% endfor %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <div class="drawer-side z-40">
+    <label for="panel-drawer" aria-label="بستن منو" class="drawer-overlay"></label>
+    <aside class="bg-base-100 border-e w-64 min-h-full p-4 flex flex-col gap-4">
+      <a href="{% url 'panel:dashboard' %}" class="flex items-center gap-2 py-1">
+        {% include "partials/_logo.html" with img_class="h-9 w-auto" brand_class="text-lead leading-none" %}
+      </a>
+      <nav aria-label="ناوبری پنل" class="flex-1">{% render_sidebar %}</nav>
+      {% if request.user.is_superuser %}
+        <a href="{% url 'admin:index' %}" target="_blank" rel="noopener" class="link text-label text-ink-3">ادمین جنگو</a>
+      {% endif %}
+    </aside>
+  </div>
+</div>
+{% endblock %}

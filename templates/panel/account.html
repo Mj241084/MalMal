@@ -1,0 +1,25 @@
+{% extends "panel/shell.html" %}
+{% load core_tags %}
+{% block title %}حساب من{% endblock %}
+{% block content %}
+<div class="max-w-md flex flex-col gap-4">
+  {% include "panel/partials/_page_heading.html" with title="حساب من" %}
+  <form method="post" class="bg-base-100 border rounded-box p-4 flex flex-col gap-4" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend text-small font-medium">{{ field.label }}</legend>
+        {{ field }}
+        {% for error in field.errors %}<p class="text-label text-error flex items-center gap-1 mt-1">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ error }}</span></p>{% endfor %}
+      </fieldset>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary h-11 min-h-11">تغییر رمز</button>
+  </form>
+  <form method="post" action="{% url 'panel:logout_all' %}" data-confirm="از همه‌ی دستگاه‌ها، از جمله همین مرورگر، خارج می‌شوید؟"
+        class="bg-base-100 border rounded-box p-4 flex items-center justify-between gap-3">
+    {% csrf_token %}
+    <span class="text-small text-ink-2">خروج هم‌زمان از همه‌ی دستگاه‌ها</span>
+    <button type="submit" class="btn btn-ghost h-10 text-ink-2 text-small">خروج از همه</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,6 @@
+{% extends "panel/shell.html" %}
+{% block title %}دسترسی ندارید{% endblock %}
+{% block content %}
+  {% url 'panel:dashboard' as home %}
+  {% include "partials/_empty_state.html" with title="به این بخش دسترسی ندارید" description="اگر لازم است، از مدیر کل بخواهید دسترسی را به حساب شما اضافه کند" action_url=home action_label="بازگشت به داشبورد" %}
+{% endblock %}

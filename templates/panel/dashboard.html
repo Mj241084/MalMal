@@ -1,10 +1,33 @@
-{% extends "panel/dashboard.html" %}
+{% extends "panel/shell.html" %}
+{% load core_tags %}
+{% block title %}داشبورد{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-4">خوش آمدید</h1>
-<div class="stats shadow">
-    <div class="stat">
-        <div class="stat-title">سفارش‌های امروز</div>
-        <div class="stat-value text-primary">۰</div>
-    </div>
+<div class="flex flex-col gap-6">
+  {% include "panel/partials/_page_heading.html" with title="داشبورد" %}
+
+  {% if refunds %}
+    <a href="{% url 'panel:payments' %}" class="alert text-small hover:bg-base-300 transition-colors">
+      {% icon "alert-circle" size=18 class="text-ink-2 shrink-0" %}
+      <span>{{ refunds|fa_digits }} پرداخت تاییدشده نیاز به بازگشت وجه دارد</span>
+    </a>
+  {% endif %}
+
+  {% if can_orders %}
+    <section class="grid grid-cols-1 sm:grid-cols-2 gap-3" aria-label="خلاصه">
+      <a href="{% url 'panel:orders' %}" class="bg-base-100 border rounded-box p-4 flex flex-col gap-1 hover:bg-base-300 transition-colors">
+        <span class="text-small text-ink-2">منتظر ارسال</span>
+        <span class="text-title font-medium">{{ to_ship|fa_digits }}</span>
+        <span class="text-label text-ink-3">پرداخت‌شده یا در حال آماده‌سازی</span>
+      </a>
+      <div class="bg-base-100 border rounded-box p-4 flex flex-col gap-1">
+        <span class="text-small text-ink-2">فروش ۳۰ روز اخیر</span>
+        <span class="text-title font-medium whitespace-nowrap">{{ sales|toman }} <span class="text-small text-ink-2 font-normal">تومان</span></span>
+        <span class="text-label text-ink-3">سفارش‌های پرداخت‌شده</span>
+      </div>
+    </section>
+    {% include "panel/partials/_ship_queue.html" %}
+  {% elif not refunds %}
+    {% include "partials/_empty_state.html" with title="هنوز بخشی به حساب شما اضافه نشده" description="از مدیر کل بخواهید دسترسی‌های لازم را بدهد" %}
+  {% endif %}
 </div>
 {% endblock %}

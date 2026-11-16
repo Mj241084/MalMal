@@ -1,12 +1,33 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl" class="h-full">
+{% load static %}<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="malmal">
 <head>
-    <meta charset="utf-8">
-    <title>پنل مدیریت - MAL MAL</title>
-    <link rel="stylesheet" href="{{ static('css/app.css') }}">
-    <script src="{{ static('js/mm/panel.js') }}" defer></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>{% block title %}پنل{% endblock %} — {{ site_settings.store_name }}</title>
+  <link rel="icon" href="{% static 'favicon/favicon.ico' %}" sizes="any">
+  <script>
+    (function () {
+      var pref = "system";
+      try { pref = localStorage.getItem("malmal.theme") || "system"; } catch (e) {}
+      var dark = pref === "dark" || (pref !== "light" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.setAttribute("data-theme", dark ? "malmal-dark" : "malmal");
+      document.documentElement.dataset.themePref = pref;
+    })();
+  </script>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
-<body class="h-full bg-base-200">
-    {% block body %}{% endblock %}
+<body class="bg-base-200 text-base-content min-h-screen" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  <div id="toasts" class="toast toast-top toast-center z-50" aria-live="polite"></div>
+  {% block body %}{% endblock %}
+  {% include "partials/_mm_dialog.html" %}
+  <script src="{% static 'js/htmx.min.js' %}" defer></script>
+  <script src="{% static 'js/mm/core.js' %}" defer></script>
+  <script src="{% static 'js/mm/ui.js' %}" defer></script>
+  <script src="{% static 'js/mm/forms.js' %}" defer></script>
+  <script src="{% static 'js/mm/theme.js' %}" defer></script>
+  <script src="{% static 'js/mm/shell.js' %}" defer></script>
+  <script src="{% static 'js/mm/panel.js' %}" defer></script>
+  {% block extra_js %}{% endblock %}
 </body>
 </html>

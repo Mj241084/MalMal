@@ -1,21 +1,17 @@
-import pytest
-import pathlib
-import re
+"""D35: only apps/panel may import apps.panel."""
 
-def test_no_forbidden_imports():
-    root = pathlib.Path(".")
-    offenders = []
-    
-    # regex to find imports of apps.panel
-    panel_import_re = re.compile(r"from\s+apps\.panel|import\s+apps\.panel")
-    
-    for path in root.rglob("*.py"):
-        if path.parts[0] in ["apps", "config", "scripts", "templates"]:
-            if "apps/panel/" in str(path).replace("\\", "/"):
-                continue
-                
-            content = path.read_text(encoding="utf-8")
-            if panel_import_re.search(content):
-                offenders.append(str(path))
-                
-    assert not offenders, f"Only apps/panel may import apps/panel (D35):\n" + "\n".join(offenders)
+import re
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[4]
+IMPORT = re.compile(r"^\s*(from\s+apps\.panel|import\s+apps\.panel)", re.M)
+
+
+def test_only_the_panel_imports_the_panel():
+    offenders = [
+        str(path.relative_to(ROOT))
+        for folder in ("apps", "config", "scripts")
+        for path in (ROOT / folder).rglob("*.py")
+        if "apps/panel/" not in path.as_posix() and IMPORT.search(path.read_text(encoding="utf-8"))
+    ]
+    assert not offenders, offenders

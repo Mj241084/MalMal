@@ -43,7 +43,7 @@ def _settings():
     if site.scheme != "https" or site.hostname in LOCAL_HOSTS:
         yield ERROR, "SITE_URL باید نشانی https واقعی باشد (callback پرداخت و sitemap از آن ساخته می‌شود)"
     if settings.ADMIN_URL.startswith("panel/"):
-        yield ERROR, "ADMIN_URL ????? ?? panel/ ???? ??? (?? ???? ??? ????? ????)"
+        yield ERROR, "ADMIN_URL نباید با panel/ شروع شود (با مسیر پنل تداخل دارد)"
 
     if settings.ADMIN_URL == "admin/":
         yield ERROR, "ADMIN_URL هنوز پیش‌فرض (admin/) است"

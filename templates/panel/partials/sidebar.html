@@ -1,18 +1,16 @@
-<aside class="drawer-side">
-    <label for="sidebar" class="drawer-overlay"></label>
-    <ul class="menu p-4 w-60 bg-base-100 text-base-content border-l">
-        <li class="menu-title"><span class="font-bold">MAL MAL</span></li>
-        {% for group_name, links in groups %}
-            <li class="menu-title mt-4"><span>{{ group_name }}</span></li>
-            {% for link in links %}
-                <li>
-                    <a href="{{ link.url }}" class="{% if link.active %}active{% endif %}">
-                        {% icon link.item.icon %}
-                        {{ link.item.label }}
-                        {% render_badge link.item.badge counts %}
-                    </a>
-                </li>
-            {% endfor %}
-        {% endfor %}
-    </ul>
-</aside>
+{% load core_tags panel_tags %}
+<ul id="panel-nav" class="menu w-full p-0 gap-1"
+    hx-get="{% url 'panel:badges' %}" hx-trigger="every 60s" hx-swap="outerHTML"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+  {% for group_label, links in groups %}
+    <li class="menu-title text-label text-ink-3{% if not forloop.first %} mt-4{% endif %}">{{ group_label }}</li>
+    {% for link in links %}
+      <li>
+        <a href="{{ link.url }}" class="text-small gap-3{% if link.active %} menu-active{% endif %}"{% if link.active %} aria-current="page"{% endif %}>
+          {% icon link.item.icon size=18 class="text-ink-2" %}
+          <span class="flex-1">{{ link.item.label }}</span>
+          {% if link.item.badge %}{% render_badge link.item.badge counts %}{% endif %}
+        </a>
+      </li>
+    {% endfor %}
+  {% endfor %}
+</ul>

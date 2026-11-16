@@ -1,4 +1,3 @@
-NAV_ICON_RE = re.compile(r"""\bicon\s*=\s*["\']([a-z0-9-]+)["\']""")
 #!/usr/bin/env python3
 """Build an optimized SVG icon sprite from static/src/sprite.svg.
 
@@ -22,6 +21,7 @@ OUT_SPRITE = ROOT / "static" / "sprite.svg"
 SCAN_DIRS = [ROOT / "templates", ROOT / "apps"]
 
 ICON_RE = re.compile(r"""\{%\s*icon\s+["']([a-z0-9-]+)["']""")
+NAV_ICON_RE = re.compile(r"""\bicon\s*=\s*["']([a-z0-9-]+)["']""")  # NavItem(icon="...") in apps/panel
 SVG_NS = "http://www.w3.org/2000/svg"
 
 # Icons referenced dynamically (e.g. TrustItem seed or JS states) can be listed here.
@@ -35,6 +35,16 @@ ALWAYS_INCLUDE: set[str] = {
     "phone",
     "shield-check",
     "truck",
+    "menu",
+    "search",
+    "shopping-bag",
+    "credit-card",
+    "copy",
+    "printer",
+    "arrow-left",
+    "user",
+    "log-out",
+    "package",
 }
 
 
@@ -49,7 +59,7 @@ def collect_used_icons() -> set[str]:
                 if "tests" in path.parts or path.name.startswith("test_"):
                     continue
                 text = path.read_text(encoding="utf-8", errors="ignore")
-                                names.update(ICON_RE.findall(text))
+                names.update(ICON_RE.findall(text))
                 if path.suffix == ".py" and "panel" in path.parts:
                     names.update(NAV_ICON_RE.findall(text))
     return names
@@ -111,4 +121,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -1,38 +1,33 @@
 from __future__ import annotations
 
-from django.contrib import messages
+from django.contrib.auth import logout
 from django.shortcuts import redirect, render
-from django.urls import reverse
-from django.views import View
+from django.views.decorators.http import require_http_methods, require_POST
 
-from apps.panel import auth, htmx
-
-
-class LoginView(View):
-    template_name = "panel/login.html"
-
-    def get(self, request):
-        if request.user.is_authenticated and request.user.is_staff:
-            return redirect("panel:dashboard")
-        return render(request, self.template_name, {"next": request.GET.get("next")})
-
-    def post(self, request):
-        mobile = request.POST.get("mobile", "")
-        password = request.POST.get("password", "")
-        next_url = request.POST.get("next")
-        
-        status = auth.try_login(request, mobile, password)
-        if status == auth.OK:
-            return redirect(auth.safe_next(request, next_url))
-        
-        err = auth.LOGIN_FAILED if status == auth.INVALID else auth.LOGIN_THROTTLED
-        if request.htmx:
-            return htmx.toast(render(request, "panel/partials/login_form.html", {"error": err}), err, "error")
-        messages.error(request, err)
-        return render(request, self.template_name, {"error": err, "next": next_url})
+from apps.panel import auth
+from apps.panel.permissions import public_view
 
 
+@public_view
+@require_http_methods(["GET", "POST"])
+def login_view(request):
+    if request.method == "GET":
+        # Only a *panel* session skips the form: an admin-only session has no panel_login_at and would loop.
+        if request.user.is_authenticated and request.user.is_staff and auth.session_state(request) == auth.STATE_OK:
+            return redirect(auth.safe_next(request, request.GET.get("next")))
+        return render(request, "panel/login.html", {"next": request.GET.get("next", "")})
+
+    mobile = request.POST.get("mobile", "")
+    next_url = request.POST.get("next", "")
+    outcome = auth.try_login(request, mobile, request.POST.get("password", ""))
+    if outcome == auth.OK:
+        return redirect(auth.safe_next(request, next_url))
+    error = auth.LOGIN_FAILED if outcome == auth.INVALID else auth.LOGIN_THROTTLED
+    return render(request, "panel/login.html", {"next": next_url, "mobile": mobile, "error": error})
+
+
+@public_view
+@require_POST
 def logout_view(request):
-    from django.contrib.auth import logout
     logout(request)
     return redirect("panel:login")

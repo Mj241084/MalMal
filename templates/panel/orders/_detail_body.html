@@ -1,0 +1,164 @@
+{% load core_tags jalali_tags panel_tags %}
+{% if steps %}
+  <ul class="steps w-full text-small">{% for label, done in steps %}<li class="step{% if done %} step-neutral{% endif %}">{{ label }}</li>{% endfor %}</ul>
+{% else %}
+  <div class="flex items-center gap-2 text-small"><span class="status {{ order.status_dot }}"></span>{{ order.get_status_display }}
+    {% if order.cancel_reason %}<span class="text-ink-3">— {{ order.cancel_reason|fa_text }}</span>{% endif %}</div>
+{% endif %}
+
+{% if refund_ids %}
+  <div role="alert" class="alert text-small">{% icon "alert-circle" size=18 class="text-ink-2 shrink-0" %}
+    <span>این سفارش پرداخت تاییدشده‌ای دارد که باید برگردانده شود. مبلغ را از پنل زرین‌پال برگردانید و بعد ثبت کنید</span></div>
+{% endif %}
+
+<div class="lg:grid lg:grid-cols-[1fr_320px] lg:gap-6 items-start flex flex-col gap-4">
+  <div class="flex flex-col gap-4 min-w-0 w-full">
+    <section class="bg-base-100 border rounded-box p-4 flex flex-col gap-3">
+      <h2 class="text-lead font-medium">اقلام</h2>
+      <ul class="flex flex-col divide-y">
+        {% for item in items %}
+          <li class="flex items-center gap-3 py-3 first:pt-0">
+            <span class="w-14 h-14 shrink-0 rounded-lg bg-white border overflow-hidden flex items-center justify-center">
+              {% if item.image_url %}<img src="{{ item.image_url }}" alt="" width="56" height="56" loading="lazy" class="w-full h-full object-contain p-1">{% else %}{% icon "package" size=18 class="text-ink-3" %}{% endif %}
+            </span>
+            <span class="min-w-0 flex-1 flex flex-col">
+              <span class="text-small leading-6 line-clamp-2">{{ item.product_title|fa_text }}</span>
+              <span class="text-label text-ink-3">{{ item.variant_title|fa_text }} — <span class="latin">{{ item.sku }}</span> — {{ item.qty|fa_digits }} عدد</span>
+            </span>
+            <span class="text-small whitespace-nowrap shrink-0">{{ item.line_total|toman }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+      <div class="flex flex-col gap-2 border-t pt-3 text-small">
+        <div class="flex justify-between"><span class="text-ink-2">جمع کالاها</span><span class="whitespace-nowrap">{{ order.items_total|toman }} تومان</span></div>
+        <div class="flex justify-between"><span class="text-ink-2">ارسال</span><span class="text-ink-2">{% if order.shipping_payment_mode == "collect" %}پس‌کرایه{% else %}{{ order.shipping_cost|toman }} تومان{% endif %}</span></div>
+        <div class="flex justify-between text-lead font-medium"><span>مبلغ سفارش</span><span class="whitespace-nowrap">{{ order.payable|toman }} تومان</span></div>
+      </div>
+    </section>
+
+    <section class="bg-base-100 border rounded-box p-4 flex flex-col gap-2">
+      <div class="flex items-center justify-between gap-2">
+        <h2 class="text-lead font-medium">گیرنده و آدرس</h2>
+        <button type="button" data-copy="recipient-text" class="btn btn-ghost btn-sm h-10 gap-1">{% icon "copy" size=16 %}<span>کپی مشخصات</span></button>
+      </div>
+      <p class="text-small"><bdi>{{ order.recipient_name|fa_text }}</bdi> — <span class="num">{{ order.recipient_mobile|fa_digits }}</span></p>
+      <p class="text-small text-ink-2 leading-6">{{ order.province_name }}، {{ order.city_name }}، {{ order.address_text|fa_text }}</p>
+      <p class="text-label text-ink-3">پلاک {{ order.plate|fa_digits }}{% if order.unit %}، واحد {{ order.unit|fa_digits }}{% endif %} — کدپستی <span class="num">{{ order.postal_code|fa_digits }}</span></p>
+      {% if map_link %}<a href="{{ map_link }}" target="_blank" rel="noopener" class="link text-small self-start">نمایش روی نقشه</a>{% endif %}
+      <textarea id="recipient-text" class="hidden" readonly>{{ recipient_text }}</textarea>
+    </section>
+
+    <section class="bg-base-100 border rounded-box p-4 flex flex-col gap-2">
+      <h2 class="text-lead font-medium">خریدار</h2>
+      <p class="text-small"><bdi>{{ order.buyer_name|fa_text }}</bdi> — <span class="num">{{ order.buyer_mobile|fa_digits }}</span></p>
+      <p class="text-label text-ink-3">کد ملی <span class="num">{{ order.buyer_national_code|fa_digits }}</span>{% if order.buyer_email %} — <span class="latin">{{ order.buyer_email }}</span>{% endif %}</p>
+    </section>
+
+    <section class="bg-base-100 border rounded-box p-4 flex flex-col gap-3">
+      <h2 class="text-lead font-medium">پرداخت‌ها</h2>
+      {% for p in payments %}
+        <div class="flex items-center justify-between gap-3 {% if not forloop.first %}border-t pt-3{% endif %}">
+          <span class="min-w-0 flex flex-col">
+            <span class="flex items-center gap-2 text-small"><span class="status {{ p.status|payment_dot }}"></span>{{ p.get_status_display }} — <span class="whitespace-nowrap">{{ p.amount|toman }} تومان</span></span>
+            <span class="text-label text-ink-3"><span class="latin">{{ p.gateway_code }}</span>{% if p.ref_id %} — تراکنش <span class="latin">{{ p.ref_id }}</span>{% endif %} — <span class="num">{{ p.created_at|to_jalali }}</span></span>
+          </span>
+          {% if can_refund and p.pk in refund_ids %}
+            <button type="button" popovertarget="refund-{{ p.pk }}" class="btn btn-sm h-10 bg-base-300 border shrink-0">ثبت بازگشت وجه</button>
+          {% endif %}
+        </div>
+      {% empty %}
+        <p class="text-small text-ink-2">پرداختی ثبت نشده است</p>
+      {% endfor %}
+    </section>
+
+    <section class="bg-base-100 border rounded-box p-4 flex flex-col gap-3">
+      <h2 class="text-lead font-medium">تاریخچه</h2>
+      <ul class="flex flex-col gap-3">
+        {% for row in logs %}
+          <li class="flex flex-col gap-1 text-small">
+            <span>{% if row.from_label %}{{ row.from_label }} ← {% endif %}{{ row.to_label }}</span>
+            <span class="text-label text-ink-3"><span class="num">{{ row.log.created_at|to_jalali }}</span>{% if row.by %} — <bdi>{{ row.by|fa_text }}</bdi>{% endif %}{% if row.log.note %} — {{ row.log.note|fa_text }}{% endif %}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+
+  <aside class="bg-base-100 border rounded-box p-4 flex flex-col gap-3 w-full lg:sticky lg:top-20">
+    <h2 class="text-lead font-medium">اقدام</h2>
+    {% if order.tracking_code %}
+      <p class="text-small text-ink-2">کد رهگیری: <span class="latin">{{ order.tracking_code }}</span>{% if tracking_page %} — <a href="{{ tracking_page }}" target="_blank" rel="noopener" class="link">رهگیری در سایت تیپاکس</a>{% endif %}</p>
+    {% endif %}
+    {% include "panel/orders/_primary_action.html" with btn_class="w-full h-11 min-h-11 hidden lg:inline-flex" %}
+    <div class="flex flex-wrap gap-2">
+      {% if can_invoice %}<a href="{% url 'panel:order_invoice' order.number %}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm h-10 gap-1">{% icon "printer" size=16 %}<span>چاپ فاکتور</span></a>{% endif %}
+      {% if can_manage and can_resend %}
+        <button type="button" class="btn btn-ghost btn-sm h-10" hx-post="{% url 'panel:order_resend_sms' order.number %}" hx-target="#order-body" hx-swap="innerHTML" hx-disabled-elt="this">ارسال دوباره‌ی پیامک</button>
+      {% endif %}
+      {% if can_manage and can_cancel %}<button type="button" popovertarget="cancel-modal" class="btn btn-ghost btn-sm h-10 text-ink-2">لغو سفارش</button>{% endif %}
+      {% if can_refund and refund_payment %}<button type="button" popovertarget="refund-{{ refund_payment.pk }}" class="btn btn-ghost btn-sm h-10 text-ink-2">ثبت بازگشت وجه</button>{% endif %}
+    </div>
+  </aside>
+</div>
+
+{# D28: the main action sits at the start (right), the amount at the end #}
+{% if can_manage %}{% if can_start or can_ship or can_deliver %}
+  <div class="lg:hidden fixed bottom-0 inset-x-0 z-20 bg-base-100 border-t px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+    <div class="flex items-center gap-3">
+      <div class="flex-1 min-w-0">{% include "panel/orders/_primary_action.html" with btn_class="w-full h-11 min-h-11" %}</div>
+      <span class="text-lead font-medium whitespace-nowrap tabular-nums shrink-0">{{ order.payable|toman }}</span>
+    </div>
+  </div>
+{% endif %}{% endif %}
+
+{% if can_manage and can_ship %}
+  <div class="modal" popover id="ship-modal">
+    <div class="modal-box max-w-sm">
+      <h3 class="text-lead font-medium">ثبت ارسال</h3>
+      <p class="text-small text-ink-2 mt-2">با ثبت ارسال، پیامک برای مشتری فرستاده می‌شود</p>
+      <form method="post" action="{% url 'panel:order_status' order.number %}" hx-post="{% url 'panel:order_status' order.number %}"
+            hx-target="#order-body" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']" class="mt-4 flex flex-col gap-3">
+        {% csrf_token %}<input type="hidden" name="to" value="shipped">
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend text-small font-medium">کد رهگیری{% if not needs_tracking %} (اختیاری){% endif %}</legend>
+          <input type="text" name="tracking_code" maxlength="25" dir="ltr" autocomplete="off" autofocus{% if needs_tracking %} required{% endif %} class="input w-full text-end latin">
+        </fieldset>
+        <div class="flex items-center gap-2 border-t pt-3">
+          <button type="submit" class="btn btn-primary flex-1 h-11 min-h-11">ثبت ارسال و ارسال پیامک</button>
+          <button type="button" popovertarget="ship-modal" popovertargetaction="hide" class="btn btn-ghost h-11 text-ink-2">انصراف</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endif %}
+
+{% if can_manage and can_cancel %}
+  <div class="modal" popover id="cancel-modal">
+    <div class="modal-box max-w-sm">
+      <h3 class="text-lead font-medium">سفارش لغو شود؟</h3>
+      <p class="text-small text-ink-2 mt-2 leading-6">موجودی کالاها به انبار برمی‌گردد و پیامک لغو برای مشتری ارسال می‌شود. اگر مشتری پرداخت کرده باشد، بازگشت وجه را جداگانه ثبت کنید</p>
+      <form method="post" action="{% url 'panel:order_status' order.number %}" hx-post="{% url 'panel:order_status' order.number %}"
+            hx-target="#order-body" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']" class="mt-4 flex flex-col gap-3">
+        {% csrf_token %}<input type="hidden" name="to" value="cancelled">
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend text-small font-medium">دلیل لغو</legend>
+          <input type="text" name="note" maxlength="200" required autocomplete="off" autofocus class="input w-full">
+        </fieldset>
+        <div class="flex items-center gap-2 border-t pt-3">
+          <button type="submit" class="btn btn-error flex-1 h-11 min-h-11">لغو سفارش</button>
+          <button type="button" popovertarget="cancel-modal" popovertargetaction="hide" class="btn btn-ghost h-11 text-ink-2">انصراف</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endif %}
+
+{% if can_refund %}
+  {% for p in payments %}
+    {% if p.pk in refund_ids or p.pk == refund_payment.pk %}
+      {% include "panel/payments/_refund_modal.html" with payment=p next=request.path htmx_target="" %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% if request.htmx %}{% render_sidebar oob=True %}{% endif %}

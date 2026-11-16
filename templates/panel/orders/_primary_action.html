@@ -1,0 +1,17 @@
+{% if can_manage %}
+  {% if can_start %}
+    <form method="post" action="{% url 'panel:order_status' order.number %}" hx-post="{% url 'panel:order_status' order.number %}"
+          hx-target="#order-body" hx-swap="innerHTML" hx-disabled-elt="find button">
+      {% csrf_token %}<input type="hidden" name="to" value="processing">
+      <button type="submit" class="btn btn-primary {{ btn_class }}">شروع آماده‌سازی</button>
+    </form>
+  {% elif can_ship %}
+    <button type="button" popovertarget="ship-modal" class="btn btn-primary {{ btn_class }}">ثبت ارسال</button>
+  {% elif can_deliver %}
+    <form method="post" action="{% url 'panel:order_status' order.number %}" hx-post="{% url 'panel:order_status' order.number %}"
+          hx-target="#order-body" hx-swap="innerHTML" hx-disabled-elt="find button">
+      {% csrf_token %}<input type="hidden" name="to" value="delivered">
+      <button type="submit" class="btn btn-primary {{ btn_class }}">ثبت تحویل</button>
+    </form>
+  {% endif %}
+{% endif %}

@@ -1,0 +1,46 @@
+{% load core_tags jalali_tags panel_tags %}
+<input type="hidden" id="payments-tab" name="tab" value="{{ tab }}">
+<div class="flex flex-col gap-4">
+  <div role="tablist" class="tabs tabs-border overflow-x-auto no-scrollbar">
+    {% for code, label, count in tabs %}
+      <a role="tab" class="tab gap-2 whitespace-nowrap{% if code == tab %} tab-active{% endif %}"
+         href="?tab={{ code }}{% if filter_qs %}&{{ filter_qs }}{% endif %}"
+         hx-get="?tab={{ code }}{% if filter_qs %}&{{ filter_qs }}{% endif %}" hx-target="#payments-results" hx-push-url="true"
+         hx-indicator="#payments-indicator">
+        {{ label }}<span class="text-label text-ink-3 num">{{ count|fa_digits }}</span>
+      </a>
+    {% endfor %}
+  </div>
+
+  {% if page_obj.object_list %}
+    <div class="bg-base-100 border rounded-box overflow-x-auto">
+      <table class="table table-sm">
+        <thead><tr>
+          <th scope="col">سفارش</th><th scope="col">درگاه</th><th scope="col">مبلغ (تومان)</th><th scope="col">وضعیت</th>
+          <th scope="col">تراکنش</th><th scope="col">زمان</th><th scope="col"><span class="sr-only">اقدام</span></th>
+        </tr></thead>
+        <tbody>
+          {% for p in page_obj.object_list %}
+            <tr class="hover:bg-base-300">
+              <td><a href="{% url 'panel:order_detail' p.order.number %}" class="latin link link-hover font-medium">{{ p.order.number }}</a></td>
+              <td><span class="latin">{{ p.gateway_code }}</span></td>
+              <td class="whitespace-nowrap">{{ p.amount|toman }}</td>
+              <td><span class="flex items-center gap-2 text-small whitespace-nowrap"><span class="status {{ p.status|payment_dot }}"></span>{{ p.get_status_display }}</span></td>
+              <td>{% if p.ref_id %}<span class="latin">{{ p.ref_id }}</span>{% endif %}{% if p.card_pan_masked %}<div class="latin text-label text-ink-3">{{ p.card_pan_masked }}</div>{% endif %}</td>
+              <td class="text-ink-2 whitespace-nowrap"><span class="num">{{ p.created_at|to_jalali }}</span></td>
+              <td>
+                {% if can_refund and p.pk in candidate_ids %}
+                  <button type="button" popovertarget="refund-{{ p.pk }}" class="btn btn-sm h-10 bg-base-300 border whitespace-nowrap">ثبت بازگشت وجه</button>
+                  {% include "panel/payments/_refund_modal.html" with payment=p next=request.get_full_path htmx_target="#payments-results" %}
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "panel/partials/_pagination.html" with target="#payments-results" %}
+  {% else %}
+    {% include "partials/_empty_state.html" with title="پرداختی پیدا نشد" description="فیلترها را تغییر دهید یا تب دیگری را ببینید" %}
+  {% endif %}
+</div>

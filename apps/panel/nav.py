@@ -36,6 +36,24 @@ class NavLink:
 
 ITEMS: list[NavItem] = [
     NavItem("dashboard", "داشبورد", "panel:dashboard", icon="layout-dashboard", group="daily"),
+    NavItem(
+        "orders",
+        "سفارش‌ها",
+        "panel:orders",
+        icon="shopping-bag",
+        group="daily",
+        perms=("orders.view_order",),
+        badge="orders_to_ship",
+    ),
+    NavItem(
+        "payments",
+        "پرداخت‌ها",
+        "panel:payments",
+        icon="credit-card",
+        group="daily",
+        perms=("payments.view_payment",),
+        badge="refunds",
+    ),
 ]
 
 

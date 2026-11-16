@@ -18,6 +18,7 @@ from apps.engagement import counters
 from apps.notifications import sms
 from apps.orders import notify as order_notify
 from apps.orders import services as order_services
+from apps.orders import workflow
 from apps.orders.models import Order
 from apps.payments import gateways
 from apps.payments.models import Payment
@@ -188,7 +189,57 @@ def _notify_paid(order_id: int) -> None:
 
 def refund_candidates():
     """Verified payments that no longer back a live order, plus any second verified payment of one order."""
-    earlier = Payment.objects.filter(order_id=OuterRef("order_id"), status=Payment.VERIFIED, pk__lt=OuterRef("pk"))
+    earlier = Payment.objects.filter(
+        order_id=OuterRef("order_id"), status__in=[Payment.VERIFIED, Payment.REFUNDED], pk__lt=OuterRef("pk")
+    )
     return Payment.objects.filter(status=Payment.VERIFIED).filter(
         Q(order__status__in=[Order.CANCELLED, Order.EXPIRED]) | Exists(earlier)
     )
+
+
+class RefundError(Exception):
+    """A refusal whose message is safe to show to staff."""
+
+
+@dataclass(frozen=True)
+class RefundResult:
+    payment: Payment
+    order_refunded: bool
+
+
+def record_refund(payment_id: int, *, by, note: str) -> RefundResult:
+    """The only road from a verified payment to «refunded» (D42); admin and panel both call it.
+
+    Staff return the money in the gateway panel first; this records that it happened. The order moves first,
+    because workflow.allowed_targets needs the VERIFIED payment to still be there. Callers write the audit entry.
+    """
+    note = " ".join((note or "").split())[:200]
+    if not note:
+        raise RefundError("یادداشت لازم است (مثلاً شماره‌ی پیگیری بازگشت وجه)")
+    with transaction.atomic():
+        payment = Payment.objects.select_related("order").filter(pk=payment_id).first()
+        if payment is None:
+            raise RefundError("پرداخت پیدا نشد")
+        if payment.status == Payment.REFUNDED:
+            raise RefundError("بازگشت وجه این پرداخت قبلاً ثبت شده است")
+        if payment.status != Payment.VERIFIED:
+            raise RefundError("فقط پرداخت تاییدشده بازگشت وجه می‌خورد")
+
+        order = payment.order
+        duplicate = Payment.objects.filter(
+            order_id=order.pk, status__in=[Payment.VERIFIED, Payment.REFUNDED], pk__lt=payment.pk
+        ).exists()
+        order_refunded = False
+        if not duplicate and order.status in (Order.CANCELLED, Order.EXPIRED, Order.DELIVERED):
+            try:
+                workflow.change_status(order.pk, Order.REFUNDED, by=by, note=note)
+            except workflow.TransitionError as exc:
+                raise RefundError(str(exc)) from exc
+            order_refunded = True
+        elif not duplicate and order.status != Order.REFUNDED:
+            raise RefundError("سفارش هنوز در جریان است؛ لغو یا تحویل آن را ثبت کنید")
+
+        if not _move(payment.pk, [Payment.VERIFIED], status=Payment.REFUNDED):
+            raise RefundError("پرداخت هم‌زمان تغییر کرد؛ صفحه را دوباره باز کنید")  # rolls the order back too
+    payment.status = Payment.REFUNDED
+    return RefundResult(payment, order_refunded)

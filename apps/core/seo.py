@@ -90,7 +90,8 @@ SITEMAPS = {
 
 PRIVATE_PATHS = (
     "/account/",
-    "/auth/",`n    "/panel/",`n    "/panel/",
+    "/auth/",
+    "/panel/",
     "/login/",
     "/cart/",
     "/checkout/",

@@ -1,0 +1,23 @@
+{% load core_tags %}
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="join flex justify-center mt-4" aria-label="صفحه‌بندی">
+  {% if page_obj.has_previous %}
+    <a class="join-item btn btn-sm" rel="prev" href="?{{ qs }}&page={{ page_obj.previous_page_number }}"
+       hx-get="?{{ qs }}&page={{ page_obj.previous_page_number }}" hx-target="{{ target }}" hx-push-url="true">
+      {% icon "chevron-right" size=18 flip=True %}<span class="sr-only">صفحه قبل</span></a>
+  {% endif %}
+  {% for number in page_obj.paginator.page_range %}
+    {% if number == page_obj.number %}
+      <span class="join-item btn btn-sm bg-base-300 border" aria-current="page">{{ number|fa_digits }}</span>
+    {% elif number >= page_obj.number|add:"-2" and number <= page_obj.number|add:"2" %}
+      <a class="join-item btn btn-sm" href="?{{ qs }}&page={{ number }}"
+         hx-get="?{{ qs }}&page={{ number }}" hx-target="{{ target }}" hx-push-url="true">{{ number|fa_digits }}</a>
+    {% endif %}
+  {% endfor %}
+  {% if page_obj.has_next %}
+    <a class="join-item btn btn-sm" rel="next" href="?{{ qs }}&page={{ page_obj.next_page_number }}"
+       hx-get="?{{ qs }}&page={{ page_obj.next_page_number }}" hx-target="{{ target }}" hx-push-url="true">
+      {% icon "chevron-left" size=18 flip=True %}<span class="sr-only">صفحه بعد</span></a>
+  {% endif %}
+</nav>
+{% endif %}

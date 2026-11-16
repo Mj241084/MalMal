@@ -112,17 +112,7 @@
     </form>
   </dialog>
 
-  <dialog id="mm-dialog" class="modal modal-bottom sm:modal-middle" aria-labelledby="mm-dialog-title" aria-describedby="mm-dialog-message">
-    <div class="modal-box max-w-sm p-5 bg-base-100 rounded-t-box sm:rounded-box">
-      <h2 id="mm-dialog-title" data-mm-title class="text-lead font-medium" hidden></h2>
-      <p id="mm-dialog-message" data-mm-message class="text-small text-ink-2 mt-2"></p>
-      <div class="flex items-center gap-2 border-t pt-4 mt-4">
-        <button type="button" data-mm-ok class="btn btn-primary flex-1 min-w-0 h-11 min-h-11"></button>
-        <button type="button" data-mm-cancel class="btn btn-ghost h-11 shrink-0 text-ink-2"></button>
-      </div>
-    </div>
-    <form method="dialog" class="modal-backdrop"><button aria-label="بستن">بستن</button></form>
-  </dialog>
+  {% include "partials/_mm_dialog.html" %}
 
   <script src="{% static 'js/htmx.min.js' %}" defer></script>
   <script src="{% static 'js/mm/core.js' %}" defer></script>

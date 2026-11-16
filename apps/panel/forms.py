@@ -1,46 +1,62 @@
+"""Panel forms."""
+
 from __future__ import annotations
 
+import re
+
 from django import forms
-from django.utils.translation import gettext_lazy as _
 
-from apps.core.validators import validate_iran_mobile
-from apps.panel.fields import FaIntegerField
+from apps.core.jalali import to_fa_digits
+from apps.core.text import normalize_digits
+from apps.orders import workflow
+from apps.orders.models import Order
 
-
-class PanelLoginForm(forms.Form):
-    mobile = forms.CharField(
-        label=_("موبایل"),
-        widget=forms.TextInput(attrs={"class": "input w-full text-start", "placeholder": "۰۹..."}),
-        validators=[validate_iran_mobile],
-    )
-    password = forms.CharField(
-        label=_("رمز عبور"),
-        widget=forms.PasswordInput(attrs={"class": "input w-full text-start"}),
-    )
+TRACKING_RE = re.compile(r"^[0-9A-Za-z-]*$")
+STAFF_TARGETS = (Order.PROCESSING, Order.SHIPPED, Order.DELIVERED, Order.CANCELLED)
 
 
 class PasswordChangeForm(forms.Form):
-    old = forms.CharField(label=_("رمز فعلی"), widget=forms.PasswordInput(attrs={"class": "input w-full"}))
-    new1 = forms.CharField(label=_("رمز جدید"), widget=forms.PasswordInput(attrs={"class": "input w-full"}))
-    new2 = forms.CharField(label=_("تکرار رمز"), widget=forms.PasswordInput(attrs={"class": "input w-full"}))
+    old = forms.CharField(label="رمز فعلی", widget=forms.PasswordInput(attrs={"class": "input w-full"}))
+    new1 = forms.CharField(label="رمز جدید", widget=forms.PasswordInput(attrs={"class": "input w-full"}))
+    new2 = forms.CharField(label="تکرار رمز جدید", widget=forms.PasswordInput(attrs={"class": "input w-full"}))
 
     def clean(self):
         cleaned = super().clean()
         if cleaned.get("new1") != cleaned.get("new2"):
-            raise forms.ValidationError("رمزها مطابقت ندارند")
+            self.add_error("new2", "رمزها مطابقت ندارند")
         return cleaned
 
 
-class SearchForm(forms.Form):
-    q = forms.CharField(
-        required=False,
-        widget=forms.TextInput(
-            attrs={
-                "class": "input input-sm w-full",
-                "placeholder": "جستجو...",
-                "data-hx-get": "/panel/search/",
-                "data-hx-trigger": "input changed delay:300ms, search",
-                "data-hx-target": "#search-results",
-            }
-        ),
+class StatusChangeForm(forms.Form):
+    """Input of one staff move. Whether the move is allowed is decided by workflow.change_status, not here."""
+
+    to = forms.ChoiceField(
+        choices=[(code, code) for code in STAFF_TARGETS],
+        error_messages={"required": "وضعیت جدید را مشخص کنید", "invalid_choice": "تغییر وضعیت نامعتبر است"},
     )
+    tracking_code = forms.CharField(required=False)
+    note = forms.CharField(
+        required=False, max_length=200, error_messages={"max_length": "یادداشت حداکثر ۲۰۰ نویسه است"}
+    )
+
+    def clean_tracking_code(self) -> str:
+        code = normalize_digits(self.cleaned_data["tracking_code"]).strip()
+        if len(code) > workflow.MAX_TRACKING_LENGTH:
+            raise forms.ValidationError(f"کد رهگیری حداکثر {to_fa_digits(workflow.MAX_TRACKING_LENGTH)} نویسه است")
+        if not TRACKING_RE.match(code):
+            raise forms.ValidationError("کد رهگیری فقط حرف لاتین، عدد و خط تیره دارد")
+        return code
+
+    def clean_note(self) -> str:
+        return " ".join(self.cleaned_data["note"].split())
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("to") == Order.CANCELLED and not cleaned.get("note"):
+            self.add_error("note", "برای لغو سفارش، دلیل را بنویسید")
+        return cleaned
+
+    def first_error(self) -> str:
+        for errors in self.errors.values():
+            return str(errors[0])
+        return ""

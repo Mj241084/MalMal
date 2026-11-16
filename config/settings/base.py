@@ -162,5 +162,3 @@ def build_caches(redis_url: str) -> dict[str, dict]:
             "TIMEOUT": 60 * 60 * 24,
         },
     }
-
-

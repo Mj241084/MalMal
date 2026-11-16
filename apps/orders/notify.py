@@ -42,3 +42,8 @@ def send_status_sms(order_id: int) -> None:
     message = _message(order)
     if message:
         sms.send_safely(message[0], order.buyer_mobile, message[1])
+
+
+def has_status_sms(order: Order) -> bool:
+    """True when the current status has an SMS at all (the «resend» button is hidden otherwise)."""
+    return _message(order) is not None

@@ -1,0 +1,14 @@
+{% load core_tags %}
+{% for provider, hits in results %}
+  <div class="px-3 pt-3 text-label text-ink-3">{{ provider.label }}</div>
+  <ul class="p-1">
+    {% for hit in hits %}
+      <li><a href="{{ hit.url }}" class="flex flex-col p-2 rounded-field hover:bg-base-300 transition-colors">
+        <span class="text-small">{{ hit.title|fa_text }}</span>
+        <span class="text-label text-ink-3">{{ hit.subtitle|fa_text }}</span>
+      </a></li>
+    {% endfor %}
+  </ul>
+{% empty %}
+  <p class="p-3 text-small text-ink-2">نتیجه‌ای پیدا نشد</p>
+{% endfor %}
