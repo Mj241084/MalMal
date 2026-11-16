@@ -12,9 +12,9 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 
-from apps.catalog.models import Brand, Category, Product, Variant
+from apps.catalog.models import Product
 from apps.core.models import SiteSettings, StaticPage
-from apps.marketing.models import Banner, Collection, TrustItem
+from apps.geo.models import City
 from apps.notifications import sms
 from apps.orders.shipping import default_method
 from apps.payments import gateways
@@ -73,6 +73,8 @@ def _services():
         yield ERROR, "Redis در دسترس نیست (کش و محدودیت نرخ OTP)"
     if not settings.NESHAN_MAP_KEY:
         yield WARNING, "NESHAN_MAP_KEY خالی است (نقشه‌ی آدرس غیرفعال)"
+    if not settings.NESHAN_SERVICE_KEY:
+        yield WARNING, "NESHAN_SERVICE_KEY خالی است (فهرست استان و شهر فقط از دیتابیس خوانده می‌شود و تازه نمی‌شود)"
 
 
 def _build():
@@ -99,19 +101,8 @@ def _build():
 
 
 def _content():
-    for label, model in (
-        ("محصول", Product),
-        ("تنوع", Variant),
-        ("دسته", Category),
-        ("برند", Brand),
-        ("بنر", Banner),
-        ("مجموعه", Collection),
-    ):
-        count = model.objects.filter(is_demo=True).count()
-        if count:
-            yield ERROR, f"{count} {label} نمونه (demo) هنوز هست (seed_demo --clear)"
-    if TrustItem.objects.filter(is_active=True, is_placeholder=True).exists():
-        yield WARNING, "مزیت‌های فروشگاه هنوز متن فرضی دارند (ادمین ← مزیت‌های فروشگاه)"
+    if not City.objects.exists():
+        yield ERROR, "فهرست استان و شهر خالی است (manage.py sync_geo)"
     for page in StaticPage.objects.filter(is_active=True, needs_review=True):
         yield WARNING, f"صفحه‌ی «{page.title}» نیازمند بازبینی است"
     missing = [

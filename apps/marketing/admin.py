@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from django.contrib import admin, messages
+from django.contrib import admin
 from django.utils.html import format_html
 
 from apps.core.jalali import jalali_str
@@ -12,8 +12,8 @@ from apps.marketing.models import Banner, Collection, CollectionItem, HomeBlock,
 
 @admin.register(TrustItem)
 class TrustItemAdmin(admin.ModelAdmin):
-    list_display = ("title", "icon_preview", "subtitle", "placeholder_notice", "sort", "is_active")
-    list_filter = ("is_active", "is_placeholder")
+    list_display = ("title", "icon_preview", "subtitle", "sort", "is_active")
+    list_filter = ("is_active",)
     list_editable = ("sort", "is_active")
     search_fields = ("title", "subtitle")
     ordering = ("sort", "pk")
@@ -21,18 +21,6 @@ class TrustItemAdmin(admin.ModelAdmin):
     @admin.display(description="آیکون")
     def icon_preview(self, obj) -> str:
         return format_html("<code>{}</code>", obj.icon)
-
-    @admin.display(description="وضعیت")
-    def placeholder_notice(self, obj):
-        return format_html('<strong style="color:#b45309">{}</strong>', "متن فرضی") if obj.is_placeholder else "—"
-
-    def changelist_view(self, request, extra_context=None):
-        if TrustItem.objects.filter(is_active=True, is_placeholder=True).exists():
-            messages.warning(
-                request,
-                "برخی مزیت‌های فعال هنوز متن فرضی دارند. قبل از انتشار آن‌ها را ویرایش و «متن فرضی» را خاموش کنید.",
-            )
-        return super().changelist_view(request, extra_context)
 
 
 def _schedule(obj) -> str:
@@ -42,9 +30,9 @@ def _schedule(obj) -> str:
 @admin.register(Banner)
 class BannerAdmin(admin.ModelAdmin):
     form = BannerAdminForm
-    list_display = ("title", "placement", "target_type", "schedule", "live", "sort", "is_active", "is_demo")
+    list_display = ("title", "placement", "target_type", "schedule", "live", "sort", "is_active")
     list_editable = ("sort", "is_active")
-    list_filter = ("placement", "is_active", "target_type", "is_demo")
+    list_filter = ("placement", "is_active", "target_type")
     search_fields = ("title", "alt")
     autocomplete_fields = ("target_product", "target_category", "target_collection")
     readonly_fields = ("preview",)
@@ -53,7 +41,6 @@ class BannerAdmin(admin.ModelAdmin):
         ("تصویر", {"fields": ("image_desktop", "image_mobile", "alt", "preview")}),
         ("مقصد", {"fields": ("target_type", "target_product", "target_category", "target_collection", "target_url")}),
         ("زمان‌بندی (تاریخ شمسی)", {"fields": ("starts_at", "ends_at")}),
-        ("سایر", {"fields": ("is_demo",), "classes": ("collapse",)}),
     )
 
     @admin.display(description="زمان‌بندی")
@@ -81,8 +68,8 @@ class CollectionItemInline(admin.TabularInline):
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):
     form = CollectionAdminForm
-    list_display = ("title", "mode", "schedule", "live", "is_active", "is_demo")
-    list_filter = ("mode", "is_active", "is_demo")
+    list_display = ("title", "mode", "schedule", "live", "is_active")
+    list_filter = ("mode", "is_active")
     search_fields = ("title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     filter_horizontal = ("categories", "brands")
@@ -105,7 +92,6 @@ class CollectionAdmin(admin.ModelAdmin):
             },
         ),
         ("سئو", {"fields": ("seo_title", "seo_description"), "classes": ("collapse",)}),
-        ("سایر", {"fields": ("is_demo",), "classes": ("collapse",)}),
     )
 
     @admin.display(description="زمان‌بندی")

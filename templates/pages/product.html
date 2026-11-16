@@ -26,13 +26,26 @@
 {# D28 thumb zone: primary action at the start (right in RTL), price at the end. #}
 <div class="lg:hidden fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] inset-x-0 z-20 bg-base-100 border-t px-4 py-3">
   <div class="flex items-center gap-3">
-    <button type="button" data-cart-add
-            class="btn btn-primary flex-1 min-w-0 h-11 min-h-11 disabled:bg-base-300 disabled:text-base-content disabled:border"
-            {% if not default_variant or default_variant.max_orderable == 0 %}disabled{% endif %}
-            aria-label="افزودن به سبد خرید">
-      {% icon "shopping-cart" size=18 class="shrink-0" %}
-      <span data-cart-label class="text-small whitespace-nowrap">افزودن به سبد</span>
-    </button>
+    <div class="flex-1 min-w-0">
+      <div data-cart-idle>
+        <button type="button" data-cart-add
+                class="btn btn-primary w-full h-11 min-h-11 disabled:bg-base-300 disabled:text-base-content disabled:border"
+                {% if not default_variant or default_variant.max_orderable == 0 %}disabled{% endif %}
+                aria-label="افزودن به سبد خرید">
+          {% icon "shopping-cart" size=18 class="shrink-0" %}
+          <span class="text-small whitespace-nowrap">افزودن به سبد</span>
+        </button>
+      </div>
+      <div data-cart-active hidden>
+        <div class="flex items-center gap-2">
+          {% include "partials/_cart_stepper.html" with outer="flex-1 min-w-0" btn_size="w-11 h-11 min-h-11" %}
+          <a href="{% url 'cart:detail' %}" class="btn btn-primary btn-square w-11 h-11 min-h-11 shrink-0"
+             aria-label="مشاهده‌ی سبد خرید">
+            {% icon "shopping-cart" size=20 %}
+          </a>
+        </div>
+      </div>
+    </div>
     <div class="flex flex-col items-end shrink-0 leading-5">
       <span data-bar-price class="text-lead font-medium whitespace-nowrap tabular-nums">{% if default_variant %}{{ default_variant.price|toman }}{% else %}{{ product.min_price|toman }}{% endif %}</span>
       <span class="text-label text-ink-2">تومان</span>
@@ -40,3 +53,5 @@
   </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}<script src="{% static 'js/mm/gallery.js' %}" defer></script>{% endblock %}

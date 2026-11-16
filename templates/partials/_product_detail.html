@@ -1,31 +1,53 @@
 {% load core_tags catalog_tags %}
 <div class="grid lg:grid-cols-2 gap-6 lg:gap-10">
   {# --- gallery --- #}
-  <div class="flex flex-col gap-3">
+  <div class="flex flex-col gap-3 min-w-0" {% if images %}data-gallery{% endif %}>
     {% if images %}
-      <div class="carousel w-full rounded-box border bg-white overflow-y-hidden">
-        {% for image in images %}
-          <div id="slide-{{ forloop.counter }}" class="carousel-item w-full">
-            <img src="{{ image|image_url }}"
-                 srcset="{{ image|srcset }}"
-                 sizes="(min-width: 1024px) 50vw, 100vw"
-                 width="800" height="800"
-                 alt="{{ image.alt|default:product.title }}"
-                 {% if forloop.first %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %}
-                 decoding="async"
-                 class="w-full aspect-square object-contain p-4">
-          </div>
-        {% endfor %}
+      <div class="relative">
+        <div data-gallery-track tabindex="0" aria-label="تصاویر محصول"
+             class="carousel w-full rounded-box border bg-white overflow-y-hidden cursor-zoom-in">
+          {% for image in images %}
+            <div data-gallery-slide class="carousel-item w-full">
+              <img src="{{ image|image_url }}"
+                   srcset="{{ image|srcset }}"
+                   sizes="(min-width: 1024px) 50vw, 100vw"
+                   data-full="{{ image|image_url }}"
+                   width="800" height="800"
+                   alt="{{ image.alt|default:product.title }}"
+                   {% if forloop.first %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %}
+                   decoding="async"
+                   class="w-full aspect-square object-contain p-4">
+            </div>
+          {% endfor %}
+        </div>
+
+        <button type="button" data-gallery-zoom aria-label="بزرگ‌نمایی تصویر"
+                class="btn btn-circle bg-base-100 border absolute end-3 top-3 w-10 h-10 min-h-10">
+          {% icon "zoom-in" size=18 class="text-ink-2" %}
+        </button>
+
+        {% if images|length > 1 %}
+          <button type="button" data-gallery-prev aria-label="تصویر قبلی"
+                  class="btn btn-circle bg-base-100 border absolute start-3 top-1/2 -translate-y-1/2 w-10 h-10 min-h-10">
+            {% icon "chevron-left" size=18 flip=True %}
+          </button>
+          <button type="button" data-gallery-next aria-label="تصویر بعدی"
+                  class="btn btn-circle bg-base-100 border absolute end-3 top-1/2 -translate-y-1/2 w-10 h-10 min-h-10">
+            {% icon "chevron-right" size=18 flip=True %}
+          </button>
+          <span data-gallery-counter class="badge badge-sm bg-base-100 border absolute start-3 bottom-3 num">{{ 1|fa_digits }} / {{ images|length|fa_digits }}</span>
+        {% endif %}
       </div>
 
       {% if images|length > 1 %}
         <div class="flex gap-2 overflow-x-auto no-scrollbar">
           {% for image in images %}
-            <a href="#slide-{{ forloop.counter }}"
-               class="w-16 h-16 shrink-0 rounded-lg border bg-white overflow-hidden"
-               aria-label="تصویر {{ forloop.counter|fa_digits }}">
+            <button type="button" data-gallery-thumb
+                    class="w-16 h-16 shrink-0 rounded-lg border bg-white overflow-hidden {% if forloop.first %}border-base-content{% else %}opacity-60{% endif %}"
+                    aria-label="نمایش تصویر {{ forloop.counter|fa_digits }}"
+                    aria-current="{% if forloop.first %}true{% else %}false{% endif %}">
               <img src="{{ image|image_url }}" alt="" width="64" height="64" loading="lazy" class="w-full h-full object-contain p-1">
-            </a>
+            </button>
           {% endfor %}
         </div>
       {% endif %}
@@ -121,3 +143,40 @@
     <div class="skeleton h-72 w-40 md:w-48 shrink-0"></div>
   </div>
 </div>
+
+{% if images %}
+<dialog id="gallery-lightbox" data-lightbox class="modal" aria-label="تصاویر محصول">
+  <div class="modal-box relative p-0 w-full max-w-none h-dvh max-h-none rounded-none bg-white overflow-hidden sm:w-[min(96vw,64rem)] sm:h-[min(90vh,52rem)] sm:rounded-box">
+    <div data-lb-stage class="absolute inset-0 overflow-hidden touch-none select-none cursor-zoom-in">
+      <img data-lb-image alt="" draggable="false" class="w-full h-full object-contain will-change-transform">
+    </div>
+
+    <div class="absolute inset-x-3 top-3 z-10 flex items-center justify-between gap-2 pointer-events-none">
+      <span data-lb-counter class="badge bg-base-100 border num pointer-events-auto"></span>
+      <div class="flex items-center gap-2 pointer-events-auto">
+        <button type="button" data-lb-zoom-out aria-label="کوچک‌نمایی" class="btn btn-circle bg-base-100 border w-10 h-10 min-h-10">
+          {% icon "zoom-out" size=18 class="text-ink-2" %}
+        </button>
+        <button type="button" data-lb-zoom-in aria-label="بزرگ‌نمایی" class="btn btn-circle bg-base-100 border w-10 h-10 min-h-10">
+          {% icon "zoom-in" size=18 class="text-ink-2" %}
+        </button>
+        <button type="button" data-dialog-close aria-label="بستن" class="btn btn-circle bg-base-100 border w-10 h-10 min-h-10">
+          {% icon "x" size=18 class="text-ink-2" %}
+        </button>
+      </div>
+    </div>
+
+    {% if images|length > 1 %}
+      <button type="button" data-lb-prev aria-label="تصویر قبلی"
+              class="btn btn-circle bg-base-100 border absolute start-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 min-h-10">
+        {% icon "chevron-left" size=18 flip=True %}
+      </button>
+      <button type="button" data-lb-next aria-label="تصویر بعدی"
+              class="btn btn-circle bg-base-100 border absolute end-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 min-h-10">
+        {% icon "chevron-right" size=18 flip=True %}
+      </button>
+    {% endif %}
+  </div>
+  <form method="dialog" class="modal-backdrop"><button aria-label="بستن">بستن</button></form>
+</dialog>
+{% endif %}

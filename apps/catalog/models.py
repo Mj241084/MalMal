@@ -38,7 +38,6 @@ class Brand(TimeStampedModel):
         help_text="با کاما جدا کنید؛ برای جستجو استفاده می‌شود (مثلاً «سامسونگ، Samsung»).",
     )
     is_active = models.BooleanField(default=True, verbose_name="فعال")
-    is_demo = models.BooleanField(default=False, verbose_name="نمونه (demo)")
 
     class Meta:
         verbose_name = "برند"
@@ -89,7 +88,6 @@ class Category(TimeStampedModel):
     spec_inherit = models.BooleanField(default=True, verbose_name="ارث‌بری مشخصات از والد")
     rev = models.PositiveIntegerField(default=0, verbose_name="نسخه")
     subtree_rev = models.PositiveIntegerField(default=0, verbose_name="نسخه زیردرخت")
-    is_demo = models.BooleanField(default=False, verbose_name="نمونه (demo)")
 
     objects = CategoryQuerySet.as_manager()
 
@@ -266,7 +264,6 @@ class Product(TimeStampedModel):
         related_name="+",
         verbose_name="تصویر اصلی",
     )
-    is_demo = models.BooleanField(default=False, verbose_name="نمونه (demo)")
 
     objects = ProductQuerySet.as_manager()
 
@@ -422,7 +419,6 @@ class Variant(TimeStampedModel):
     price = models.BigIntegerField(validators=[MinValueValidator(0)], verbose_name="قیمت (تومان)")
     compare_at_price = models.BigIntegerField(null=True, blank=True, verbose_name="قیمت قبل از تخفیف")
     stock = models.IntegerField(default=0, validators=[MinValueValidator(0)], verbose_name="موجودی")
-    weight_g = models.PositiveIntegerField(default=0, verbose_name="وزن (گرم)")
     max_per_order = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
@@ -432,7 +428,6 @@ class Variant(TimeStampedModel):
     )
     is_active = models.BooleanField(default=True, verbose_name="فعال")
     sort = models.PositiveIntegerField(default=0, verbose_name="ترتیب")
-    is_demo = models.BooleanField(default=False, verbose_name="نمونه (demo)")
 
     class Meta:
         verbose_name = "تنوع (variant)"

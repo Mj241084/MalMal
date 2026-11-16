@@ -8,3 +8,4 @@ PY=/srv/malmal/.venv/bin/python
 40 3 * * *   cd /srv/malmal && $PY manage.py purge_otp
 45 3 * * *   cd /srv/malmal && $PY manage.py purge_sms_logs
 50 3 * * *   cd /srv/malmal && $PY manage.py backup_db --with-media
+55 3 * * 0   cd /srv/malmal && $PY manage.py sync_geo

@@ -54,7 +54,7 @@ class CategoryAdmin(admin.ModelAdmin):
         (None, {"fields": ("parent", "name", "slug", "logo", "description")}),
         ("درخت", {"fields": ("path", "depth"), "classes": ("collapse",)}),
         ("منو", {"fields": ("is_featured", "featured_order", "show_in_menu", "menu_order")}),
-        ("سایر", {"fields": ("is_active", "spec_inherit", "rev", "subtree_rev", "is_demo")}),
+        ("سایر", {"fields": ("is_active", "spec_inherit", "rev", "subtree_rev")}),
     )
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -79,7 +79,6 @@ class VariantInline(admin.StackedInline):
         "compare_at_price",
         "stock",
         "max_per_order",
-        "weight_g",
         "is_active",
         "sort",
     )
@@ -160,7 +159,7 @@ class ProductAdmin(admin.ModelAdmin):
                 "classes": ("collapse",),
             },
         ),
-        ("سایر", {"fields": ("is_demo", "created_at", "updated_at"), "classes": ("collapse",)}),
+        ("سایر", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
 
     def get_queryset(self, request):
@@ -194,9 +193,6 @@ class ProductAdmin(admin.ModelAdmin):
         transaction.on_commit(
             lambda: touch_product(product.pk), robust=True
         )  # specs/images/variants edited via inlines
-
-        if product.variants.filter(is_active=True, weight_g=0).exists():
-            messages.warning(request, "وزن برخی تنوع‌ها صفر است؛ سقف وزن ارسال برای آن‌ها بررسی نمی‌شود.")
 
     @admin.action(description="فعال‌سازی محصولات انتخاب‌شده")
     def action_activate(self, request, queryset):

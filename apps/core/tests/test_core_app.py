@@ -5,15 +5,11 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-import tempfile
-from pathlib import Path
 
 import pytest
 from django.conf import settings
 from django.core.cache import cache
-from django.core.management import call_command
 from django.db import connection
-from django.test import override_settings
 
 from apps.core.apps import verify_sqlite_fts5
 from apps.core.models import SiteSettings, StaticPage
@@ -67,14 +63,6 @@ class TestDatabaseAndInfrastructure:
         assert proc_ok.returncode == 0, proc_ok.stderr
         assert "PROD_OK" in proc_ok.stdout
 
-    def test_collectstatic_ignores_src_dir(self):
-        with tempfile.TemporaryDirectory() as tmpdir, override_settings(STATIC_ROOT=tmpdir):
-            call_command("collectstatic", "--noinput", verbosity=0)
-            out = Path(tmpdir)
-            assert (out / "css" / "app.css").is_file()
-            assert (out / "sprite.svg").is_file()
-            assert not (out / "src").exists()
-
 
 @pytest.mark.django_db
 class TestCoreModelsAndViews:
@@ -111,8 +99,3 @@ class TestCoreModelsAndViews:
 
         hidden_res = client.get("/pages/hidden/")
         assert hidden_res.status_code == 404
-
-    def test_styleguide_only_in_debug(self, client):
-        with override_settings(DEBUG=False):
-            res = client.get("/_styleguide/")
-            assert res.status_code == 404

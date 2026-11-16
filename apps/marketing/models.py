@@ -37,11 +37,7 @@ def is_safe_target(url: str) -> bool:
 
 
 class TrustItem(TimeStampedModel):
-    """A promise the store makes («ارسال به سراسر کشور»، «ضمانت اصالت» …).
-
-    Seeded rows carry ``is_placeholder=True`` because the wording is assumed, not
-    confirmed by the owner; ``manage.py check_launch`` warns until they are edited.
-    """
+    """A promise the store makes («ارسال به سراسر کشور»، «ضمانت اصالت» …), shown on the home and product pages."""
 
     icon = models.CharField(
         max_length=64,
@@ -50,11 +46,6 @@ class TrustItem(TimeStampedModel):
     )
     title = models.CharField(max_length=120, verbose_name="عنوان")
     subtitle = models.CharField(max_length=200, blank=True, verbose_name="توضیح کوتاه")
-    is_placeholder = models.BooleanField(
-        default=False,
-        verbose_name="متن فرضی (placeholder)",
-        help_text="تا وقتی روشن است، check_launch هشدار می‌دهد.",
-    )
     sort = models.PositiveIntegerField(default=0, verbose_name="ترتیب")
     is_active = models.BooleanField(default=True, verbose_name="فعال")
 
@@ -162,7 +153,6 @@ class Banner(ScheduledModel):
     )
     sort = models.PositiveIntegerField(default=0, verbose_name="ترتیب")
     is_active = models.BooleanField(default=True, verbose_name="فعال")
-    is_demo = models.BooleanField(default=False, verbose_name="نمونه (demo)")
 
     class Meta:
         verbose_name = "بنر"
@@ -228,7 +218,6 @@ class Collection(ScheduledModel):
     sort_by = models.CharField(max_length=16, choices=SORT_CHOICES, default="newest", verbose_name="مرتب‌سازی پیش‌فرض")
     seo_title = models.CharField(max_length=200, blank=True, verbose_name="عنوان سئو")
     seo_description = models.CharField(max_length=320, blank=True, verbose_name="توضیحات سئو")
-    is_demo = models.BooleanField(default=False, verbose_name="نمونه (demo)")
 
     objects = CollectionQuerySet.as_manager()
 

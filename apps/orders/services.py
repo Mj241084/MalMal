@@ -140,8 +140,6 @@ def place_order(*, user, address, method, buyer_form, seen_fingerprint: str) -> 
                 raise CheckoutError("کالای ناموجود را از سبد خرید حذف کنید", changed=True)
             if cart_services.fingerprint(lines) != seen_fingerprint:
                 raise CheckoutError(CHANGED, changed=True)
-            if method.max_weight_g and summary.weight_g > method.max_weight_g:
-                raise CheckoutError("برای ارسال این سفارش لطفاً با پشتیبانی تماس بگیرید")
 
             for pending in Order.objects.filter(user=user, status=Order.PENDING):
                 if pending.payments.filter(status=Payment.VERIFYING).exists():

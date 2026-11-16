@@ -80,7 +80,6 @@ def _checkout_page(request, *, buyer_form, errors=(), selected_address_id=None, 
         "errors": list(errors),
         "gateways": options,
         "selected_gateway": selected_gateway or (options[0].code if options else ""),
-        "too_heavy": bool(method and method.max_weight_g and summary.weight_g > method.max_weight_g),
         **_address_section_context(request.user, selected=selected_address_id),
     }
     return render(request, "pages/checkout.html", context)

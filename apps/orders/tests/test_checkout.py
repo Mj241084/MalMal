@@ -59,15 +59,6 @@ def test_changed_price_blocks_the_order(buyer, address, cart_item, checkout_env)
     assert Variant.objects.get(pk=cart_item.pk).stock == 5
 
 
-def test_overweight_order_is_blocked(buyer, address, cart_item, checkout_env):
-    Variant.objects.filter(pk=cart_item.pk).update(weight_g=60_000)  # 2 x 60 kg > 100 kg
-
-    with pytest.raises(services.CheckoutError):
-        _place(buyer, address, checkout_env)
-
-    assert not Order.objects.exists()
-
-
 def test_checkout_never_overwrites_a_filled_profile(client, buyer, address, cart_item, checkout_env):
     client.force_login(buyer)
 

@@ -1,18 +1,18 @@
 {% load core_tags %}
 <section class="flex flex-col gap-4">
   {% include "partials/_section_heading.html" with title=block.title %}
-  <ul class="flex gap-3 overflow-x-auto no-scrollbar snap-x md:flex-wrap md:overflow-visible">
+  <ul class="flex gap-3 overflow-x-auto no-scrollbar snap-x md:grid md:grid-cols-[repeat(auto-fill,minmax(7rem,7rem))] md:overflow-visible">
     {% for item in block.items %}
-      <li class="snap-start shrink-0 w-24 md:w-28">
-        <a href="{{ item.url }}" class="flex flex-col items-center gap-2 p-2 rounded-box border bg-base-100 hover:bg-base-300 transition-colors">
-          <span class="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-white border flex items-center justify-center overflow-hidden">
+      <li class="snap-start shrink-0 w-24 flex md:w-auto">
+        <a href="{{ item.url }}" class="flex flex-col items-center gap-2 p-2 w-full rounded-box border bg-base-100 hover:bg-base-300 transition-colors">
+          <span class="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-lg bg-white border flex items-center justify-center overflow-hidden">
             {% if item.logo %}
               <img src="{{ item.logo }}" alt="" width="64" height="64" loading="lazy" class="w-full h-full object-contain p-1">
             {% else %}
               <span class="text-ink-3">{% icon "layout-grid" size=18 %}</span>
             {% endif %}
           </span>
-          <span class="text-small text-center leading-6 line-clamp-2">{{ item.name|fa_text }}</span>
+          <span class="block w-full min-h-12 text-small text-center leading-6 line-clamp-2">{{ item.name|fa_text }}</span>
         </a>
       </li>
     {% endfor %}

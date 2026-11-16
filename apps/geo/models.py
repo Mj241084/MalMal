@@ -8,6 +8,9 @@ from django.db import models
 class Province(models.Model):
     name = models.CharField(max_length=80, unique=True, verbose_name="نام استان")
     slug = models.SlugField(max_length=100, unique=True, allow_unicode=True, verbose_name="نشانی (slug)")
+    neshan_id = models.PositiveIntegerField(
+        null=True, blank=True, unique=True, editable=False, verbose_name="شناسه نشان"
+    )
     sort = models.PositiveIntegerField(default=0, verbose_name="ترتیب")
 
     class Meta:
@@ -28,6 +31,7 @@ class City(models.Model):
     )
     name = models.CharField(max_length=100, verbose_name="نام شهر")
     slug = models.SlugField(max_length=120, allow_unicode=True, verbose_name="نشانی (slug)")
+    neshan_id = models.PositiveIntegerField(null=True, blank=True, editable=False, verbose_name="شناسه نشان")
 
     class Meta:
         verbose_name = "شهر"
@@ -35,6 +39,7 @@ class City(models.Model):
         ordering = ["name"]
         constraints = [
             models.UniqueConstraint(fields=["province", "slug"], name="unique_city_slug_per_province"),
+            models.UniqueConstraint(fields=["province", "neshan_id"], name="unique_city_neshan_id_per_province"),
         ]
         indexes = [
             models.Index(fields=["province", "name"], name="geo_city_prov_name_idx"),

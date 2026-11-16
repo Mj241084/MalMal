@@ -1,17 +1,15 @@
-"""Tests for Neshan reverse geocode proxy and import_geo command."""
+"""Tests for Neshan reverse geocode proxy and Region API sync."""
 
 from __future__ import annotations
 
 import json
-from io import StringIO
 
 import pytest
-from django.core.management import call_command
 from django.test import Client
 from django.urls import reverse
 
 from apps.accounts.models import User
-from apps.geo import views
+from apps.geo import neshan, services, views
 from apps.geo.models import City, Province
 
 pytestmark = pytest.mark.django_db
@@ -100,33 +98,55 @@ def test_reverse_geocode_success_and_cached(client: Client, settings, monkeypatc
     assert len(calls) == 1
 
 
-def test_import_geo_is_idempotent(tmp_path):
-    geo_file = tmp_path / "iran-geo.json"
-    geo_data = {
-        "provinces": [
-            {
-                "name": "تهران",
-                "cities": ["تهران", "ری"],
-            },
-            {
-                "name": "اصفهان",
-                "cities": ["اصفهان", "کاشان"],
-            },
-        ]
-    }
-    geo_file.write_text(json.dumps(geo_data, ensure_ascii=False), encoding="utf-8")
+def test_refresh_adopts_existing_rows_by_name_and_is_idempotent(settings, monkeypatch):
+    settings.NESHAN_SERVICE_KEY = "test-service-key"
+    old_province = Province.objects.create(name="لرستان", slug="lorestan")
+    old_city = City.objects.create(province=old_province, name="خرم\u200cآباد", slug="khorramabad")
+    monkeypatch.setattr(neshan, "fetch_provinces", lambda: [(3641, "استان لرستان")])
+    monkeypatch.setattr(neshan, "fetch_cities", lambda province_id: [(1063, "خرم آباد"), (1084, "بروجرد")])
 
-    out = StringIO()
-    call_command("import_geo", path=str(geo_file), stdout=out)
-    assert Province.objects.count() == 2
-    assert City.objects.count() == 4
-    tehran = Province.objects.get(name="تهران")
-    assert tehran.slug == "تهران"
+    for _ in range(2):
+        assert services.refresh_provinces(force=True)
+        assert services.refresh_cities(Province.objects.get(), force=True)
 
-    # Second run
-    out2 = StringIO()
-    call_command("import_geo", path=str(geo_file), stdout=out2)
-    assert Province.objects.count() == 2
-    assert City.objects.count() == 4
-    tehran.refresh_from_db()
-    assert tehran.slug == "تهران"  # must NOT become تهران-2
+    old_province.refresh_from_db()
+    old_city.refresh_from_db()
+    assert old_province.neshan_id == 3641
+    assert old_city.neshan_id == 1063
+    assert (Province.objects.count(), City.objects.count()) == (1, 2)  # adopted, never duplicated
+
+
+def test_neshan_is_asked_once_per_cache_window(settings, monkeypatch):
+    settings.NESHAN_SERVICE_KEY = "test-service-key"
+    calls = []
+
+    def fetch():
+        calls.append(1)
+        return [(3641, "استان لرستان")]
+
+    monkeypatch.setattr(neshan, "fetch_provinces", fetch)
+
+    services.refresh_provinces()
+    services.refresh_provinces()
+
+    assert len(calls) == 1
+    assert Province.objects.get().neshan_id == 3641
+
+
+def test_city_options_fall_back_to_the_database_when_neshan_is_down(client, settings, monkeypatch, province, city):
+    settings.NESHAN_SERVICE_KEY = "test-service-key"
+    Province.objects.filter(pk=province.pk).update(neshan_id=3641)
+    calls = []
+
+    def down(province_id):
+        calls.append(province_id)
+        raise neshan.NeshanError("timeout")
+
+    monkeypatch.setattr(neshan, "fetch_cities", down)
+
+    for _ in range(2):
+        response = client.get(reverse("geo:city_options"), {"province": province.pk})
+        assert response.status_code == 200
+        assert city.name in response.content.decode()
+
+    assert calls == [3641]  # the second request did not hit the failing service again

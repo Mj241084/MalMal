@@ -59,7 +59,7 @@
 - ایندکس: `(user, deleted_at)`. یک آدرس پیش‌فرض برای هر کاربر (constraint شرطی).
 
 ### geo
-**Province**: `name`, `slug`, `sort`. **City**: `province` FK, `name`, `slug`. ایندکس `(province, name)`. داده با `import_geo` از دیتاست.
+**Province**: `name`, `slug`, `neshan_id` (اختیاری/یکتا), `sort`. **City**: `province` FK, `name`, `slug`, `neshan_id` (یکتا به‌ازای هر استان). ایندکس `(province, name)`. داده از Region API نشان گرفته و در دیتابیس ذخیره می‌شود (`sync_geo` برای همگام‌سازی کامل و کش ۷ روزه برای تازه‌سازی تنبل).
 
 ### catalog
 
@@ -93,7 +93,7 @@
 
 **Variant** (SKU، واحد خرید)
 - `product` FK، `sku` unique، `title` (مثلاً «سفید، ۱۲ ماه گارانتی»)، `options` JSON (`{"color":"سفید","model":"..."}`)
-- `price`, `compare_at_price` null، `stock` int ≥ 0، `weight_g`، `is_active`, `sort`
+- `price`, `compare_at_price` null، `stock` int ≥ 0، `is_active`, `sort`
 - `max_per_order` (`PositiveSmallIntegerField`، null/blank): سقف تعداد هر مشتری در هر سفارش. خالی یا ۰ = تا سقف موجودی (D29).
 - property `max_orderable`: `0` اگر `stock <= 0`؛ وگرنه `stock` وقتی `max_per_order` خالی/۰ است، در غیر این صورت `min(stock, max_per_order)`. سبد و checkout از همین استفاده می‌کنند.
 - محصول ساده: دقیقاً یک variant پیش‌فرض (در ادمین به‌طور خودکار ساخته می‌شود).
@@ -108,16 +108,16 @@
 **StockMovement** (دفتر): `variant`, `delta`, `reason` (`order/cancel/expire/manual/return`), `order_item` null, `note`. فقط افزودنی (append-only).
 
 ### marketing
-**Banner**: `title` (داخلی)، `alt` (**اجباری**)، `image_desktop` (اجباری)، `image_mobile` (**اختیاری**؛ خالی = همان تصویر دسکتاپ)، `placement` (`home_hero/home_strip`), `target_type` (`none/product/category/collection/url`), `target_product|target_category|target_collection` FK null، `target_url`, `starts_at`, `ends_at` (ذخیره UTC؛ در ادمین با ویجت تقویم شمسی طبق `06`)، `sort`, `is_active`, `is_demo`. اعتبارسنجی: دقیقاً یک مقصد متناسب با `target_type`؛ `target_url` فقط مسیر داخلی (`/…`) یا `https://…`. قالب تصویر WebP/JPG/PNG، سقف ۱ مگابایت. زمان‌بندی با `ScheduledModel` مشترک است (`clean` پایان بعد از شروع، `is_live(now)`).
+**Banner**: `title` (داخلی)، `alt` (**اجباری**)، `image_desktop` (اجباری)، `image_mobile` (**اختیاری**؛ خالی = همان تصویر دسکتاپ)، `placement` (`home_hero/home_strip`), `target_type` (`none/product/category/collection/url`), `target_product|target_category|target_collection` FK null، `target_url`, `starts_at`, `ends_at` (ذخیره UTC؛ در ادمین با ویجت تقویم شمسی طبق `06`)، `sort`, `is_active`. اعتبارسنجی: دقیقاً یک مقصد متناسب با `target_type`؛ `target_url` فقط مسیر داخلی (`/…`) یا `https://…`. قالب تصویر WebP/JPG/PNG، سقف ۱ مگابایت. زمان‌بندی با `ScheduledModel` مشترک است (`clean` پایان بعد از شروع، `is_live(now)`).
 
-**Collection**: `title`, `slug`, `description`, `cover`, `mode` (`manual/rule`), `is_active`, `starts_at`, `ends_at` (ویجت شمسی مثل Banner), `seo_*`, `is_demo`.
+**Collection**: `title`, `slug`, `description`, `cover`, `mode` (`manual/rule`), `is_active`, `starts_at`, `ends_at` (ویجت شمسی مثل Banner), `seo_*`.
 - قاعده‌ای: `categories` M2M، `brands` M2M، `min_discount_pct`، `min_price`، `max_price`، `only_in_stock`، `sort_by`.
 - دستی: **CollectionItem** (`collection`, `product`, `sort`) با unique `(collection, product)`.
 - **`rev` و `limit` ندارد** (P5): کلید کش از `epoch` سراسری می‌آید و سقف تعداد فقط روی `HomeBlock.limit` است. `CollectionQuerySet.live(now)` فعال و درون پنجره را برمی‌گرداند.
 
 **HomeBlock**: `kind` (`hero/categories/product_rail/collection_rail/banner_strip/brands/trust`), `title`, `collection` FK null, `category` FK null, `rail_source` (`best_selling/newest/discounted`), `limit` (پیش‌فرض ۱۲، **حداکثر ۲۴**), `sort`, `is_active`. اعتبارسنجی: `collection_rail` بدون مجموعه و `product_rail` بدون منبع خطا؛ فقط **یک** `hero` و **یک** `banner_strip`. مهاجرت داده‌ی `0004_default_home_blocks` ترتیب پیش‌فرض را می‌سازد (هشت بلوک: اسلایدر، دسته‌ها، نوار باریک، سه ریل محصول، برندها، مزیت‌ها).
 
-**TrustItem** (مزیت‌های فروشگاه، بلوک `trust`): `icon` (نام نماد در sprite)، `title`، `subtitle`، `is_placeholder` bool (seed اولیه `True`)، `sort`، `is_active`. در ادمین ردیف placeholder با نشان هشدار؛ `manage.py check_launch` تا وقتی placeholder فعال است هشدار می‌دهد.
+**TrustItem** (مزیت‌های فروشگاه، بلوک `trust`): `icon` (نام نماد در sprite)، `title`، `subtitle`، `sort`، `is_active`.
 
 ### core
 **SiteSettings** (singleton): نام، لوگو (روشن/تاریک)، تلفن، آدرس، ساعات کاری، لینک‌های اجتماعی، آستانه‌ی ارسال رایگان، آستانه‌ی «موجودی کم»، پارامترهای OTP، ساعت مجاز ارسال «موجود شد» (پیش‌فرض ۸ تا ۲۱)، `trust_marks_html` (قطعه‌ی HTML نماد اعتماد/اینماد؛ فقط ادمین؛ خالی = نمایش داده نمی‌شود).
@@ -141,7 +141,7 @@
 
 **OrderItem**: `order`, `product`/`variant` FK(SET_NULL)، snapshot: `product_title`, `variant_title`, `sku`, `unit_price`, `qty`, `image_path`، `warranty_text`.
 **OrderStatusLog**: `order`, `from_status`, `to_status`, `by_user` null, `note`, `created_at`.
-**ShippingMethod** (فقط فیلدهای v1): `code`, `title`, `product_note`, `checkout_note`, `has_tracking`, `payment_mode` (`prepaid`/`collect`؛ تیپاکس v1: `collect`), `max_weight_g` null, `is_active`, `sort`. `base_cost`/`per_kg_cost`/`free_over`/`eta_*`/`provinces` وقتی روش دوم آمد اضافه می‌شوند. ذخیره/حذفش `trust_rev` را بالا می‌برد تا کش جزئیات محصول (متن ارسال) به‌روز شود.
+**ShippingMethod** (فقط فیلدهای v1): `code`, `title`, `product_note`, `checkout_note`, `has_tracking`, `payment_mode` (`prepaid`/`collect`؛ تیپاکس v1: `collect`), `is_active`, `sort`. `base_cost`/`per_kg_cost`/`free_over`/`eta_*`/`provinces` وقتی روش دوم آمد اضافه می‌شوند. ذخیره/حذفش `trust_rev` را بالا می‌برد تا کش جزئیات محصول (متن ارسال) به‌روز شود.
 - **موجودی:** هنگام ساخت سفارش با `reason="order"` اتمیک کم می‌شود و `StockMovement` ثبت می‌شود؛ پرداخت موفق حرکت جدیدی ثبت نمی‌کند (`sale` نداریم). `StockMovement.order_item_id` عدد ساده می‌ماند (بدون FK، برای جلوگیری از وابستگی چرخه‌ای مهاجرت‌ها).
 
 ### payments
@@ -219,7 +219,7 @@ Product.objects.filter(
 
 ### تغییر Variant
 ۱. `Variant.save()/delete()` ← `Product.refresh_aggregates()` (min/max/discount/in_stock/total_stock محاسبه، و فقط اگر مقدار عوض شد ذخیره می‌شود).
-۲. اگر فیلد DETAIL عوض شد **و** `refresh_aggregates` خودش سطح LIST را بالا برده باشد، rev دوباره بالا نمی‌رود (تا یک تغییر دو بار باطل‌سازی نکند). فیلدهای DETAIL تنوع (P7): `title`, `options`, `max_per_order`, `weight_g`, `price`, `compare_at_price`, `is_active`, `sort`.
+۲. اگر فیلد DETAIL عوض شد **و** `refresh_aggregates` خودش سطح LIST را بالا برده باشد، rev دوباره بالا نمی‌رود (تا یک تغییر دو بار باطل‌سازی نکند). فیلدهای DETAIL تنوع (P7): `title`, `options`, `max_per_order`, `price`, `compare_at_price`, `is_active`, `sort`.
 ۳. **فروش عادی** (کم شدن موجودی) `rev` را عوض نمی‌کند، مگر موجودی از **صفر عبور کند**، **در بازه‌ی کم‌موجودی یا سقف سفارش باشد** (شرط `min(stock-before, stock-after) <= max(low_stock_threshold, max_per_order)`) یا `in_stock` عوض شود. تغییر قیمت یک تنوع میانی از ادمین، `rev` جزئیات و (اگر aggregate عوض شود) سطح LIST را بالا می‌برد.
 ۴. تخفیف کارت از **ارزان‌ترین** تنوع محاسبه می‌شود (`compare_at_min` فقط از تنوع‌هایی که قیمتشان برابر `min_price` است)؛ پس یک تنوع گران‌تر با تخفیف، بج تخفیف را روشن نمی‌کند.
 
@@ -337,6 +337,7 @@ CREATE VIRTUAL TABLE product_fts USING fts5(
 
 ## ۱۱. تغییرات
 
+- ۰.۳.۱۱ (P8 اصلاحی) — حذف `is_demo` از مدل‌های کاتالوگ و بازاریابی، حذف `is_placeholder` از `TrustItem`، حذف `weight_g` و `max_weight_g`، و افزودن `neshan_id` روی `Province`/`City` برای همگام‌سازی با Region API نشان (`sync_geo` و کش ۷ روزه).
 - ۰.۳.۱۰ (P7) — شمارنده‌های `epoch`/`trust_rev` بدون TTL و با مقدار اولیه‌ی `timestamp` (`read_epoch`) تا پس از flush یا eviction کلید کهنه دوباره معتبر نشود. باطل‌سازی تازه: `touch_product` برای مشخصات/تصاویر/حذف تنوع/ادمین، `invalidate_category(old_path)` برای زنجیره‌ی مبدأ پس از جابه‌جایی، `invalidate_brand` با بازسازی `search_text`، و hookهای `ProductImage`/`ProductSpecValue`/`SpecAttribute`. `VARIANT_DETAIL_FIELDS` شامل `price`/`compare_at_price`/`is_active`/`sort` شد و قاعده‌ی «موجودی در بازه‌ی کم‌موجودی یا سقف، rev را بالا می‌برد» در `apps/catalog/stock.py` آمد. `Product.refresh_aggregates` تخفیف را فقط از ارزان‌ترین تنوع می‌گیرد و `Variant.discount_pct` اضافه شد. `Product.save(update_fields=…)` فیلدهای محاسبه‌شده (`search_text`، `slug`، `category_path`) را هم می‌نویسد. `FRAGMENT_VERSION` به ۳ رفت و اجزای ETag صفحه‌ی محصول کامل شد.
 - ۰.۳.۹ (P6) — `StockSubscription.restocked_at` اضافه شد (فعال‌سازی «موجود شد» فقط با موجودشدن واقعی)، `Order.Meta.permissions` مجوز `orders.manage_order_status` گرفت و `PAID_STATES` در `apps/orders/models.py` تعریف شد (به‌جای تکرار در `engagement/services.py`). `django.contrib.sitemaps` به اپ‌ها و `sitemap.xml`/`robots.txt` به `config/urls.py` اضافه شد (`apps/core/seo.py`). `BACKUP_DIR` در تنظیمات پایه و `STORAGES`/HSTS/`CSRF_TRUSTED_ORIGINS`/`LOGGING` در `prod.py`. دستورهای دوره‌ای جدید در جدول بخش ۵؛ فایل `deploy/crontab.example` مرجع است.
 - ۰.۳.۸ (P5) — جدول `marketing` با کد واقعی هم‌تراز شد: `Banner.alt` اجباری و `image_mobile` اختیاری، `Collection` بدون `rev` و `limit` (و `CollectionQuerySet.live`)، `HomeBlock.limit` تا ۲۴ و قید یکتایی `hero`/`banner_strip`. کلید کش مجموعه به `col:{id}:{epoch}:v{n}:list:{sort}:{filters_hash}:{page}` تغییر کرد و کلید ریل `home:rail:{epoch}:{block_id}:v{n}` اضافه شد؛ پنجره‌ی زمانی داخل داده‌ی کش‌شده و در هر درخواست سنجیده می‌شود. `Brand` هم به لیست STRUCTURAL اضافه شد (لوگویش در بلوک برندها دیده می‌شود).

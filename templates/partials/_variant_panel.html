@@ -1,6 +1,7 @@
 {% load core_tags catalog_tags %}
 <div id="variant-panel" class="flex flex-col gap-4"
      data-variant-id="{{ active_variant.pk|default:'' }}"
+     data-variants="{% for v in variants %}{{ v.pk }}{% if not forloop.last %},{% endif %}{% endfor %}"
      data-max="{{ active_variant.max_orderable|default:0 }}"
      data-orderable="{% if active_variant and active_variant.max_orderable > 0 %}1{% else %}0{% endif %}"
      data-price="{% if active_variant %}{{ active_variant.price|toman }}{% endif %}">
@@ -64,14 +65,25 @@
     {% endif %}
   </div>
 
-  <div class="flex items-center gap-2">
-    <button type="button" data-cart-add
-            class="btn btn-primary flex-1 h-10 min-h-10 hidden lg:inline-flex disabled:bg-base-300 disabled:text-base-content disabled:border"
-            {% if not active_variant or active_variant.max_orderable == 0 %}disabled{% endif %}
-            aria-label="افزودن به سبد خرید">
-      {% icon "shopping-cart" size=18 %}
-      <span data-cart-label>افزودن به سبد</span>
-    </button>
+  <div class="hidden lg:block">
+    <div data-cart-idle>
+      <button type="button" data-cart-add
+              class="btn btn-primary w-full h-10 min-h-10 disabled:bg-base-300 disabled:text-base-content disabled:border"
+              {% if not active_variant or active_variant.max_orderable == 0 %}disabled{% endif %}
+              aria-label="افزودن به سبد خرید">
+        {% icon "shopping-cart" size=18 %}
+        <span>افزودن به سبد</span>
+      </button>
+    </div>
+    <div data-cart-active hidden>
+      <div class="flex items-center gap-2">
+        {% include "partials/_cart_stepper.html" with btn_size="w-10 h-10 min-h-10" %}
+        <a href="{% url 'cart:detail' %}" class="btn btn-primary flex-1 min-w-0 h-10 min-h-10">
+          {% icon "shopping-cart" size=18 %}
+          <span>مشاهده‌ی سبد</span>
+        </a>
+      </div>
+    </div>
   </div>
 
   {% if shipping_note or trust_items %}

@@ -127,14 +127,8 @@
         <span class="text-small font-medium">مبلغ قابل پرداخت</span>
         <span class="text-lead font-medium whitespace-nowrap">{{ summary.items_total|toman }} <span class="text-small text-ink-2 font-normal">تومان</span></span>
       </div>
-      {% if too_heavy %}
-        <div role="alert" class="alert alert-error text-small">
-          {% icon "alert-circle" size=18 class="shrink-0" %}
-          <span>برای ارسال این سفارش لطفاً با پشتیبانی تماس بگیرید{% if site_settings.phone %}: <span class="num">{{ site_settings.phone|fa_digits }}</span>{% endif %}</span>
-        </div>
-      {% endif %}
       <button type="submit" form="checkout-form" class="btn btn-primary w-full h-11 min-h-11 hidden lg:inline-flex"
-              {% if not gateways or too_heavy or not method %}disabled{% endif %}>پرداخت</button>
+              {% if not gateways or not method %}disabled{% endif %}>پرداخت</button>
       <a href="{% url 'cart:detail' %}" class="btn btn-ghost h-10 text-ink-2 hidden lg:inline-flex">بازگشت به سبد</a>
     </aside>
   </div>
@@ -144,7 +138,7 @@
 <div class="lg:hidden fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] inset-x-0 z-20 bg-base-100 border-t px-4 py-3">
   <div class="flex items-center gap-3">
     <button type="submit" form="checkout-form" class="btn btn-primary flex-1 min-w-0 h-11 min-h-11"
-            {% if not gateways or too_heavy or not method %}disabled{% endif %}>پرداخت</button>
+            {% if not gateways or not method %}disabled{% endif %}>پرداخت</button>
     <div class="flex flex-col items-end shrink-0 leading-5">
       <span class="text-lead font-medium whitespace-nowrap tabular-nums">{{ summary.items_total|toman }}</span>
       <span class="text-label text-ink-2">تومان</span>

@@ -4,7 +4,6 @@ import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
 
-from apps.marketing.models import TrustItem
 from apps.orders.models import ShippingMethod
 from apps.payments.models import PaymentGateway
 
@@ -27,7 +26,7 @@ READY = {
 
 
 @pytest.fixture
-def ready(settings):
+def ready(settings, city):
     for name, value in READY.items():
         setattr(settings, name, value)
     ShippingMethod.objects.get_or_create(code="tipax", defaults={"title": "تیپاکس"})
@@ -35,8 +34,7 @@ def ready(settings):
     PaymentGateway.objects.filter(code="zarinpal").update(is_active=True)
 
 
-def test_a_ready_setup_passes_and_placeholders_only_warn(ready):
-    TrustItem.objects.create(icon="truck", title="x", is_placeholder=True)
+def test_a_ready_setup_passes_and_warnings_only_fail_in_strict(ready):
     out = StringIO()
 
     call_command("check_launch", stdout=out)  # warnings do not fail the gate

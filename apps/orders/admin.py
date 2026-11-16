@@ -19,7 +19,7 @@ from apps.payments.models import Payment
 
 @admin.register(ShippingMethod)
 class ShippingMethodAdmin(admin.ModelAdmin):
-    list_display = ("title", "code", "payment_mode", "has_tracking", "max_weight_g", "is_active", "sort")
+    list_display = ("title", "code", "payment_mode", "has_tracking", "is_active", "sort")
     list_editable = ("is_active", "sort")
 
 

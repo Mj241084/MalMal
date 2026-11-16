@@ -16,6 +16,7 @@ from django.views.decorators.http import require_GET
 
 from apps.core.cache import safe_cache_get, safe_cache_set
 from apps.core.text import normalize_fa
+from apps.geo import services
 from apps.geo.models import City, Province
 
 logger = logging.getLogger(__name__)
@@ -39,29 +40,27 @@ def _consume_reverse_quota(user_id: int) -> bool:
 
 
 def _match_province_and_city(state_raw: str | None, city_raw: str | None) -> tuple[int | None, int | None]:
-    state_name = normalize_fa(state_raw or "").removeprefix("استان ").strip()
-    city_name = normalize_fa(city_raw or "").strip()
+    """The reverse geocoder and the Region API spell names differently (ZWNJ, ی/ک, «استان»), so compare keys."""
     province = None
-    if state_name:
-        province = Province.objects.filter(name=state_name).first()
+    if state_key := services.name_key(state_raw):
+        province = next((p for p in Province.objects.all() if services.name_key(p.name) == state_key), None)
     city = None
-    if province is not None and city_name:
-        city = City.objects.filter(province=province, name=city_name).first()
+    if province is not None and (city_key := services.name_key(city_raw)):
+        services.refresh_cities(province)
+        city = next((c for c in City.objects.filter(province=province) if services.name_key(c.name) == city_key), None)
     return (province.pk if province else None), (city.pk if city else None)
 
 
 @require_GET
 def city_options(request: HttpRequest) -> HttpResponse:
-    province_id = request.GET.get("province") or ""
+    raw = request.GET.get("province") or ""
+    province = Province.objects.filter(pk=int(raw)).first() if raw.isascii() and raw.isdigit() else None
     cities = City.objects.none()
-    if province_id.isdigit():
-        cities = City.objects.filter(province_id=int(province_id)).only("id", "name")
+    if province is not None:
+        services.refresh_cities(province)
+        cities = City.objects.filter(province=province).only("id", "name")
     selected = request.GET.get("selected") or ""
-    return render(
-        request,
-        "partials/_city_options.html",
-        {"cities": cities, "selected": selected},
-    )
+    return render(request, "partials/_city_options.html", {"cities": cities, "selected": selected})
 
 
 @login_required

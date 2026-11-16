@@ -1,13 +1,10 @@
-.PHONY: run css css-watch sprite favicons test lint format check seed seed-clear warm search expire recount reconcile stock launch backup purge
+.PHONY: run css css-watch sprite favicons test lint format check geo warm search expire recount reconcile stock launch backup purge
 
 run:
 	uv run python manage.py runserver
 
-seed:
-	uv run python manage.py seed_demo
-
-seed-clear:
-	uv run python manage.py seed_demo --clear
+geo:
+	uv run python manage.py sync_geo
 
 warm:
 	uv run python manage.py warm_cache

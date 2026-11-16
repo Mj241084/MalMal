@@ -38,7 +38,7 @@
 | مرچنت‌کد زرین‌پال | `ZARINPAL_SANDBOX=true` (sandbox رسمی)، در نبود شبکه و برای تست خودکار `FakeGateway` (فقط `DEBUG`). گذار به واقعی فقط با `.env`، بدون تغییر کد |
 | کلید و شناسه‌ی قالب‌های sms.ir | `SMS_BACKEND=console`؛ شناسه‌ی خالی = ارسال انجام نمی‌شود و `SmsLog(skipped_no_template)` ثبت می‌شود، نه خطا و نه شکست جریان اصلی |
 | دامنه | `SITE_URL=http://localhost:8000`؛ همه‌ی آدرس‌های مطلق (callback پرداخت، sitemap، canonical، OG) از آن؛ قالب OTP بدون خط WebOTP |
-| کلید نشان | نقشه غیرفعال، آدرس بدون مختصات |
+| کلید نشان | نقشه غیرفعال، آدرس بدون مختصات؛ اگر `NESHAN_SERVICE_KEY` خالی باشد، لیست استان/شهر فقط از دیتابیس خوانده می‌شود (یک‌بار `sync_geo` یا ادمین) |
 | مشخصات فروشنده، متن صفحات ثابت، اینماد | فیلد خالی نمایش داده نمی‌شود |
 | سوال‌ها و تایید `07` (ارسال) | با فروشنده است و خارج از پروژه؛ متن پیش‌فرض می‌ماند |
 | فونت، sprite، عکس | فونت سیستم و placeholder |
@@ -98,7 +98,7 @@
 | `color-palette` | فقط اگر رنگی به سیستم اضافه می‌شود (`docs/04` بخش ۲). پالت فعلی نهایی است. |
 | `unslop` | هر وقت صفحه‌ی تازه می‌سازی یا ظاهر را بازبینی می‌کنی؛ چک‌لیست انتهای آن را اجرا کن. |
 | `htmx-patterns` | هر فاز با تعامل HTMX (از P1 به بعد). |
-| `image-fetch` | فقط در توسعه، وقتی عکس واقعی از وب لازم است (مثلاً عکس نمونه‌ی محصول یا دسته برای دیدن UI). اجرا: `uv run python skills/image-fetch/scripts/imgfetch.py search "<query>" -n 5 -o <پوشه>`. خروجی برای انتشار نیست (حق نشر) و مدل‌ها `is_demo` می‌مانند. کلیدهای API عمداً داخل اسکریپت‌اند، استثنای قاعده‌ی «سرّی‌ها»، و مالک خودش عوضشان می‌کند. |
+| `image-fetch` | فقط در توسعه، وقتی عکس واقعی از وب لازم است (مثلاً عکس نمونه‌ی محصول یا دسته برای دیدن UI). اجرا: `uv run python skills/image-fetch/scripts/imgfetch.py search "<query>" -n 5 -o <پوشه>`. خروجی برای انتشار نیست (حق نشر). کلیدهای API عمداً داخل اسکریپت‌اند، استثنای قاعده‌ی «سرّی‌ها»، و مالک خودش عوضشان می‌کند. |
 
 ## ۶. تست و کیفیت
 
@@ -124,6 +124,7 @@
 # بازسازی خرید ۳۰ روزه:  uv run python manage.py recount_purchases  (شبانه)
 # بازسازی شمارنده‌ها:    uv run python manage.py reconcile_counters  (شبانه)
 # گیت انتشار:            uv run python manage.py check_launch  (--strict: هشدار هم خطاست)
+# همگام‌سازی استان/شهر:  uv run python manage.py sync_geo  (نیاز به NESHAN_SERVICE_KEY؛ هفتگی در cron)
 # پشتیبان دیتابیس:       uv run python manage.py backup_db --with-media  (شبانه؛ BACKUP_DIR بیرون پروژه)
 # پاک‌سازی نگه‌داری:     uv run python manage.py purge_otp | purge_sms_logs  (شبانه)
 # گروه‌های staff:        uv run python manage.py setup_groups  و  create_staff 0912... --group فروش
@@ -148,7 +149,7 @@ static/        fonts/{vazir,inter,dastnevis}/، src/ (input.css، sprite.svg —
 scripts/       build_sprite.py، make_favicons.py، sync_vendor.mjs
 deploy/        malmal.service، nginx.conf.example، crontab.example
 docs/          اسناد ۰۱ تا ۰۸، deploy.md، phases/، vendors/
-Makefile       میانبرهای run، css، sprite، favicons، test، lint، format، check، seed، warm، search، expire، recount، reconcile، stock، launch، backup، purge
+Makefile       میانبرهای run، css، sprite، favicons، test، lint، format، check، geo، warm، search، expire، recount، reconcile، stock، launch، backup، purge
 ```
 
 ## ۹. وقتی فاز تمام شد

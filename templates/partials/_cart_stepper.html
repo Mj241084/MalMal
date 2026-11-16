@@ -1,0 +1,11 @@
+{% load core_tags %}
+<div class="join border rounded-field {{ outer }}">
+  <button type="button" class="btn btn-ghost join-item px-0 {{ btn_size }}" data-cart-step="-1" aria-label="کم کردن">
+    <span data-cart-minus>{% icon "minus" size=18 %}</span>
+    <span data-cart-trash hidden>{% icon "trash-2" size=18 %}</span>
+  </button>
+  <span class="join-item flex items-center justify-center flex-1 min-w-9 text-small num" data-cart-qty aria-live="polite">۱</span>
+  <button type="button" class="btn btn-ghost join-item px-0 {{ btn_size }}" data-cart-step="1" aria-label="زیاد کردن">
+    {% icon "plus" size=18 %}
+  </button>
+</div>

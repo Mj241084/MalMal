@@ -14,6 +14,7 @@ from apps.core.forms import FieldErrorAttrsMixin
 from apps.core.text import normalize_digits, normalize_fa
 from apps.core.validators import normalize_iran_mobile, normalize_national_code, validate_national_code
 from apps.core.widgets import FaDigitsInput, FaTextarea, FaTextInput
+from apps.geo import services as geo_services
 from apps.geo.models import City, Province
 
 IRAN_LAT_MIN = Decimal("24")
@@ -208,6 +209,7 @@ class AddressForm(FieldErrorAttrsMixin, forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         self.user = user
         super().__init__(*args, **kwargs)
+        geo_services.refresh_provinces()
         self.fields["province"].queryset = Province.objects.order_by("sort", "name")
         self.fields["province"].empty_label = "انتخاب استان"
         self.fields["city"].queryset = City.objects.none()

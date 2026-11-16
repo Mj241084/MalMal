@@ -41,7 +41,6 @@ class Line:
 @dataclass(frozen=True)
 class Summary:
     items_total: int
-    weight_g: int
     has_unavailable: bool
 
 
@@ -97,11 +96,7 @@ def notices_for(lines: list[Line]) -> list[str]:
 
 def summarize(lines: list[Line]) -> Summary:
     ok = [line for line in lines if line.available]
-    return Summary(
-        items_total=sum(line.total for line in ok),
-        weight_g=sum(line.variant.weight_g * line.qty for line in ok),
-        has_unavailable=len(ok) != len(lines),
-    )
+    return Summary(items_total=sum(line.total for line in ok), has_unavailable=len(ok) != len(lines))
 
 
 def fingerprint(lines: list[Line]) -> str:
@@ -134,6 +129,20 @@ def count(user) -> int:
 
 def bust_count(user_id: int) -> None:
     safe_cache_delete(f"cart_count:{user_id}")
+
+
+def quantities(user, variant_ids) -> dict[int, int]:
+    """Stored quantity per variant in the signed-in viewer's cart (empty for guests)."""
+    if user is None or not user.is_authenticated:
+        return {}
+    ids = list(variant_ids)
+    if not ids:
+        return {}
+    return dict(CartItem.objects.filter(cart__user=user, variant_id__in=ids).values_list("variant_id", "qty"))
+
+
+def quantity(user, variant_id: int) -> int:
+    return quantities(user, [variant_id]).get(variant_id, 0)
 
 
 def normalize(cart: Cart) -> tuple[list[Line], list[str]]:

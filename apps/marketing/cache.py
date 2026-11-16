@@ -30,7 +30,6 @@ def _build(limit: int) -> list[dict]:
             "icon": item.icon,
             "title": item.title,
             "subtitle": item.subtitle,
-            "is_placeholder": item.is_placeholder,
         }
         for item in TrustItem.objects.filter(is_active=True).order_by("sort", "pk")[:limit]
     ]

@@ -37,6 +37,12 @@ def clean_cache_and_index():
     cache.clear()
 
 
+@pytest.fixture(autouse=True)
+def neshan_service_off(settings):
+    """Tests never reach Neshan: with no service key the province/city lists come from the database only."""
+    settings.NESHAN_SERVICE_KEY = ""
+
+
 @pytest.fixture
 def province(db) -> Province:
     return Province.objects.create(name="تهران", slug="tehran", sort=1)
@@ -106,7 +112,7 @@ def checkout_env(db, settings):
     settings.SMS_BACKEND = "console"
     method, _ = ShippingMethod.objects.get_or_create(
         code="tipax",
-        defaults={"title": "ارسال با تیپاکس", "checkout_note": "پس‌کرایه", "max_weight_g": 100_000},
+        defaults={"title": "ارسال با تیپاکس", "checkout_note": "پس‌کرایه"},
     )
     PaymentGateway.objects.get_or_create(code="fake", defaults={"title": "درگاه آزمایشی"})
     return method

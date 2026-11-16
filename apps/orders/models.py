@@ -22,7 +22,6 @@ class ShippingMethod(TimeStampedModel):
     payment_mode = models.CharField(
         max_length=10, choices=PAYMENT_CHOICES, default=PAYMENT_COLLECT, verbose_name="نحوه‌ی پرداخت کرایه"
     )
-    max_weight_g = models.PositiveIntegerField(null=True, blank=True, verbose_name="سقف وزن سفارش (گرم)")
     is_active = models.BooleanField(default=True, verbose_name="فعال")
     sort = models.PositiveIntegerField(default=0, verbose_name="ترتیب")
 

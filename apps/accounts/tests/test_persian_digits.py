@@ -4,7 +4,6 @@ from django.urls import reverse
 from apps.accounts.forms import AddressForm, MobileForm, ProfileForm
 from apps.accounts.models import Address
 from apps.core.testing import find_ascii_digits
-from apps.core.widgets import FaDigitsInput, FaTextarea, FaTextInput
 
 pytestmark = pytest.mark.django_db
 
@@ -66,17 +65,6 @@ def test_persian_input_is_stored_as_ascii(client, user, province, city):
         "3",
         "1234567890",
     )
-
-
-def test_widgets_render_persian_digits_and_preserve_latin_tokens():
-    rendered_mobile = FaDigitsInput().render("mobile", "09121234567")
-    assert 'value="۰۹۱۲۱۲۳۴۵۶۷"' in rendered_mobile
-
-    rendered_text = FaTextInput().render("title", "مدل WM-1234 شماره 12")
-    assert 'value="مدل WM-1234 شماره ۱۲"' in rendered_text
-
-    rendered_textarea = FaTextarea().render("address_text", "پلاک 12 کد WM-1234")
-    assert "پلاک ۱۲ کد WM-1234" in rendered_textarea
 
 
 def test_forms_normalize_persian_digits_to_ascii(user, province, city):

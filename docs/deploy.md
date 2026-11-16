@@ -50,7 +50,7 @@ cp .env.example .env && nano .env      # همه‌ی مقدارها را پر ک
 مراحل به ترتیب (همه با `uv run python manage.py ...`):
 
 1. `migrate`
-2. `import_geo`
+2. `sync_geo`
 3. `collectstatic --noinput`
 4. `setup_groups`  (گروه‌های مجوز «محتوا»، «فروش»، «نظرها»)
 5. `createsuperuser`  (مدیر کل)
@@ -72,8 +72,10 @@ crontab -e                            # محتوای deploy/crontab.example (ک�
 
 **.env لازم در production:** `DJANGO_SECRET_KEY`، `REDIS_URL`، `ALLOWED_HOSTS`، `SITE_URL` (با `https`)،
 `ADMIN_URL` (غیرپیش‌فرض)، `CSRF_TRUSTED_ORIGINS`، `SMS_BACKEND=smsir` + کلید و شناسه‌های قالب،
-`ZARINPAL_MERCHANT_ID` با `ZARINPAL_SANDBOX=false`، `TRUSTED_PROXY_IPS=127.0.0.1`، `BACKUP_DIR`،
+`ZARINPAL_MERCHANT_ID` با `ZARINPAL_SANDBOX=false`، `TRUSTED_PROXY_IPS=127.0.0.1`، `BACKUP_DIR`، `NESHAN_SERVICE_KEY`،
 `SSL_REDIRECT=true`. `BACKUP_DIR` باید **بیرون از پروژه** باشد (ترجیحاً دیسک دیگر).
+
+`sync_geo` پشتیبان استان/شهر است و هفتگی در cron می‌رود (`deploy/crontab.example`).
 
 `TRUSTED_PROXY_IPS=127.0.0.1` چون gunicorn روی TCP لوپ‌بک اجرا می‌شود، نه سوکت یونیکس: با سوکت،
 `REMOTE_ADDR` خالی است و محدودیت نرخ بر پایه‌ی IP کار نمی‌کند.
