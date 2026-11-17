@@ -31,15 +31,15 @@ def refund(key: str) -> None:
         _cache().decr(key)
 
 
-def otp_keys(mobile: str, ip: str | None) -> tuple[str, str, str | None]:
-    mobile_key_h = f"otp:mobile:{mobile}:h"
-    mobile_key_d = f"otp:mobile:{mobile}:d"
-    ip_key_h = f"otp:ip:{ip}:h" if ip else None
-    return mobile_key_h, mobile_key_d, ip_key_h
+def otp_keys(mobile: str) -> tuple[str, str]:
+    return f"otp:mobile:{mobile}:h", f"otp:mobile:{mobile}:d"
 
 
 MOBILE_HOURLY_LIMIT = 5
 MOBILE_DAILY_LIMIT = 10
-IP_HOURLY_LIMIT = 20
+# One ceiling for the whole site. It replaces the per-IP limit (behind a CDN every visitor shares a few edge IPs)
+# and only protects the SMS budget from someone cycling through many different numbers.
+GLOBAL_KEY = "otp:global:h"
+GLOBAL_HOURLY_LIMIT = 300
 HOUR = 60 * 60
 DAY = 60 * 60 * 24

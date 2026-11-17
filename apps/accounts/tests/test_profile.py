@@ -80,16 +80,6 @@ class TestProfilePage:
         user.refresh_from_db()
         assert user.mobile == MOBILE
 
-    def test_first_national_code_requires_confirmation(self, client, user):
-        client.force_login(user)
-
-        response = client.post(reverse("accounts:profile"), _profile_data(national_code=VALID_CODE))
-
-        user.refresh_from_db()
-        assert response.status_code == 200
-        assert "تایید قیدشده" in response.content.decode()
-        assert user.national_code == ""
-
     def test_first_national_code_accepts_persian_digits_with_confirmation(self, client, user):
         client.force_login(user)
         persian_code = VALID_CODE.translate(str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹"))

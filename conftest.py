@@ -43,6 +43,12 @@ def neshan_service_off(settings):
     settings.NESHAN_SERVICE_KEY = ""
 
 
+@pytest.fixture(autouse=True)
+def shahkar_off(settings):
+    """Tests never reach Shahkar; the ones that exercise it set a token and stub `_call`."""
+    settings.SHAHKAR_API_TOKEN = ""
+
+
 @pytest.fixture
 def province(db) -> Province:
     return Province.objects.create(name="تهران", slug="tehran", sort=1)

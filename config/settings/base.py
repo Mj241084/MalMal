@@ -99,10 +99,10 @@ SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 days
 # Static & Media
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = Path(get_env("STATIC_ROOT", str(BASE_DIR / "staticfiles")))
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = Path(get_env("MEDIA_ROOT", str(BASE_DIR / "media")))
 
 # URLs & Admin
 SITE_URL = get_env("SITE_URL", "http://localhost:8000").rstrip("/")
@@ -126,6 +126,7 @@ SMS_ADMIN_MOBILES = get_env("SMS_ADMIN_MOBILES")
 
 NESHAN_MAP_KEY = get_env("NESHAN_MAP_KEY")
 NESHAN_SERVICE_KEY = get_env("NESHAN_SERVICE_KEY")
+SHAHKAR_API_TOKEN = get_env("SHAHKAR_API_TOKEN")
 
 TRUSTED_PROXY_IPS = get_env_list("TRUSTED_PROXY_IPS")
 
@@ -144,8 +145,11 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-def build_caches(redis_url: str) -> dict[str, dict]:
-    """Configure RedisCache for general caching (mm:v1:) and a separate DB for rate limits."""
+def build_caches(redis_url: str, ratelimit_url: str = "") -> dict[str, dict]:
+    """Configure RedisCache for general caching (mm:v1:) and a separate DB for rate limits.
+
+    `ratelimit_url` overrides the derived URL (hosts that give one database or a unix socket).
+    """
     return {
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
@@ -156,7 +160,7 @@ def build_caches(redis_url: str) -> dict[str, dict]:
         },
         "ratelimit": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
-            "LOCATION": derive_ratelimit_redis_url(redis_url),
+            "LOCATION": ratelimit_url or derive_ratelimit_redis_url(redis_url),
             "KEY_PREFIX": "mm:rl",
             "KEY_FUNCTION": "apps.core.cache.make_key",
             "TIMEOUT": 60 * 60 * 24,

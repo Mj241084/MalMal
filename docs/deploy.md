@@ -181,3 +181,4 @@ uv run python manage.py backup_db --with-media   # db-YYYYMMDD-HHMMSS.sqlite3 + 
 
 - ۰.۳ — P15 (تکمیل پنل): ارجاع به `docs/panel-guide.md` در بخش ۸. بخش ۸ از قبل «اولین کارمند» و «`setup_groups` بعد از هر استقرار با مجوز تازه» را داشت.
 - ۰.۲ — بخش ۸ «پنل مدیریت» (اولین کارمند، `setup_groups` پس از مجوز تازه، حد آپلود، robots/noindex، `ADMIN_URL`، بازگشت وجه). این سند تا ۰.۱ بخش «تغییرات» نداشت.
+- هاست cPanel: passenger_wsgi.py، STATIC_ROOT و MEDIA_ROOT و RATELIMIT_REDIS_URL از env، و deploy/crontab.cpanel.example.

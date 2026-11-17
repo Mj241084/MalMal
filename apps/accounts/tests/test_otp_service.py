@@ -145,17 +145,6 @@ def test_daily_limit_per_mobile_and_hourly_counter_is_refunded(fixed_otp_code, m
     assert caches["ratelimit"].get(f"otp:mobile:{MOBILE}:h") == 2
 
 
-def test_hourly_limit_per_ip(fixed_otp_code, monkeypatch):
-    monkeypatch.setattr(ratelimit, "IP_HOURLY_LIMIT", 2)
-
-    assert otp.request_code("09121110001", "10.0.0.1").ok
-    assert otp.request_code("09121110002", "10.0.0.1").ok
-
-    result = otp.request_code("09121110003", "10.0.0.1")
-
-    assert result.status == otp.STATUS_RATE_LIMITED
-
-
 def test_send_failure_leaves_no_challenge_and_refunds_the_counters(fixed_otp_code, monkeypatch):
     monkeypatch.setattr(ratelimit, "MOBILE_HOURLY_LIMIT", 1)
     real_send = sms.send_template

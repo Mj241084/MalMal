@@ -130,16 +130,22 @@ def request_code(mobile: str, ip: str | None = None) -> OTPRequestResult:
         logger.warning("OTP requested but the sms.ir OTP template id is not configured.")
         return OTPRequestResult(STATUS_UNAVAILABLE)
 
-    mobile_h, mobile_d, ip_h = ratelimit.otp_keys(normalized, ip)
-    if not ratelimit.consume(mobile_h, ratelimit.MOBILE_HOURLY_LIMIT, ratelimit.HOUR):
-        return OTPRequestResult(STATUS_RATE_LIMITED, retry_after=ratelimit.HOUR)
-    if not ratelimit.consume(mobile_d, ratelimit.MOBILE_DAILY_LIMIT, ratelimit.DAY):
-        ratelimit.refund(mobile_h)
-        return OTPRequestResult(STATUS_RATE_LIMITED, retry_after=ratelimit.DAY)
-    if ip_h and not ratelimit.consume(ip_h, ratelimit.IP_HOURLY_LIMIT, ratelimit.HOUR):
-        ratelimit.refund(mobile_h)
-        ratelimit.refund(mobile_d)
-        return OTPRequestResult(STATUS_RATE_LIMITED, retry_after=ratelimit.HOUR)
+    mobile_h, mobile_d = ratelimit.otp_keys(normalized)
+    taken: list[str] = []
+
+    def release() -> None:
+        for key in taken:
+            ratelimit.refund(key)
+
+    for key, limit, window in (
+        (mobile_h, ratelimit.MOBILE_HOURLY_LIMIT, ratelimit.HOUR),
+        (mobile_d, ratelimit.MOBILE_DAILY_LIMIT, ratelimit.DAY),
+        (ratelimit.GLOBAL_KEY, ratelimit.GLOBAL_HOURLY_LIMIT, ratelimit.HOUR),
+    ):
+        if not ratelimit.consume(key, limit, window):
+            release()
+            return OTPRequestResult(STATUS_RATE_LIMITED, retry_after=window)
+        taken.append(key)
 
     code = generate_code()
     _dev_echo_code(normalized, code)
@@ -154,10 +160,7 @@ def request_code(mobile: str, ip: str | None = None) -> OTPRequestResult:
     # No DB transaction is open here: the network call happens before the challenge is stored.
     log = sms.send_template("otp", normalized, {"CODE": code})
     if log.status != log.STATUS_SENT:
-        ratelimit.refund(mobile_h)
-        ratelimit.refund(mobile_d)
-        if ip_h:
-            ratelimit.refund(ip_h)
+        release()
         return OTPRequestResult(STATUS_SEND_FAILED)
 
     _store_challenge(normalized, digest, ttl_seconds, max_attempts, ip)

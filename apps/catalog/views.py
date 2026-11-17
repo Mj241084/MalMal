@@ -26,7 +26,7 @@ from apps.catalog.filters import PAGE_SIZE, SORT_CHOICES, ProductFilter
 from apps.catalog.models import Brand, Category, Product, SpecAttribute, Variant
 from apps.catalog.similar import base_category, similar_products
 from apps.catalog.tree import subtree_upper_bound
-from apps.core import seo
+from apps.core import seo, shortlinks
 from apps.core.html import sanitize_html
 from apps.core.models import SiteSettings
 
@@ -177,6 +177,7 @@ def _product_context(product: Product) -> dict:
     specs = list(product.spec_values.select_related("attribute").order_by("attribute__sort", "attribute__pk"))
     return {
         "product": product,
+        "share_url": shortlinks.short_url("p", product.pk),
         "images": images,
         "variants": variants,
         "default_variant": default_variant,

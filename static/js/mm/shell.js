@@ -84,6 +84,33 @@
     if (target && target.id === "search-suggest") syncSuggestPanel();
   });
 
+  /* [data-share="<url>"]: copy a link. The Clipboard API needs https or localhost; otherwise a hidden textarea. */
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+    return new Promise(function (resolve, reject) {
+      var box = document.createElement("textarea");
+      var ok = false;
+      box.value = text;
+      box.setAttribute("readonly", "");
+      box.style.cssText = "position:fixed;top:0;opacity:0";
+      document.body.appendChild(box);
+      box.select();
+      try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      box.remove();
+      if (ok) resolve(); else reject(new Error("copy"));
+    });
+  }
+
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest ? event.target.closest("[data-share]") : null;
+    if (!button) return;
+    var url = button.getAttribute("data-share");
+    copyText(url).then(
+      function () { MM.ui.toast("لینک محصول کپی شد", { level: "success" }); },
+      function () { MM.ui.alert({ title: "کپی نشد؛ لینک را دستی کپی کنید", message: url }); }
+    );
+  });
+
   MM.init("shell", function (root) {
     MM.each(root, "#search-suggest", syncSuggestPanel);
   });

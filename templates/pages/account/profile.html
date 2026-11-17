@@ -67,16 +67,7 @@
             <span>{{ error }}</span>
           </p>
         {% endfor %}
-        <div role="alert" class="alert text-small mt-2 items-start">
-          {% icon "info" size=18 class="text-ink-2 shrink-0 mt-0.5" %}
-          <div class="flex flex-col gap-2">
-            <span>کد ملی بعد از ثبت قابل تغییر نیست. از درستی آن مطمئن شوید</span>
-            <label class="flex items-start gap-2 cursor-pointer">
-              {{ form.national_code_confirm }}
-              <span class="text-label text-ink-2 leading-5">{{ form.national_code_confirm.label }}</span>
-            </label>
-          </div>
-        </div>
+        <p class="label text-label text-ink-3">کد ملی باید به نام صاحب همین شماره‌ی موبایل باشد</p>
       {% endif %}
     </fieldset>
 

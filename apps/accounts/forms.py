@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Q
 from django.urls import reverse_lazy
 
+from apps.accounts import shahkar
 from apps.accounts.models import Address, User
 from apps.core.forms import FieldErrorAttrsMixin
 from apps.core.text import normalize_digits, normalize_fa
@@ -87,12 +88,6 @@ class OTPCodeForm(FieldErrorAttrsMixin, forms.Form):
 
 
 class ProfileForm(FieldErrorAttrsMixin, forms.ModelForm):
-    national_code_confirm = forms.BooleanField(
-        required=False,
-        label="از درستی کد ملی مطمئن هستم و می‌دانم بعد از ثبت قابل تغییر نیست",
-        widget=forms.CheckboxInput(attrs={"class": "checkbox checkbox-sm mt-0.5"}),
-    )
-
     class Meta:
         model = User
         fields = ["first_name", "last_name", "national_code", "email"]
@@ -126,7 +121,6 @@ class ProfileForm(FieldErrorAttrsMixin, forms.ModelForm):
         if self.instance.national_code:
             # D20: locked after the first save; the value posted by the client is ignored.
             self.fields["national_code"].disabled = True
-            self.fields["national_code_confirm"].disabled = True
 
     def clean_national_code(self) -> str:
         if self.instance.national_code:
@@ -145,8 +139,8 @@ class ProfileForm(FieldErrorAttrsMixin, forms.ModelForm):
     def clean(self):
         cleaned = super().clean()
         code = cleaned.get("national_code") or ""
-        if code and not self.instance.national_code and not cleaned.get("national_code_confirm"):
-            self.add_error("national_code", "برای ثبت کد ملی، تایید قیدشده را علامت بزنید")
+        if code and not self.instance.national_code and not self.errors:
+            shahkar.check_form(self, user_id=self.instance.pk, mobile=self.instance.mobile, national_code=code)
         return cleaned
 
     def clean_first_name(self) -> str:

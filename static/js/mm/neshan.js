@@ -36,7 +36,7 @@
       center: [initialLng, initialLat],
       zoom: hasInitial ? 16 : 12,
       minZoom: 5,
-      mapKey: apiKey,
+      apiKey: apiKey,
     });
     map.addControl(new maplibregl.NavigationControl());
 

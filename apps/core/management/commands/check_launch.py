@@ -67,6 +67,8 @@ def _services():
             yield WARNING, f"شناسه‌ی قالب پیامک «{key}» خالی است ({sms.TEMPLATE_SETTINGS[key]})"
     if default_method() is None:
         yield ERROR, "روش ارسال فعالی نیست (checkout کار نمی‌کند)"
+    if not settings.SHAHKAR_API_TOKEN:
+        yield WARNING, "SHAHKAR_API_TOKEN خالی است (کد ملی با شماره‌ی موبایل تطبیق داده نمی‌شود)"
     try:
         for alias in ("default", "ratelimit"):
             caches[alias].set("launch_check", 1, 5)

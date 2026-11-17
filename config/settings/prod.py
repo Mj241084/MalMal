@@ -20,7 +20,7 @@ if not REDIS_URL:
 
 ALLOWED_HOSTS = get_env_list("ALLOWED_HOSTS")
 
-CACHES = build_caches(REDIS_URL)
+CACHES = build_caches(REDIS_URL, get_env("RATELIMIT_REDIS_URL"))
 
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True

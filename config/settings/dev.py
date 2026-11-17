@@ -14,4 +14,4 @@ SECRET_KEY = get_env(
 ALLOWED_HOSTS = get_env_list("ALLOWED_HOSTS", ["localhost", "127.0.0.1", "[::1]"])
 
 REDIS_URL = get_env("REDIS_URL", "redis://127.0.0.1:6379/1")
-CACHES = build_caches(REDIS_URL)
+CACHES = build_caches(REDIS_URL, get_env("RATELIMIT_REDIS_URL"))

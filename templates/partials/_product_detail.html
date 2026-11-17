@@ -68,7 +68,13 @@
 
     <div class="flex items-start justify-between gap-3">
       <h1 class="text-title lg:text-display font-medium">{{ product.title|fa_text }}</h1>
-      <div class="shrink-0">{% include "partials/_like_button.html" with product_id=product.pk liked=False %}</div>
+      <div class="shrink-0 flex items-center gap-2">
+        <button type="button" data-share="{{ share_url }}" aria-label="کپی لینک محصول"
+                class="btn btn-ghost btn-circle w-10 h-10 min-h-10 bg-base-100 border">
+          {% icon "share-2" size=18 class="text-ink-2" %}
+        </button>
+        {% include "partials/_like_button.html" with product_id=product.pk liked=False %}
+      </div>
     </div>
 
     {% if product.short_description %}

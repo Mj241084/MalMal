@@ -10,7 +10,6 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from apps.accounts import ratelimit
-from apps.core.http import client_ip
 from apps.core.text import normalize_digits
 from apps.core.validators import normalize_iran_mobile
 
@@ -19,7 +18,6 @@ SESSION_KEY = "panel_login_at"
 SESSION_MAX_AGE = 12 * 60 * 60
 
 MOBILE_LIMIT, MOBILE_WINDOW = 5, 15 * 60
-IP_LIMIT, IP_WINDOW = 20, ratelimit.HOUR
 
 OK, INVALID, THROTTLED = "ok", "invalid", "throttled"
 STATE_OK, STATE_MISSING, STATE_EXPIRED = "ok", "missing", "expired"
@@ -54,13 +52,8 @@ def try_login(request, raw_mobile: str, password: str) -> str:
     except ValidationError:
         mobile = ""
     mobile_key = f"panel:login:m:{mobile or normalize_digits(raw_mobile).strip()[:20]}"
-    ip = client_ip(request)
-    ip_key = f"panel:login:ip:{ip}" if ip else None
 
     if not ratelimit.consume(mobile_key, MOBILE_LIMIT, MOBILE_WINDOW):
-        return THROTTLED
-    if ip_key and not ratelimit.consume(ip_key, IP_LIMIT, IP_WINDOW):
-        ratelimit.refund(mobile_key)
         return THROTTLED
 
     user = authenticate(request, username=mobile, password=password) if mobile else None

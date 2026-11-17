@@ -1,0 +1,12 @@
+# cPanel ← Cron Jobs: one line per command. Replace USER (cPanel username) and APP (app folder).
+# cron does not read .env (the app does) but needs the settings module, so it is set on every line.
+# If the host refuses intervals under 15 minutes, use */15 for the first two lines (the reservation is 30 minutes).
+*/5  * * * * cd /home/USER/APP && DJANGO_SETTINGS_MODULE=config.settings.prod /home/USER/virtualenv/APP/3.12/bin/python manage.py expire_orders
+*/10 * * * * cd /home/USER/APP && DJANGO_SETTINGS_MODULE=config.settings.prod /home/USER/virtualenv/APP/3.12/bin/python manage.py send_back_in_stock
+15 3 * * *   cd /home/USER/APP && DJANGO_SETTINGS_MODULE=config.settings.prod /home/USER/virtualenv/APP/3.12/bin/python manage.py recount_purchases
+20 3 * * *   cd /home/USER/APP && DJANGO_SETTINGS_MODULE=config.settings.prod /home/USER/virtualenv/APP/3.12/bin/python manage.py reconcile_counters
+30 3 * * *   cd /home/USER/APP && DJANGO_SETTINGS_MODULE=config.settings.prod /home/USER/virtualenv/APP/3.12/bin/python manage.py warm_cache
+40 3 * * *   cd /home/USER/APP && DJANGO_SETTINGS_MODULE=config.settings.prod /home/USER/virtualenv/APP/3.12/bin/python manage.py purge_otp
+45 3 * * *   cd /home/USER/APP && DJANGO_SETTINGS_MODULE=config.settings.prod /home/USER/virtualenv/APP/3.12/bin/python manage.py purge_sms_logs
+50 3 * * *   cd /home/USER/APP && DJANGO_SETTINGS_MODULE=config.settings.prod /home/USER/virtualenv/APP/3.12/bin/python manage.py backup_db --with-media
+55 3 * * 0   cd /home/USER/APP && DJANGO_SETTINGS_MODULE=config.settings.prod /home/USER/virtualenv/APP/3.12/bin/python manage.py sync_geo

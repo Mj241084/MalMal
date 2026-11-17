@@ -54,6 +54,8 @@ def get_env_list(name: str, default: list[str] | None = None) -> list[str]:
 def derive_ratelimit_redis_url(redis_url: str) -> str:
     """Return a Redis URL pointing to a separate DB index for rate limiting."""
     parsed = urlparse(redis_url)
+    if parsed.scheme == "unix":  # one socket = one database; the "mm:rl" key prefix keeps the keys apart
+        return redis_url
     path = (parsed.path or "").lstrip("/")
     try:
         current_db = int(path) if path else 0

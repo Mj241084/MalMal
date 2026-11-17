@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import re
 
+from django.conf import settings
+
 MAX_PARAM_LENGTH = 25
 # kind letter -> (app_label, model_name). Add a row when another object type needs SMS links.
 KINDS: dict[str, tuple[str, str]] = {"p": ("catalog", "Product")}
@@ -46,3 +48,8 @@ def short_link_param(kind: str, pk: int) -> str:
     if len(param) > MAX_PARAM_LENGTH:
         raise ValueError(f"Short link exceeds {MAX_PARAM_LENGTH} characters: {param!r}")
     return param
+
+
+def short_url(kind: str, pk: int) -> str:
+    """Absolute link for people (copy/share): SITE_URL/r/<code>/. The trailing slash avoids an APPEND_SLASH redirect hop."""
+    return f"{settings.SITE_URL}/{short_link_param(kind, pk)}/"

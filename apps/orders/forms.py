@@ -5,6 +5,7 @@ from __future__ import annotations
 from django import forms
 from django.core.exceptions import ValidationError as DjangoValidationError
 
+from apps.accounts import shahkar
 from apps.core.text import normalize_fa
 from apps.core.validators import validate_national_code
 from apps.core.widgets import FaDigitsInput
@@ -31,19 +32,13 @@ class CheckoutBuyerForm(forms.Form):
         label="کد ملی",
         widget=FaDigitsInput(attrs={"class": "input w-full text-end num", "maxlength": "10", "data-digits-only": "1"}),
     )
-    national_code_confirm = forms.BooleanField(
-        required=False,
-        label="از درستی کد ملی مطمئن هستم و می‌دانم بعد از ثبت قابل تغییر نیست",
-        widget=forms.CheckboxInput(attrs={"class": "checkbox checkbox-sm mt-0.5"}),
-    )
 
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
+        self.user = user
         for name in _PROFILE_FIELDS:
             if getattr(user, name):
                 del self.fields[name]
-        if "national_code" not in self.fields:
-            self.fields.pop("national_code_confirm", None)
         for field in self.fields.values():
             # inputs live outside the <form> element (nested forms are invalid)
             field.widget.attrs["form"] = FORM_ID
@@ -62,8 +57,9 @@ class CheckoutBuyerForm(forms.Form):
 
     def clean(self):
         cleaned = super().clean()
-        if cleaned.get("national_code") and not cleaned.get("national_code_confirm"):
-            self.add_error("national_code", "برای ثبت کد ملی، تایید قیدشده را علامت بزنید")
+        code = cleaned.get("national_code")
+        if code and "national_code" in self.fields and not self.errors:
+            shahkar.check_form(self, user_id=self.user.pk, mobile=self.user.mobile, national_code=code)
         return cleaned
 
     def apply_to(self, user) -> None:
