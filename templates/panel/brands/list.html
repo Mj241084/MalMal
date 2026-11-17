@@ -1,0 +1,15 @@
+{% extends "panel/base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+    <h1 class="text-h2">برندها</h1>
+    <button hx-get="{% url 'panel:brand_new' %}" hx-target="#brand-modal-body" hx-trigger="click" onclick="brand_modal.showModal()" class="btn btn-primary">افزودن برند</button>
+</div>
+<div id="brands-list">{% include "panel/brands/_list_results.html" %}</div>
+
+<dialog id="brand-modal" class="modal">
+    <div class="modal-box">
+        <div id="brand-modal-body"></div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>بستن</button></form>
+</dialog>
+{% endblock %}

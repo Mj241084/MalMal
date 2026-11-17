@@ -1,0 +1,11 @@
+{% extends "panel/shell.html" %}
+{% block title %}نظرها{% endblock %}
+{% block content %}
+<div class="flex flex-col gap-4">
+  <div class="flex items-center justify-between gap-3">
+    {% include "panel/partials/_page_heading.html" with title="نظرها" %}
+    <span id="reviews-indicator" class="htmx-indicator loading loading-spinner loading-sm" aria-hidden="true"></span>
+  </div>
+  <div id="reviews-results" aria-live="polite">{% include "panel/reviews/_list_results.html" %}</div>
+</div>
+{% endblock %}

@@ -12,20 +12,39 @@
     </a>
   {% endif %}
 
-  {% if can_orders %}
-    <section class="grid grid-cols-1 sm:grid-cols-2 gap-3" aria-label="خلاصه">
-      <a href="{% url 'panel:orders' %}" class="bg-base-100 border rounded-box p-4 flex flex-col gap-1 hover:bg-base-300 transition-colors">
-        <span class="text-small text-ink-2">منتظر ارسال</span>
-        <span class="text-title font-medium">{{ to_ship|fa_digits }}</span>
-        <span class="text-label text-ink-3">پرداخت‌شده یا در حال آماده‌سازی</span>
-      </a>
-      <div class="bg-base-100 border rounded-box p-4 flex flex-col gap-1">
-        <span class="text-small text-ink-2">فروش ۳۰ روز اخیر</span>
-        <span class="text-title font-medium whitespace-nowrap">{{ sales|toman }} <span class="text-small text-ink-2 font-normal">تومان</span></span>
-        <span class="text-label text-ink-3">سفارش‌های پرداخت‌شده</span>
-      </div>
+  {% if can_orders or can_reviews or can_stock %}
+    <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3" aria-label="خلاصه">
+      {% if can_orders %}
+        <a href="{% url 'panel:orders' %}" class="bg-base-100 border rounded-box p-4 flex flex-col gap-1 hover:bg-base-300 transition-colors">
+          <span class="text-small text-ink-2">منتظر ارسال</span>
+          <span class="text-title font-medium">{{ to_ship|fa_digits }}</span>
+          <span class="text-label text-ink-3">پرداخت‌شده یا در حال آماده‌سازی</span>
+        </a>
+        <div class="bg-base-100 border rounded-box p-4 flex flex-col gap-1">
+          <span class="text-small text-ink-2">فروش ۳۰ روز اخیر</span>
+          <span class="text-title font-medium whitespace-nowrap">{{ sales|toman }} <span class="text-small text-ink-2 font-normal">تومان</span></span>
+          <span class="text-label text-ink-3">سفارش‌های پرداخت‌شده</span>
+        </div>
+      {% endif %}
+      {% if can_reviews %}
+        <a href="{% url 'panel:reviews' %}" class="bg-base-100 border rounded-box p-4 flex flex-col gap-1 hover:bg-base-300 transition-colors">
+          <span class="text-small text-ink-2">نظرهای منتظر تایید</span>
+          <span class="text-title font-medium">{{ reviews_pending|fa_digits }}</span>
+          <span class="text-label text-ink-3">تا تایید نشوند در فروشگاه دیده نمی‌شوند</span>
+        </a>
+      {% endif %}
+      {% if can_stock %}
+        <a href="{% url 'panel:inventory' %}?state=alert" class="bg-base-100 border rounded-box p-4 flex flex-col gap-1 hover:bg-base-300 transition-colors">
+          <span class="text-small text-ink-2">ناموجود یا کم‌موجود</span>
+          <span class="text-title font-medium">{{ stock_alerts|fa_digits }}</span>
+          <span class="text-label text-ink-3">تنوع فعال از محصولات فعال</span>
+        </a>
+      {% endif %}
     </section>
-    {% include "panel/partials/_ship_queue.html" %}
+
+    {% if can_orders %}{% include "panel/partials/_ship_queue.html" %}{% endif %}
+    {% if can_reviews and review_queue %}{% include "panel/partials/_review_queue.html" %}{% endif %}
+    {% if can_stock and wanted %}{% include "panel/partials/_wanted_stock.html" %}{% endif %}
   {% elif not refunds %}
     {% include "partials/_empty_state.html" with title="هنوز بخشی به حساب شما اضافه نشده" description="از مدیر کل بخواهید دسترسی‌های لازم را بدهد" %}
   {% endif %}

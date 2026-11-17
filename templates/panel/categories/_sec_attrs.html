@@ -1,0 +1,18 @@
+<section class="card bg-base-100 border">
+    <div class="card-body">
+        <h2 class="card-title">مشخصات فنی</h2>
+        {% for a, form in rows %}
+        <form hx-post="{% url 'panel:spec_edit' attrs_category.pk a.pk %}" hx-target="#attrs" hx-swap="outerHTML" class="flex gap-2 items-center mb-2">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-sm">ذخیره</button>
+            <button type="button" hx-post="{% url 'panel:spec_action' attrs_category.pk a.pk 'delete' %}" hx-target="#attrs" hx-swap="outerHTML" class="btn btn-sm btn-error">حذف</button>
+        </form>
+        {% endfor %}
+        <form hx-post="{% url 'panel:spec_new' attrs_category.pk %}" hx-target="#attrs" hx-swap="outerHTML">
+            {% csrf_token %}
+            {{ new_form.as_p }}
+            <button type="submit" class="btn btn-primary w-full">افزودن مشخصه</button>
+        </form>
+    </div>
+</section>

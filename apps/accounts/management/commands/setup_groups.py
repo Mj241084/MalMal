@@ -13,6 +13,7 @@ GROUPS = {
             CRUD,
         ),
         ("catalog", ("stockmovement",), VIEW),
+        ("engagement", ("stocksubscription",), VIEW),
         ("marketing", ("banner", "collection", "collectionitem", "homeblock", "trustitem"), CRUD),
         ("core", ("staticpage", "footerlink"), CRUD),
     ],
@@ -20,10 +21,14 @@ GROUPS = {
         ("orders", ("order",), VIEW),
         ("payments", ("payment",), VIEW),
         ("catalog", ("product", "variant", "stockmovement"), VIEW),
+        ("engagement", ("stocksubscription",), VIEW),
     ],
     "نظرها": [("engagement", ("review",), ("view", "change"))],
 }
-EXTRA = {"فروش": [("orders", "manage_order_status")]}
+EXTRA = {
+    "محتوا": [("catalog", "adjust_stock")],
+    "فروش": [("orders", "manage_order_status"), ("catalog", "adjust_stock")],
+}
 
 
 class Command(BaseCommand):

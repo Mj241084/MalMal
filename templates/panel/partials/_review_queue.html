@@ -1,0 +1,27 @@
+{% load core_tags panel_tags %}
+<section id="review-queue" class="bg-base-100 border rounded-box p-4 flex flex-col gap-3 min-h-40">
+  <div class="flex items-center justify-between gap-3">
+    <h2 class="text-lead font-medium">نظرهای منتظر تایید</h2>
+    <a href="{% url 'panel:reviews' %}" class="text-small text-brand-ink">همه‌ی نظرها</a>
+  </div>
+  {% for review in review_queue %}
+    <div class="flex items-start justify-between gap-3 {% if not forloop.first %}border-t pt-3{% endif %}">
+      <div class="min-w-0 flex flex-col gap-1">
+        <span class="text-small font-medium line-clamp-1">{{ review.product.title|fa_text }}</span>
+        {% include "partials/_stars.html" with value=review.rating size="xs" %}
+        <p class="text-small text-ink-2 leading-6 whitespace-pre-line">{{ review.body|fa_text }}</p>
+      </div>
+      {% if can_moderate %}
+        <form method="post" action="{% url 'panel:review_decide' %}" hx-post="{% url 'panel:review_decide' %}"
+              hx-target="#review-queue" hx-swap="outerHTML" hx-disabled-elt="find button">
+          {% csrf_token %}
+          <input type="hidden" name="review" value="{{ review.pk }}:{{ review.updated_at|stamp }}">
+          <input type="hidden" name="action" value="approve"><input type="hidden" name="ctx" value="dashboard">
+          <button type="submit" class="btn btn-sm h-10 bg-base-300 border shrink-0">تایید</button>
+        </form>
+      {% endif %}
+    </div>
+  {% empty %}
+    <p class="text-small text-ink-2 py-6 text-center">نظری منتظر تایید نیست</p>
+  {% endfor %}
+</section>

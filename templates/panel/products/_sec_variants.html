@@ -1,0 +1,19 @@
+<section class="card bg-base-100 border">
+    <div class="card-body">
+        <h2 class="card-title">تنوع‌ها</h2>
+        {% for variant, form in variant_forms %}
+        <form hx-post="{% url 'panel:variant_edit' product.pk variant.pk %}" hx-target="#sec-variants" hx-swap="outerHTML" class="flex gap-2 items-center mb-2">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-sm btn-primary">ذخیره</button>
+            <button type="button" hx-post="{% url 'panel:variant_action' product.pk variant.pk 'delete' %}" hx-target="#sec-variants" hx-swap="outerHTML" class="btn btn-sm btn-ghost">حذف</button>
+        </form>
+        {% endfor %}
+        <div class="divider">تنوع جدید</div>
+        <form hx-post="{% url 'panel:variant_new' product.pk %}" hx-target="#sec-variants" hx-swap="outerHTML">
+            {% csrf_token %}
+            {{ new_variant_form.as_p }}
+            <button type="submit" class="btn btn-primary w-full">افزودن تنوع</button>
+        </form>
+    </div>
+</section>

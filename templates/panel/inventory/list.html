@@ -1,0 +1,28 @@
+{% extends "panel/shell.html" %}
+{% block title %}انبار{% endblock %}
+{% block content %}
+<div class="flex flex-col gap-4">
+  <div class="flex items-center justify-between gap-3">
+    {% include "panel/partials/_page_heading.html" with title="انبار" %}
+    <span id="inventory-indicator" class="htmx-indicator loading loading-spinner loading-sm" aria-hidden="true"></span>
+  </div>
+  {% include "panel/inventory/_tabs.html" with active="stock" %}
+
+  <form action="{% url 'panel:inventory' %}" method="get" role="search"
+        hx-get="{% url 'panel:inventory' %}" hx-target="#inventory-results" hx-swap="innerHTML" hx-push-url="true"
+        hx-trigger="input changed delay:300ms, change, submit" hx-sync="this:replace" hx-indicator="#inventory-indicator"
+        class="bg-base-100 border rounded-box p-3 flex flex-wrap items-center gap-3">
+    {% if filters.product %}<input type="hidden" name="product" value="{{ filters.product }}">{% endif %}
+    <label class="input h-10 grow min-w-48 flex items-center gap-2">
+      <input type="search" name="q" value="{{ q }}" placeholder="عنوان محصول یا کد کالا" class="grow text-small" autocomplete="off">
+    </label>
+    <select name="state" class="select h-10 w-48 text-small">
+      <option value="">همه‌ی وضعیت‌ها</option>
+      {% for code, label in states %}<option value="{{ code }}"{% if code == state %} selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </form>
+
+  <div id="inventory-results" aria-live="polite">{% include "panel/inventory/_stock_results.html" %}</div>
+</div>
+<div class="modal" popover id="stock-modal"><div class="modal-box max-w-sm" id="stock-modal-body"></div></div>
+{% endblock %}

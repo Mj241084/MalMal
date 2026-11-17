@@ -1,0 +1,10 @@
+<div class="bg-base-100 rounded-box border p-4">
+    {% for cat in categories %}
+    <div class="flex items-center gap-2 mb-2" style="margin-right: {{ cat.level }}rem">
+        <a href="{% url 'panel:category_edit' cat.pk %}" class="link">{{ cat.name }}</a>
+        <span class="text-xs text-ink-3">({{ cat.product_count }})</span>
+        <form hx-post="{% url 'panel:category_move' cat.pk 'up' %}" hx-target="#tree">{% csrf_token %}<button {% if cat.is_first %}disabled{% endif %}>↑</button></form>
+        <form hx-post="{% url 'panel:category_move' cat.pk 'down' %}" hx-target="#tree">{% csrf_token %}<button {% if cat.is_last %}disabled{% endif %}>↓</button></form>
+    </div>
+    {% endfor %}
+</div>

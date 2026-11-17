@@ -11,6 +11,11 @@ def toast(response, message: str, level: str = "success"):
     return trigger_client_event(response, "mm:toast", {"message": message, "level": level})
 
 
+def close_popover(response, popover_id: str):
+    """Close a popover modal after a successful HTMX save (handled by panel.js)."""
+    return trigger_client_event(response, "mm:popover-close", {"id": popover_id})
+
+
 def flash(request, message: str, level: str = "success") -> None:
     """The same message for a request without HTMX (shown by the base template)."""
     messages.add_message(request, LEVELS.get(level, messages.INFO), message)

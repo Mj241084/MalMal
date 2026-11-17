@@ -1,0 +1,73 @@
+{% load core_tags jalali_tags panel_tags %}
+<li class="bg-base-100 border rounded-box p-4 flex flex-col gap-3">
+  <div class="flex items-start gap-3">
+    {% if can_moderate %}<input type="checkbox" form="reviews-bulk" name="review" value="{{ review.pk }}:{{ review.updated_at|stamp }}" class="checkbox checkbox-sm mt-1 shrink-0" aria-label="انتخاب نظر">{% endif %}
+    <a href="{{ review.product.get_absolute_url }}" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"
+       class="w-12 h-12 shrink-0 rounded-lg bg-white border overflow-hidden flex items-center justify-center">
+      {% if review.product.main_image %}<img src="{{ review.product.main_image|thumb_url }}" alt="" width="48" height="48" loading="lazy" class="w-full h-full object-contain p-1">{% else %}{% icon "package" size=18 class="text-ink-3" %}{% endif %}
+    </a>
+    <div class="min-w-0 flex-1 flex flex-col gap-1">
+      <a href="{{ review.product.get_absolute_url }}" target="_blank" rel="noopener" class="text-small font-medium leading-6 line-clamp-2">{{ review.product.title|fa_text }}</a>
+      <span class="flex flex-wrap items-center gap-2 text-label text-ink-3">
+        <bdi>{{ review.user.get_full_name|default:review.user.mobile|fa_text }}</bdi>
+        {% if review.is_verified_buyer %}<span class="badge badge-sm badge-soft">خریدار این محصول</span>{% endif %}
+        <span class="num">{{ review.created_at|to_jalali }}</span>
+      </span>
+    </div>
+    <span class="flex items-center gap-2 text-small shrink-0 whitespace-nowrap"><span class="status {{ review.status|review_dot }}"></span>{{ review.get_status_display }}</span>
+  </div>
+
+  {% include "partials/_stars.html" with value=review.rating size="xs" %}
+  <p class="text-small leading-7 whitespace-pre-line">{{ review.body|fa_text }}</p>
+  {% if review.rejection_reason %}<p class="text-label text-ink-3">دلیل رد (داخلی): {{ review.rejection_reason|fa_text }}</p>{% endif %}
+  {% if review.admin_reply %}
+    <div class="bg-base-200 rounded-sm p-3 flex flex-col gap-1">
+      <span class="text-label text-ink-3">پاسخ فروشگاه</span>
+      <p class="text-small leading-7 whitespace-pre-line">{{ review.admin_reply|fa_text }}</p>
+    </div>
+  {% endif %}
+
+  {% if can_moderate %}
+    <div class="flex flex-wrap items-start gap-2 border-t pt-3">
+      {% if review.status != "approved" %}
+        <form method="post" action="{% url 'panel:review_decide' %}" hx-post="{% url 'panel:review_decide' %}"
+              hx-target="#reviews-results" hx-swap="innerHTML" hx-disabled-elt="find button">
+          {% csrf_token %}
+          {% for name, value in hidden %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+          <input type="hidden" name="review" value="{{ review.pk }}:{{ review.updated_at|stamp }}">
+          <input type="hidden" name="action" value="approve">
+          <button type="submit" class="btn btn-sm h-10 bg-base-300 border">تایید و انتشار</button>
+        </form>
+      {% endif %}
+
+      {% if review.status != "rejected" %}
+        <details class="open:w-full">
+          <summary class="btn btn-ghost btn-sm h-10 text-ink-2 list-none">رد کردن</summary>
+          <form method="post" action="{% url 'panel:review_decide' %}" hx-post="{% url 'panel:review_decide' %}"
+                hx-target="#reviews-results" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']"
+                class="flex flex-col gap-2 mt-2">
+            {% csrf_token %}
+            {% for name, value in hidden %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+            <input type="hidden" name="review" value="{{ review.pk }}:{{ review.updated_at|stamp }}">
+            <input type="hidden" name="action" value="reject">
+            <input type="text" name="reason" maxlength="200" data-fa-digits autocomplete="off" class="input w-full text-small" aria-label="دلیل رد (داخلی)" placeholder="دلیل رد (داخلی، اختیاری)">
+            <button type="submit" class="btn btn-sm h-10 bg-base-300 border self-start">رد کردن نظر</button>
+          </form>
+        </details>
+      {% endif %}
+
+      <details class="open:w-full">
+        <summary class="btn btn-ghost btn-sm h-10 text-ink-2 list-none">{% if review.admin_reply %}ویرایش پاسخ{% else %}پاسخ فروشگاه{% endif %}</summary>
+        <form method="post" action="{% url 'panel:review_reply' review.pk %}" hx-post="{% url 'panel:review_reply' review.pk %}"
+              hx-target="#reviews-results" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']"
+              class="flex flex-col gap-2 mt-2">
+          {% csrf_token %}
+          {% for name, value in hidden %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+          <textarea name="reply" rows="3" maxlength="1000" data-fa-digits class="textarea w-full text-small" aria-label="پاسخ فروشگاه">{{ review.admin_reply|fa_text }}</textarea>
+          <p class="text-label text-ink-3">پاسخ فقط وقتی نظر تایید شده باشد در فروشگاه دیده می‌شود. خالی بگذارید تا پاسخ حذف شود</p>
+          <button type="submit" class="btn btn-sm h-10 bg-base-300 border self-start">ذخیره‌ی پاسخ</button>
+        </form>
+      </details>
+    </div>
+  {% endif %}
+</li>

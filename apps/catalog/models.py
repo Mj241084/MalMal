@@ -433,6 +433,7 @@ class Variant(TimeStampedModel):
         verbose_name = "تنوع (variant)"
         verbose_name_plural = "تنوع‌ها"
         ordering = ["sort", "pk"]
+        permissions = [("adjust_stock", "Can change stock manually")]
         indexes = [
             models.Index(fields=["product", "is_active"], name="variant_product_active_idx"),
         ]

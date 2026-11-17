@@ -1,0 +1,49 @@
+{% load panel_tags %}
+<div class="overflow-x-auto bg-base-100 rounded-box border">
+  <table class="table table-hover">
+    <thead>
+      <tr>
+        <th><input type="checkbox" class="checkbox" data-check-all></th>
+        <th></th>
+        <th>عنوان</th>
+        <th>دسته / برند</th>
+        <th>وضعیت</th>
+        <th>موجودی</th>
+        <th>قیمت</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for product in page_obj %}
+      <tr class="{% if not product.is_active %}opacity-60{% endif %}">
+        <td><input type="checkbox" name="product" value="{{ product.pk }}" class="checkbox"></td>
+        <td><img src="{{ product|thumb_url }}" class="size-10 rounded object-cover"></td>
+        <td>
+          <a href="{% url 'panel:product_studio' product.pk %}" class="link link-hover font-medium">{{ product.title }}</a>
+          <div class="text-xs text-ink-3">SKU: {{ product.pk }}</div>
+        </td>
+        <td class="text-sm">
+          {{ product.category.name }}
+          <div class="text-ink-3">{{ product.brand.name_fa|default:"-" }}</div>
+        </td>
+        <td><span class="badge {% if product.status == 'active' %}badge-success{% else %}badge-ghost{% endif %}">{{ product.get_status_display }}</span></td>
+        <td class="tabular-nums">{{ product.total_stock|fa_digits }}</td>
+        <td class="tabular-nums">{{ product.min_price|fa_digits }}</td>
+        <td>
+          <button type="button" hx-get="{% url 'panel:product_quick' product.pk %}" hx-target="body" hx-swap="beforeend" class="btn btn-sm btn-ghost text-ink-3">ویرایش قیمت</button>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="text-center py-8 text-ink-3">محصولی یافت نشد</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="mt-4 flex items-center justify-between">
+  <div class="flex gap-2">
+    <button type="submit" name="action" value="activate" class="btn btn-sm">فعال‌سازی</button>
+    <button type="submit" name="action" value="archive" class="btn btn-sm">بایگانی</button>
+  </div>
+  {% include "panel/partials/_pagination.html" with page_obj=page_obj %}
+</div>

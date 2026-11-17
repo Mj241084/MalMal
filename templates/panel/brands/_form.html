@@ -1,0 +1,10 @@
+<form method="post" enctype="multipart/form-data" hx-post="{% if brand %}{% url 'panel:brand_edit' brand.pk %}{% else %}{% url 'panel:brand_new' %}{% endif %}" hx-target="#brand-modal-body">
+    {% csrf_token %}
+    <div id="brand-form-body">
+        {{ form.as_p }}
+    </div>
+    <div class="modal-action">
+        <button type="submit" class="btn btn-primary">ذخیره</button>
+        <button type="button" class="btn" onclick="brand_modal.close()">بستن</button>
+    </div>
+</form>

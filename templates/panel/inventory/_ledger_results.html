@@ -1,0 +1,33 @@
+{% load core_tags jalali_tags panel_tags %}
+<div class="flex flex-col gap-4">
+  {% if rows %}
+    <div class="bg-base-100 border rounded-box overflow-x-auto">
+      <table class="table table-sm">
+        <thead><tr>
+          <th scope="col">زمان</th><th scope="col">کالا</th><th scope="col">تغییر</th>
+          <th scope="col">دلیل</th><th scope="col">یادداشت</th><th scope="col">سفارش</th>
+        </tr></thead>
+        <tbody>
+          {% for movement, number in rows %}
+            <tr class="hover:bg-base-300">
+              <td class="text-ink-2 whitespace-nowrap"><span class="num">{{ movement.created_at|to_jalali }}</span></td>
+              <td>
+                <span class="text-small">{{ movement.variant.product.title|fa_text }}</span>
+                <div class="text-label text-ink-3">{{ movement.variant.title|fa_text }} — <span class="latin">{{ movement.variant.sku }}</span></div>
+              </td>
+              <td class="whitespace-nowrap"><span class="num font-medium">{{ movement.delta|signed }}</span></td>
+              <td class="whitespace-nowrap text-small">{{ movement.get_reason_display }}</td>
+              <td class="text-small text-ink-2">{{ movement.note|fa_text }}</td>
+              <td>
+                {% if number %}{% if can_orders %}<a href="{% url 'panel:order_detail' number %}" class="latin link link-hover">{{ number }}</a>{% else %}<span class="latin">{{ number }}</span>{% endif %}{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "panel/partials/_pagination.html" with target="#ledger-results" %}
+  {% else %}
+    {% include "partials/_empty_state.html" with title="گردشی پیدا نشد" description="فیلترها را تغییر دهید" %}
+  {% endif %}
+</div>

@@ -1,0 +1,43 @@
+{% load core_tags %}
+<form method="post" action="{{ action }}" hx-post="{{ action }}" hx-target="#inventory-results" hx-swap="innerHTML"
+      hx-disabled-elt="find button[type='submit']" class="flex flex-col gap-3" novalidate>
+  {% csrf_token %}
+  {% for name, value in hidden %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+  {{ form.expected }}
+  <div>
+    <h3 class="text-lead font-medium">تغییر موجودی</h3>
+    <p class="text-small text-ink-2 mt-1"><bdi>{{ variant.product.title|fa_text }}</bdi> — {{ variant.title|fa_text }} (<span class="latin">{{ variant.sku }}</span>)</p>
+    <p class="text-small mt-1">موجودی فعلی: <span class="num font-medium">{{ variant.stock|fa_digits }}</span></p>
+  </div>
+
+  {% if error %}<div role="alert" class="alert alert-error text-small">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ error }}</span></div>{% endif %}
+  {% for e in form.non_field_errors %}<div role="alert" class="alert alert-error text-small">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ e }}</span></div>{% endfor %}
+
+  <fieldset class="fieldset">
+    <legend class="fieldset-legend text-small font-medium">نوع تغییر</legend>
+    {% for radio in form.mode %}
+      <label class="flex items-center gap-2 cursor-pointer min-h-10">
+        <input type="radio" name="{{ radio.data.name }}" value="{{ radio.data.value }}" class="radio radio-sm"{% if radio.data.selected %} checked{% endif %}>
+        <span class="text-small">{{ radio.choice_label }}</span>
+      </label>
+    {% endfor %}
+  </fieldset>
+
+  <fieldset class="fieldset">
+    <legend class="fieldset-legend text-small font-medium">{{ form.amount.label }}</legend>
+    {{ form.amount }}
+    {% for e in form.amount.errors %}<p class="text-label text-error flex items-center gap-1 mt-1">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ e }}</span></p>{% endfor %}
+  </fieldset>
+
+  <fieldset class="fieldset">
+    <legend class="fieldset-legend text-small font-medium">{{ form.reason.label }}</legend>
+    {{ form.reason }}
+    {% for e in form.reason.errors %}<p class="text-label text-error flex items-center gap-1 mt-1">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ e }}</span></p>{% endfor %}
+    <p class="label text-label text-ink-3">مثلاً شمارش انبار، ورود کالای جدید یا کالای معیوب</p>
+  </fieldset>
+
+  <div class="flex items-center gap-2 border-t pt-3">
+    <button type="submit" class="btn btn-primary flex-1 min-w-0 h-11 min-h-11">ثبت موجودی</button>
+    <button type="button" popovertarget="stock-modal" popovertargetaction="hide" class="btn btn-ghost h-11 text-ink-2">انصراف</button>
+  </div>
+</form>

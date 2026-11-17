@@ -1,0 +1,16 @@
+{% load core_tags %}
+<section class="bg-base-100 border rounded-box p-4 flex flex-col gap-3">
+  <div class="flex items-center justify-between gap-3">
+    <h2 class="text-lead font-medium">ناموجودهای پرمتقاضی</h2>
+    <a href="{% url 'panel:inventory' %}?state=out" class="text-small text-brand-ink">انبار</a>
+  </div>
+  {% for v in wanted %}
+    <a href="{% url 'panel:inventory' %}?product={{ v.product_id }}" class="flex items-center justify-between gap-3 {% if not forloop.first %}border-t pt-3{% endif %}">
+      <span class="min-w-0 flex flex-col">
+        <span class="text-small line-clamp-1">{{ v.product.title|fa_text }}</span>
+        <span class="text-label text-ink-3">{{ v.title|fa_text }} — <span class="latin">{{ v.sku }}</span></span>
+      </span>
+      <span class="text-small text-ink-2 whitespace-nowrap shrink-0"><span class="num">{{ v.waiting|fa_digits }}</span> نفر منتظر</span>
+    </a>
+  {% endfor %}
+</section>

@@ -1,0 +1,49 @@
+{% extends "panel/base.html" %}
+{% load panel_tags %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-h2">محصولات</h1>
+  {% if can_add %}
+  <a href="{% url 'panel:product_new' %}" class="btn btn-primary">افزودن محصول</a>
+  {% endif %}
+</div>
+
+<form hx-get="{% url 'panel:products' %}" hx-trigger="change delay:200ms, keyup changed delay:500ms from:(input, select)" hx-target="#results" hx-push-url="true" class="mb-6 bg-base-100 p-4 rounded-box border">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <input type="text" name="q" placeholder="جستجو (عنوان، SKU)" value="{{ q }}" class="input input-bordered w-full">
+    <select name="category" class="select select-bordered w-full">
+      <option value="">همه دسته‌ها</option>
+      {% for pk, label in category_options %}
+      <option value="{{ pk }}" {% if pk|slugify == selected.category %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="brand" class="select select-bordered w-full">
+      <option value="">همه برندها</option>
+      {% for pk, name in brand_options %}
+      <option value="{{ pk }}" {% if pk|slugify == selected.brand %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+    <div class="flex gap-2">
+      <select name="status" class="select select-bordered w-full">
+        <option value="">همه وضعیت‌ها</option>
+        {% for status, label in status_choices %}
+        <option value="{{ status }}" {% if status == selected.status %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <select name="stock" class="select select-bordered w-full">
+        <option value="">همه موجودی‌ها</option>
+        {% for val, label in stock_filters %}
+        <option value="{{ val }}" {% if val == selected.stock %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</form>
+
+<form hx-post="{% url 'panel:product_bulk' %}" hx-target="#results" hx-swap="outerHTML">
+  <div id="results">
+    {% include "panel/products/_list_results.html" %}
+  </div>
+</form>
+{% endblock %}

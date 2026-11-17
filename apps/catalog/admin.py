@@ -71,6 +71,7 @@ class CategoryAdmin(admin.ModelAdmin):
 class VariantInline(admin.StackedInline):
     model = Variant
     extra = 0
+    readonly_fields = ("stock",)
     fields = (
         "title",
         "sku",

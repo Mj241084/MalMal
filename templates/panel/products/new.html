@@ -1,0 +1,11 @@
+{% extends "panel/base.html" %}
+{% block content %}
+<h1 class="text-h2 mb-6">افزودن محصول</h1>
+<form method="post" class="max-w-xl bg-base-100 p-6 rounded-box border">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <div class="mt-6">
+    <button type="submit" class="btn btn-primary">ایجاد پیش‌نویس</button>
+  </div>
+</form>
+{% endblock %}

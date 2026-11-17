@@ -54,6 +54,28 @@ ITEMS: list[NavItem] = [
         perms=("payments.view_payment",),
         badge="refunds",
     ),
+    NavItem("products", "محصولات", "panel:products", icon="package", group="catalog", perms=("catalog.view_product",)),
+    NavItem(
+        "categories",
+        "دسته‌ها",
+        "panel:categories",
+        icon="layout-grid",
+        group="catalog",
+        perms=("catalog.view_category",),
+    ),
+    NavItem("brands", "برندها", "panel:brands", icon="tag", group="catalog", perms=("catalog.view_brand",)),
+    NavItem(
+        "reviews",
+        "نظرها",
+        "panel:reviews",
+        icon="message-square",
+        group="daily",
+        perms=("engagement.view_review",),
+        badge="reviews_pending",
+    ),
+    NavItem(
+        "inventory", "انبار", "panel:inventory", icon="warehouse", group="catalog", perms=("catalog.view_variant",)
+    ),
 ]
 
 

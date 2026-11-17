@@ -1,0 +1,62 @@
+{% load core_tags panel_tags %}
+<div class="flex flex-col gap-4">
+  {% if product_note %}
+    <div role="alert" class="alert text-small">
+      <span>فقط تنوع‌های «{{ product_note|fa_text }}»</span>
+      <a href="{% url 'panel:inventory' %}" class="link">نمایش همه</a>
+    </div>
+  {% endif %}
+
+  {% if page_obj.object_list %}
+    <div class="bg-base-100 border rounded-box overflow-x-auto">
+      <table class="table table-sm">
+        <thead><tr>
+          <th scope="col">محصول</th><th scope="col">کد کالا</th><th scope="col">موجودی</th>
+          <th scope="col">منتظران پیامک</th><th scope="col">صف «موجود شد»</th><th scope="col"><span class="sr-only">اقدام</span></th>
+        </tr></thead>
+        <tbody>
+          {% for v in page_obj.object_list %}
+            <tr class="hover:bg-base-300">
+              <td>
+                <div class="flex items-center gap-3 min-w-0">
+                  <span class="w-10 h-10 shrink-0 rounded-lg bg-white border overflow-hidden flex items-center justify-center">
+                    {% if v.product.main_image %}<img src="{{ v.product.main_image|thumb_url }}" alt="" width="40" height="40" loading="lazy" class="w-full h-full object-contain p-1">{% else %}{% icon "package" size=18 class="text-ink-3" %}{% endif %}
+                  </span>
+                  <span class="min-w-0 flex flex-col">
+                    {% if can_open_product %}<a href="{% url 'panel:product_studio' v.product_id %}" class="text-small link link-hover line-clamp-1">{{ v.product.title|fa_text }}</a>
+                    {% else %}<span class="text-small line-clamp-1">{{ v.product.title|fa_text }}</span>{% endif %}
+                    <span class="text-label text-ink-3">{{ v.title|fa_text }}{% if not v.is_active %} <span class="badge badge-sm badge-soft ms-1">غیرفعال</span>{% endif %}</span>
+                  </span>
+                </div>
+              </td>
+              <td><span class="latin">{{ v.sku }}</span></td>
+              <td class="whitespace-nowrap">
+                {% if v.stock <= 0 %}
+                  <span class="flex items-center gap-1 text-small text-ink-2">{% icon "alert-circle" size=16 class="text-ink-3" %}ناموجود</span>
+                {% else %}
+                  <span class="num text-small font-medium">{{ v.stock|fa_digits }}</span>
+                  {% if v.stock <= low %}<span class="text-label text-ink-3 ms-2">کم‌موجود</span>{% endif %}
+                {% endif %}
+              </td>
+              <td><span class="num">{{ v.waiting|fa_digits }}</span></td>
+              <td>
+                {% if v.queued %}<span class="num">{{ v.queued|fa_digits }}</span><div class="text-label text-ink-3">{{ send_hint }}</div>{% else %}<span class="text-ink-3">—</span>{% endif %}
+              </td>
+              <td>
+                {% if can_adjust %}
+                  <button type="button" popovertarget="stock-modal" class="btn btn-sm h-10 bg-base-300 border whitespace-nowrap"
+                          hx-get="{% url 'panel:stock_adjust' v.pk %}?{{ qs }}&page={{ page_obj.number }}"
+                          hx-target="#stock-modal-body" hx-swap="innerHTML">تغییر موجودی</button>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "panel/partials/_pagination.html" with target="#inventory-results" %}
+  {% else %}
+    {% include "partials/_empty_state.html" with title="تنوعی پیدا نشد" description="فیلترها را تغییر دهید" %}
+  {% endif %}
+</div>
+{% if reset_modal %}<div id="stock-modal-body" class="modal-box max-w-sm" hx-swap-oob="true"></div>{% endif %}

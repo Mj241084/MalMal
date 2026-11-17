@@ -1,0 +1,10 @@
+{% extends "panel/base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+    <h1 class="text-h2">دسته‌ها</h1>
+    {% if can_add %}
+    <a href="{% url 'panel:category_new' %}" class="btn btn-primary">افزودن دسته</a>
+    {% endif %}
+</div>
+<div id="tree">{% include "panel/categories/_tree.html" %}</div>
+{% endblock %}

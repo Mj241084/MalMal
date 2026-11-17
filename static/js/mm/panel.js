@@ -72,12 +72,22 @@
 
     var all = target.closest("[data-check-all]");
     if (all && all.form) {
-      all.form.querySelectorAll("input[name='order']:not(:disabled)").forEach(function (box) { box.checked = all.checked; });
+      /* form.elements also holds checkboxes tied with form="..." that sit outside the <form> element */
+      Array.prototype.forEach.call(all.form.elements, function (box) {
+        if (box.type === "checkbox" && !box.hasAttribute("data-check-all") && !box.disabled) box.checked = all.checked;
+      });
       return;
     }
 
+
     var panel = document.getElementById("search-results");
     if (panel && !target.closest("[data-panel-search]")) panel.classList.add("hidden");
+  });
+
+  /* HX-Trigger: {"mm:popover-close": {"id": "..."}} closes a popover modal after a successful save */
+  document.addEventListener("mm:popover-close", function (event) {
+    var el = document.getElementById((event.detail || {}).id);
+    if (el && el.hidePopover) { try { el.hidePopover(); } catch (e) { /* already closed */ } }
   });
 
   document.addEventListener("htmx:afterSwap", function (event) {

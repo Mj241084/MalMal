@@ -1,0 +1,22 @@
+<section class="card bg-base-100 border">
+    <div class="card-body">
+        <h2 class="card-title">تصاویر</h2>
+        <div class="grid grid-cols-4 gap-2 mb-4">
+            {% for img in images %}
+            <div class="relative group">
+                <img src="{{ img.image.url }}" class="rounded size-24 object-cover">
+                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1 transition">
+                    <button hx-post="{% url 'panel:product_image_action' product.pk img.pk 'delete' %}" hx-target="#sec-gallery" hx-swap="outerHTML" class="btn btn-xs btn-error">حذف</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% if images|length < max_images %}
+        <form hx-post="{% url 'panel:product_images' product.pk %}" hx-target="#sec-gallery" hx-swap="outerHTML" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" name="files" multiple accept="image/*" class="file-input w-full">
+            <button type="submit" class="btn btn-primary mt-2">آپلود</button>
+        </form>
+        {% endif %}
+    </div>
+</section>

@@ -1,0 +1,36 @@
+{% load core_tags panel_tags %}
+<div class="flex flex-col gap-4">
+  <div role="tablist" class="tabs tabs-border overflow-x-auto no-scrollbar">
+    {% for code, label, count in tabs %}
+      <a role="tab" class="tab gap-2 whitespace-nowrap{% if code == tab %} tab-active{% endif %}" href="?tab={{ code }}"
+         hx-get="?tab={{ code }}" hx-target="#reviews-results" hx-push-url="true" hx-indicator="#reviews-indicator">
+        {{ label }}<span class="text-label text-ink-3 num">{{ count|fa_digits }}</span>
+      </a>
+    {% endfor %}
+  </div>
+
+  {% if page_obj.object_list %}
+    {% if can_moderate %}
+      {# the cards hold their own forms, so the checkboxes join this one with form="reviews-bulk" #}
+      <form id="reviews-bulk" method="post" action="{% url 'panel:review_decide' %}" hx-post="{% url 'panel:review_decide' %}"
+            hx-target="#reviews-results" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']"
+            class="flex items-center justify-between gap-3">
+        {% csrf_token %}
+        {% for name, value in hidden %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+        <input type="hidden" name="action" value="approve">
+        <label class="flex items-center gap-2 text-small text-ink-2 cursor-pointer min-h-10">
+          <input type="checkbox" data-check-all class="checkbox checkbox-sm"><span>انتخاب همه</span>
+        </label>
+        <button type="submit" class="btn btn-primary h-10 min-h-10">تایید انتخاب‌شده‌ها</button>
+      </form>
+    {% endif %}
+
+    <ul class="flex flex-col gap-3">
+      {% for review in page_obj.object_list %}{% include "panel/reviews/_card.html" %}{% endfor %}
+    </ul>
+    {% include "panel/partials/_pagination.html" with target="#reviews-results" %}
+  {% else %}
+    {% include "partials/_empty_state.html" with title="نظری پیدا نشد" description="تب دیگری را ببینید" %}
+  {% endif %}
+</div>
+{% if request.htmx %}{% render_sidebar oob=True %}{% endif %}

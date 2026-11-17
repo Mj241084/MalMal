@@ -1,0 +1,16 @@
+<table class="table bg-base-100 border rounded-box">
+    <thead>
+        <tr><th>نام</th><th>تعداد محصول</th><th>عملیات</th></tr>
+    </thead>
+    <tbody>
+        {% for brand in brands %}
+        <tr>
+            <td>{{ brand.name_fa }}</td>
+            <td>{{ brand.live_products }} / {{ brand.product_total }}</td>
+            <td>
+                <button hx-get="{% url 'panel:brand_edit' brand.pk %}" hx-target="#brand-modal-body" onclick="brand_modal.showModal()" class="btn btn-sm">ویرایش</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

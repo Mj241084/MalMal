@@ -1,0 +1,30 @@
+{% extends "panel/base.html" %}
+{% load panel_tags %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-h2">{{ product.title }}</h1>
+    <div class="flex gap-2">
+        {% if delete_block %}
+        <span class="text-xs text-error">{{ delete_block }}</span>
+        {% elif can_delete %}
+        <form method="post" action="{% url 'panel:product_delete' product.pk %}">
+            {% csrf_token %}
+            <button type="button" onclick="MM.ui.confirm('حذف شود؟', { action: function() { this.closest('form').submit(); } })" class="btn btn-sm btn-outline btn-error">حذف پیش‌نویس</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+        <div id="sec-basics">{% include "panel/products/_sec_basics.html" %}</div>
+        <div id="sec-gallery">{% include "panel/products/_sec_gallery.html" %}</div>
+        <div id="sec-variants">{% include "panel/products/_sec_variants.html" %}</div>
+        <div id="sec-specs">{% include "panel/products/_sec_specs.html" %}</div>
+    </div>
+    <div class="space-y-6">
+        <div id="sec-publish">{% include "panel/products/_sec_publish.html" %}</div>
+    </div>
+</div>
+{% endblock %}

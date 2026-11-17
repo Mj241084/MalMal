@@ -19,6 +19,15 @@ class InsufficientStock(Exception):
         self.variant_id = variant_id
 
 
+class StockConflict(Exception):
+    """A manual change was refused: stock would go below zero, or it is no longer what the staff member saw."""
+
+    def __init__(self, variant_id: int, current: int | None):
+        super().__init__(f"Stock of variant {variant_id} is {current}")
+        self.variant_id = variant_id
+        self.current = current
+
+
 def _invalidate_if_visible(variant_id: int, delta: int) -> None:
     """The cached product page shows 'sold out', 'only N left' and the per-order cap: bump it when a move touches that zone."""
     row = Variant.objects.filter(pk=variant_id).values_list("stock", "max_per_order", "product_id").first()
@@ -52,3 +61,32 @@ def refresh_products(product_ids: Iterable[int]) -> None:
     """Recompute aggregates after stock moves; cache rev only bumps when in_stock flips (docs/03 §5)."""
     for product in Product.objects.filter(pk__in=set(product_ids)):
         product.refresh_aggregates()
+
+
+def adjust_manual(variant_id: int, delta: int, *, note: str, expected_stock: int | None = None) -> int:
+    """Staff stock change (D43): atomic compare-and-set, ledger row, aggregates, cache. Returns the new stock.
+
+    Callers are inside transaction.atomic(). This path never goes through Variant.save(), so it does the
+    aggregates, the cache bump and the «back in stock» marking itself.
+    """
+    if not delta:
+        raise ValueError("delta must not be zero")
+    rows = Variant.objects.filter(pk=variant_id, stock__gte=-delta)
+    if expected_stock is not None:
+        rows = rows.filter(stock=expected_stock)
+    if not rows.update(stock=F("stock") + delta):
+        current = Variant.objects.filter(pk=variant_id).values_list("stock", flat=True).first()
+        raise StockConflict(variant_id, current)
+    new_stock, active, product_id = (
+        Variant.objects.filter(pk=variant_id).values_list("stock", "is_active", "product_id").get()
+    )
+    StockMovement.objects.create(
+        variant_id=variant_id, delta=delta, reason=StockMovement.REASON_MANUAL, note=note[:255]
+    )
+    _invalidate_if_visible(variant_id, delta)
+    refresh_products([product_id])
+    if new_stock - delta == 0 and new_stock > 0 and active:  # a real restock: stock leaves zero
+        from apps.engagement import back_in_stock
+
+        transaction.on_commit(lambda: back_in_stock.mark_due(variant_id), robust=True)
+    return new_stock

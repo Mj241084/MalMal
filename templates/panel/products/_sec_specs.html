@@ -1,0 +1,15 @@
+<section class="card bg-base-100 border">
+    <div class="card-body">
+        <h2 class="card-title">مشخصات فنی</h2>
+        <form hx-post="{% url 'panel:product_specs' product.pk %}" hx-target="#sec-specs" hx-swap="outerHTML">
+            {% csrf_token %}
+            {% for attr, field, sugg in spec_rows %}
+            <div class="form-control mb-2">
+                <label class="label">{{ attr.name }}</label>
+                {{ field }}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary mt-4">ذخیره مشخصات</button>
+        </form>
+    </div>
+</section>

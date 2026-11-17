@@ -1,0 +1,13 @@
+<section class="card bg-base-100 border">
+    <div class="card-body">
+        <h2 class="card-title">انتشار</h2>
+        <form hx-post="{% url 'panel:product_publish' product.pk %}" hx-target="#sec-publish" hx-swap="outerHTML">
+            {% csrf_token %}
+            <div class="flex gap-2">
+                <button type="submit" name="to" value="active" class="btn btn-success flex-1">فعال</button>
+                <button type="submit" name="to" value="draft" class="btn btn-warning flex-1">پیش‌نویس</button>
+                <button type="submit" name="to" value="archived" class="btn btn-error flex-1">بایگانی</button>
+            </div>
+        </form>
+    </div>
+</section>

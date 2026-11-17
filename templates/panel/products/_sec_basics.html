@@ -1,0 +1,10 @@
+<section class="card bg-base-100 border">
+    <div class="card-body">
+        <h2 class="card-title">اطلاعات پایه</h2>
+        <form hx-post="{% url 'panel:product_basics' product.pk %}" hx-target="#sec-basics" hx-swap="outerHTML">
+            {% csrf_token %}
+            {{ basics_form.as_p }}
+            <button type="submit" class="btn btn-primary mt-4">ذخیره اطلاعات</button>
+        </form>
+    </div>
+</section>

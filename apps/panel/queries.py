@@ -1,18 +1,24 @@
-"""Query helpers shared by panel views, search providers and the dashboard."""
-
 from __future__ import annotations
 
 from datetime import datetime, time, timedelta
 
-from django.db.models import Q, QuerySet, Sum
+from django.db.models import Count, Q, QuerySet, Sum
 from django.utils import timezone
 
+from apps.catalog.models import Product, Variant
 from apps.core.cache import safe_cache_get, safe_cache_set
+from apps.core.jalali import to_fa_digits
 from apps.core.jalali_forms import parse_jalali_safe
+from apps.core.models import SiteSettings
 from apps.core.text import normalize_fa
+from apps.engagement.models import Review
+from apps.notifications import sms
 from apps.orders.models import PAID_STATES, Order
 
 SALES_TTL = 60  # D44: dashboard numbers may be cached for at most 60 s
+
+
+# --- Existing query helpers --------------------------------------------------
 
 
 def order_search_q(raw: str) -> Q | None:
@@ -67,3 +73,54 @@ def sales_last_30_days() -> int:
 def ship_queue(user) -> dict:
     rows = list(Order.objects.filter(status__in=(Order.PAID, Order.PROCESSING)).order_by("paid_at", "pk")[:5])
     return {"queue": rows, "can_manage": user.has_perm("orders.manage_order_status")}
+
+
+# --- Phase 12 helpers --------------------------------------------------------
+
+
+def stamp(moment) -> int:
+    """Version of a row as the moderator saw it: a decision is refused when the row changed meanwhile."""
+    return int(moment.timestamp() * 1_000_000)
+
+
+def reviews_pending() -> int:
+    return Review.objects.filter(status=Review.PENDING).count()
+
+
+def review_queue(user) -> dict:
+    rows = list(Review.objects.filter(status=Review.PENDING).select_related("product").order_by("created_at", "pk")[:5])
+    return {"review_queue": rows, "can_moderate": user.has_perm("engagement.change_review")}
+
+
+def stock_board(product_id: int | None = None):
+    """Variants the inventory page manages: sellable ones of live products, or every variant of one product."""
+    if product_id:
+        return Variant.objects.filter(product_id=product_id)
+    return Variant.objects.filter(product__status=Product.STATUS_ACTIVE, is_active=True)
+
+
+def stock_alert_count() -> int:
+    return stock_board().filter(stock__lte=SiteSettings.get_solo().low_stock_threshold).count()
+
+
+def wanted_out_of_stock(limit: int = 5) -> list[Variant]:
+    return list(
+        stock_board()
+        .filter(stock__lte=0)
+        .annotate(waiting=Count("stock_subscriptions", filter=Q(stock_subscriptions__notified_at__isnull=True)))
+        .filter(waiting__gt=0)
+        .select_related("product")
+        .order_by("-waiting", "pk")[:limit]
+    )
+
+
+def restock_send_hint(now=None) -> str:
+    """When the «back in stock» SMS of a queued restock goes out (docs/02 §13)."""
+    if not sms.template_is_configured("back_in_stock"):
+        return "قالب پیامک «موجود شد» تنظیم نشده است"
+    site = SiteSettings.get_solo()
+    if now is None:
+        now = timezone.now()
+    if site.back_in_stock_start_hour <= timezone.localtime(now).hour < site.back_in_stock_end_hour:
+        return "در اجرای بعدی (حداکثر ۱۰ دقیقه)"
+    return f"از ساعت {to_fa_digits(f'{site.back_in_stock_start_hour:02d}:00')}"

@@ -4,11 +4,16 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from apps.core.cache import safe_cache_get, safe_cache_set
+from apps.core.cache import safe_cache_delete, safe_cache_get, safe_cache_set
 from apps.panel import nav
 
 TTL = 30
 BADGES: dict[str, Callable[[], int]] = {}
+
+
+def bust(key: str) -> None:
+    """Drop a cached counter so the next render shows the real number."""
+    safe_cache_delete(f"panel:badge:{key}")
 
 
 def register(key: str):
