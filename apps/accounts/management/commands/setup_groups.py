@@ -22,6 +22,7 @@ GROUPS = {
         ("payments", ("payment",), VIEW),
         ("catalog", ("product", "variant", "stockmovement"), VIEW),
         ("engagement", ("stocksubscription",), VIEW),
+        ("accounts", ("user",), VIEW),
     ],
     "نظرها": [("engagement", ("review",), ("view", "change"))],
 }

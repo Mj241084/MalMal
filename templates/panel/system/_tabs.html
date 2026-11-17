@@ -1,0 +1,5 @@
+<div role="tablist" class="tabs tabs-border overflow-x-auto no-scrollbar">
+  <a role="tab" href="{% url 'panel:staff' %}" class="tab whitespace-nowrap{% if tab == 'staff' %} tab-active{% endif %}">همکاران</a>
+  <a role="tab" href="{% url 'panel:audit' %}" class="tab whitespace-nowrap{% if tab == 'audit' %} tab-active{% endif %}">ممیزی</a>
+  <a role="tab" href="{% url 'panel:launch' %}" class="tab whitespace-nowrap{% if tab == 'launch' %} tab-active{% endif %}">آمادگی انتشار</a>
+</div>

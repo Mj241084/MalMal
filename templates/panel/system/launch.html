@@ -1,0 +1,30 @@
+{% extends "panel/shell.html" %}
+{% load core_tags jalali_tags %}
+{% block title %}آمادگی انتشار{% endblock %}
+{% block content %}
+<div class="flex flex-col gap-4">
+  <div class="flex items-center justify-between gap-3">
+    {% include "panel/partials/_page_heading.html" with title="سیستم" %}
+    <span id="launch-indicator" class="htmx-indicator loading loading-spinner loading-sm" aria-hidden="true"></span>
+  </div>
+  {% include "panel/system/_tabs.html" with tab="launch" %}
+  <div class="flex items-center justify-between gap-3">
+    <p class="text-small text-ink-2">همان بررسی دستور check_launch؛ مواردی که با .env یا سرور درست می‌شوند لینک رفع ندارند</p>
+    <button type="button" class="btn h-10 bg-base-300 border shrink-0" hx-get="{% url 'panel:launch' %}" hx-target="#launch-results" hx-swap="innerHTML"
+            hx-indicator="#launch-indicator" hx-disabled-elt="this">بررسی دوباره</button>
+  </div>
+  <div id="launch-results" aria-live="polite">{% include "panel/system/_launch_results.html" %}</div>
+
+  <section class="bg-base-100 border rounded-box p-4 flex flex-col gap-2">
+    <h2 class="text-lead font-medium">پشتیبان دیتابیس</h2>
+    {% if backup is None %}
+      <p class="text-small text-ink-2">BACKUP_DIR تنظیم نشده یا پوشه‌اش وجود ندارد</p>
+    {% elif not backup.name %}
+      <p class="text-small text-ink-2">هنوز نسخه‌ی پشتیبانی ساخته نشده</p>
+    {% else %}
+      <p class="text-small"><span class="latin">{{ backup.name }}</span> — <span class="num">{{ backup.at|to_jalali }}</span></p>
+      {% if backup.stale %}<p class="text-small text-ink-2 flex items-center gap-1">{% icon "alert-circle" size=18 class="text-ink-3" %}آخرین نسخه بیش از دو روز پیش است؛ کران backup_db را بررسی کنید</p>{% endif %}
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "panel/shell.html" %}
+{% load core_tags %}
+{% block title %}روش‌های ارسال{% endblock %}
+{% block content %}
+<div class="flex flex-col gap-4">
+  {% include "panel/partials/_page_heading.html" with title="تنظیمات" %}
+  {% include "panel/settings/_tabs.html" %}
+  {% for m in methods %}
+    {% if forloop.first %}<ul class="flex flex-col gap-2">{% endif %}
+    <li class="bg-base-100 border rounded-box p-3 flex items-center gap-3{% if not m.is_active %} opacity-60{% endif %}">
+      <div class="min-w-0 flex-1 flex flex-col gap-1">
+        <a href="{% url 'panel:shipping_edit' m.pk %}" class="text-small font-medium line-clamp-1">{{ m.title|fa_text }}</a>
+        <span class="flex flex-wrap items-center gap-2 text-label text-ink-3">
+          <span class="flex items-center gap-1"><span class="status {% if m.is_active %}status-success{% else %}status-neutral{% endif %}"></span>{% if m.is_active %}فعال{% else %}غیرفعال{% endif %}</span>
+          <span class="latin">{{ m.code }}</span><span>{{ m.get_payment_mode_display }}</span>{% if m.has_tracking %}<span>با کد رهگیری</span>{% endif %}
+        </span>
+      </div>
+    </li>
+    {% if forloop.last %}</ul>{% endif %}
+  {% empty %}
+    {% include "partials/_empty_state.html" with title="روش ارسالی ثبت نشده" description="مهاجرت داده‌ی روش تیپاکس اجرا نشده است" %}
+  {% endfor %}
+</div>
+{% endblock %}

@@ -97,6 +97,19 @@ ITEMS: list[NavItem] = [
         group="store",
         perms=("core.view_staticpage", "core.view_footerlink"),
     ),
+    NavItem("customers", "مشتریان", "panel:customers", icon="users", group="customers", perms=("accounts.view_user",)),
+    NavItem(
+        "settings",
+        "تنظیمات",
+        "panel:settings_index",
+        icon="settings",
+        group="admin",
+        perms=("core.change_sitesettings", "payments.change_paymentgateway", "orders.change_shippingmethod"),
+    ),
+    NavItem(
+        "sms", "گزارش پیامک", "panel:sms", icon="message-circle", group="admin", perms=("notifications.view_smslog",)
+    ),
+    NavItem("system", "سیستم", "panel:system", icon="shield-check", group="admin", superuser=True),
 ]
 
 

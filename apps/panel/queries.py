@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime, time, timedelta
+from pathlib import Path
 
+from django.conf import settings
 from django.db.models import Count, Q, QuerySet, Sum
 from django.utils import timezone
 
@@ -124,3 +126,32 @@ def restock_send_hint(now=None) -> str:
     if site.back_in_stock_start_hour <= timezone.localtime(now).hour < site.back_in_stock_end_hour:
         return "در اجرای بعدی (حداکثر ۱۰ دقیقه)"
     return f"از ساعت {to_fa_digits(f'{site.back_in_stock_start_hour:02d}:00')}"
+
+
+# --- Phase 14 helpers --------------------------------------------------------
+
+
+def customer_search_q(raw: str) -> Q | None:
+    """Name, or (part of) a mobile number or national code; Persian digits are fine."""
+    text = normalize_fa(raw)[:40].strip()
+    if not text:
+        return None
+    condition = Q(first_name__icontains=text) | Q(last_name__icontains=text)
+    digits = "".join(ch for ch in text if ch.isdigit())
+    if len(digits) >= 3:
+        condition |= Q(mobile__contains=digits) | Q(national_code__contains=digits)
+    return condition
+
+
+def backup_status() -> dict | None:
+    """Newest db-*.sqlite3 in BACKUP_DIR. None when BACKUP_DIR is unset or missing; empty name when no copy exists."""
+    if not settings.BACKUP_DIR:
+        return None
+    folder = Path(settings.BACKUP_DIR)
+    if not folder.is_dir():
+        return None
+    files = sorted(folder.glob("db-*.sqlite3"), key=lambda path: path.stat().st_mtime, reverse=True)
+    if not files:
+        return {"name": "", "at": None, "stale": True}
+    moment = datetime.fromtimestamp(files[0].stat().st_mtime, tz=timezone.get_current_timezone())
+    return {"name": files[0].name, "at": moment, "stale": timezone.now() - moment > timedelta(days=2)}

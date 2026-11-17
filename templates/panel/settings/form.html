@@ -1,0 +1,21 @@
+{% extends "panel/shell.html" %}
+{% load core_tags %}
+{% block title %}{{ heading }}{% endblock %}
+{% block content %}
+<div class="flex flex-col gap-4 max-w-3xl">
+  {% if sub %}
+    {% include "panel/partials/_form_head.html" with back_url=back_url title=heading %}
+  {% else %}
+    {% include "panel/partials/_page_heading.html" with title="تنظیمات" %}
+    {% include "panel/settings/_tabs.html" %}
+  {% endif %}
+  <form method="post" enctype="multipart/form-data" class="bg-base-100 border rounded-box p-4 flex flex-col gap-4" novalidate>
+    {% csrf_token %}
+    {% for e in form.non_field_errors %}<div role="alert" class="alert alert-error text-small">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ e }}</span></div>{% endfor %}
+    {% for field in form.visible_fields %}
+      {% if field.name == "logo_light_clear" and not obj.logo_light %}{% elif field.name == "logo_dark_clear" and not obj.logo_dark %}{% elif field.name == "logo_clear" and not obj.logo %}{% else %}{% include "panel/partials/_field.html" %}{% endif %}
+    {% endfor %}
+    {% include "panel/partials/_save_bar.html" with back_url=back_url %}
+  </form>
+</div>
+{% endblock %}

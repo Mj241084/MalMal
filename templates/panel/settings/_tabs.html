@@ -1,0 +1,10 @@
+<div role="tablist" class="tabs tabs-border overflow-x-auto no-scrollbar">
+  {% if perms.core.change_sitesettings %}
+    <a role="tab" href="{% url 'panel:settings_identity' %}" class="tab whitespace-nowrap{% if tab == 'identity' %} tab-active{% endif %}">هویت و تماس</a>
+    <a role="tab" href="{% url 'panel:settings_legal' %}" class="tab whitespace-nowrap{% if tab == 'legal' %} tab-active{% endif %}">مشخصات فاکتور</a>
+    <a role="tab" href="{% url 'panel:settings_sales' %}" class="tab whitespace-nowrap{% if tab == 'sales' %} tab-active{% endif %}">فروش</a>
+  {% endif %}
+  {% if perms.orders.change_shippingmethod %}<a role="tab" href="{% url 'panel:shipping_list' %}" class="tab whitespace-nowrap{% if tab == 'shipping' %} tab-active{% endif %}">ارسال</a>{% endif %}
+  {% if perms.payments.change_paymentgateway %}<a role="tab" href="{% url 'panel:gateway_list' %}" class="tab whitespace-nowrap{% if tab == 'gateways' %} tab-active{% endif %}">درگاه‌ها</a>{% endif %}
+  {% if request.user.is_superuser %}<a role="tab" href="{% url 'panel:settings_advanced' %}" class="tab whitespace-nowrap{% if tab == 'advanced' %} tab-active{% endif %}">پیشرفته</a>{% endif %}
+</div>

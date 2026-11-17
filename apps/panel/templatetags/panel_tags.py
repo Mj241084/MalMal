@@ -4,6 +4,7 @@ from django import template
 from django.conf import settings
 
 from apps.core.jalali import to_fa_digits
+from apps.notifications.models import SmsLog
 from apps.panel import badges, nav, queries
 from apps.payments.models import Payment
 
@@ -12,6 +13,11 @@ register = template.Library()
 PAYMENT_DOT = {Payment.VERIFIED: "status-success", Payment.VERIFYING: "status-info", Payment.FAILED: "status-error"}
 REVIEW_DOT = {"pending": "status-warning", "approved": "status-success", "rejected": "status-error"}
 PRODUCT_DOT = {"active": "status-success", "draft": "status-warning", "archived": "status-neutral"}
+SMS_DOT = {
+    SmsLog.STATUS_SENT: "status-success",
+    SmsLog.STATUS_FAILED: "status-error",
+    SmsLog.STATUS_SKIPPED_NO_TEMPLATE: "status-warning",
+}
 
 
 @register.inclusion_tag("panel/partials/sidebar.html", takes_context=True)
@@ -44,6 +50,11 @@ def review_dot(status: str) -> str:
 @register.filter
 def product_dot(status: str) -> str:
     return PRODUCT_DOT.get(status, "status-neutral")
+
+
+@register.filter
+def sms_dot(status: str) -> str:
+    return SMS_DOT.get(status, "status-neutral")
 
 
 @register.filter

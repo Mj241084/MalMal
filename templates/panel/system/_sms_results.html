@@ -1,0 +1,22 @@
+{% load core_tags jalali_tags panel_tags %}
+{% if page_obj.object_list %}
+  <div class="bg-base-100 border rounded-box overflow-x-auto">
+    <table class="table table-sm">
+      <thead><tr><th scope="col">زمان</th><th scope="col">موبایل</th><th scope="col">قالب</th><th scope="col">وضعیت</th><th scope="col">شناسه / خطا</th></tr></thead>
+      <tbody>
+        {% for log in page_obj.object_list %}
+          <tr class="hover:bg-base-300">
+            <td class="text-ink-2 whitespace-nowrap"><span class="num">{{ log.created_at|to_jalali }}</span></td>
+            <td><span class="num">{{ log.mobile|fa_digits }}</span></td>
+            <td><span class="latin">{{ log.kind }}</span></td>
+            <td><span class="flex items-center gap-2 text-small whitespace-nowrap"><span class="status {{ log.status|sms_dot }}"></span>{{ log.get_status_display }}</span></td>
+            <td class="text-label text-ink-3">{% if log.error %}<span class="latin">{{ log.error|truncatechars:90 }}</span>{% elif log.provider_message_id %}<span class="latin">{{ log.provider_message_id }}</span>{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "panel/partials/_pagination.html" with target="#sms-results" %}
+{% else %}
+  {% include "partials/_empty_state.html" with title="پیامکی پیدا نشد" description="فیلترها را تغییر دهید" %}
+{% endif %}

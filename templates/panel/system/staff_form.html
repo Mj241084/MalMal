@@ -1,0 +1,25 @@
+{% extends "panel/shell.html" %}
+{% load core_tags %}
+{% block title %}{{ heading }}{% endblock %}
+{% block content %}
+<div class="flex flex-col gap-4 max-w-xl">
+  {% url 'panel:staff' as back_url %}
+  {% include "panel/partials/_form_head.html" with back_url=back_url title=heading %}
+  <form method="post" class="bg-base-100 border rounded-box p-4 flex flex-col gap-4" novalidate>
+    {% csrf_token %}
+    {% for e in form.non_field_errors %}<div role="alert" class="alert alert-error text-small">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ e }}</span></div>{% endfor %}
+    {% if member %}<p class="text-small text-ink-2">موبایل: <span class="num">{{ member.mobile|fa_digits }}</span></p>{% endif %}
+    {% for field in form.visible_fields %}{% include "panel/partials/_field.html" %}{% endfor %}
+    {% include "panel/partials/_save_bar.html" with back_url=back_url label=label %}
+  </form>
+  {% if member %}
+    <form method="post" action="{% url 'panel:staff_password' member.pk %}" class="bg-base-100 border rounded-box p-4 flex flex-col gap-4" novalidate
+          data-confirm="رمز همکار عوض شود و از همه‌ی دستگاه‌ها خارج شود؟" data-confirm-title="ریست رمز" data-confirm-label="ریست کن">
+      {% csrf_token %}
+      <h2 class="text-lead font-medium">ریست رمز</h2>
+      {% for field in password_form.visible_fields %}{% include "panel/partials/_field.html" %}{% endfor %}
+      <button type="submit" class="btn w-full h-11 min-h-11 bg-base-300 border">ثبت رمز تازه</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

@@ -8,6 +8,7 @@ from .views import (
     brands,
     categories,
     content,
+    customers,
     dashboard,
     inventory,
     marketing,
@@ -15,7 +16,9 @@ from .views import (
     payments,
     products,
     reviews,
+    settings,
     shell,
+    system,
 )
 
 app_name = "panel"
@@ -120,4 +123,30 @@ urlpatterns = [
     path("content/links/<int:pk>/", content.link_edit, name="link_edit"),
     path("content/links/<int:pk>/delete/", content.link_delete, name="link_delete"),
     path("content/links/<int:pk>/<str:action>/", content.link_action, name="link_action"),
+    # customers
+    path("customers/", customers.customer_list, name="customers"),
+    path("customers/<int:pk>/", customers.customer_detail, name="customer_detail"),
+    path("customers/<int:pk>/active/", customers.customer_active, name="customer_active"),
+    path("customers/<int:pk>/logout/", customers.customer_logout, name="customer_logout"),
+    path("customers/<int:pk>/national-code/", customers.customer_national_code, name="customer_national_code"),
+    # settings
+    path("settings/", settings.settings_index, name="settings_index"),
+    path("settings/identity/", settings.settings_identity, name="settings_identity"),
+    path("settings/legal/", settings.settings_legal, name="settings_legal"),
+    path("settings/sales/", settings.settings_sales, name="settings_sales"),
+    path("settings/advanced/", settings.settings_advanced, name="settings_advanced"),
+    path("settings/shipping/", settings.shipping_list, name="shipping_list"),
+    path("settings/shipping/<int:pk>/", settings.shipping_edit, name="shipping_edit"),
+    path("settings/gateways/", settings.gateway_list, name="gateway_list"),
+    path("settings/gateways/<int:pk>/", settings.gateway_edit, name="gateway_edit"),
+    # system
+    path("sms/", system.sms_list, name="sms"),
+    path("system/", system.system_index, name="system"),
+    path("system/staff/", system.staff_list, name="staff"),
+    path("system/staff/new/", system.staff_new, name="staff_new"),
+    path("system/staff/<int:pk>/", system.staff_edit, name="staff_edit"),
+    path("system/staff/<int:pk>/password/", system.staff_password, name="staff_password"),
+    path("system/staff/<int:pk>/active/", system.staff_active, name="staff_active"),
+    path("system/audit/", system.audit_list, name="audit"),
+    path("system/launch/", system.launch, name="launch"),
 ]

@@ -1,0 +1,22 @@
+{% load core_tags jalali_tags %}
+{% if rows %}
+  <div class="bg-base-100 border rounded-box overflow-x-auto">
+    <table class="table table-sm">
+      <thead><tr><th scope="col">زمان</th><th scope="col">همکار</th><th scope="col">عمل</th><th scope="col">مورد</th><th scope="col">شرح</th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+          <tr class="hover:bg-base-300">
+            <td class="text-ink-2 whitespace-nowrap"><span class="num">{{ row.entry.action_time|to_jalali }}</span></td>
+            <td class="whitespace-nowrap"><bdi>{{ row.entry.user.get_full_name|default:row.entry.user.mobile|fa_text }}</bdi></td>
+            <td class="whitespace-nowrap text-small">{{ row.action }}</td>
+            <td class="text-small"><span class="text-ink-3">{{ row.entry.content_type.name }}</span> — {{ row.entry.object_repr|fa_text }}</td>
+            <td class="text-small text-ink-2">{{ row.message|fa_text }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "panel/partials/_pagination.html" with target="#audit-results" %}
+{% else %}
+  {% include "partials/_empty_state.html" with title="موردی ثبت نشده" description="فقط تغییرهایی که از پنل انجام شده‌اند در این فهرست‌اند" %}
+{% endif %}

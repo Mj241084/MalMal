@@ -133,6 +133,25 @@ def collect():
         yield from group()
 
 
+# finding text -> panel url name where it can be fixed (anything else is an .env or server task)
+_FIXES = (
+    ("هیچ درگاه واقعی", "panel:gateway_list"),
+    ("روش ارسال فعالی", "panel:shipping_list"),
+    ("صفحه‌ی ثابت فعال", "panel:pages"),
+    ("نیازمند بازبینی", "panel:pages"),
+    ("تنظیمات سایت", "panel:settings_identity"),
+    ("لوگوی نهایی", "panel:settings_identity"),
+    ("نماد اعتماد", "panel:settings_advanced"),
+    ("بازگشت وجه", "panel:payments"),
+)
+
+
+def collect_detailed():
+    """collect() plus the panel page that fixes each finding ('' when it is an .env or server task)."""
+    for level, text in collect():
+        yield level, text, next((name for needle, name in _FIXES if needle in text), "")
+
+
 class Command(BaseCommand):
     help = "Pre-launch gate. Exit code 1 on any ERROR (or any WARNING with --strict)."
 

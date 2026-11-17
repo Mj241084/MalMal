@@ -1,0 +1,40 @@
+{% load core_tags jalali_tags %}
+{% if page_obj.object_list %}
+  <div class="hidden lg:block bg-base-100 border rounded-box overflow-x-auto">
+    <table class="table table-sm">
+      <thead><tr>
+        <th scope="col">مشتری</th><th scope="col">موبایل</th><th scope="col">سفارش‌ها</th>
+        <th scope="col">جمع خرید (تومان)</th><th scope="col">عضویت</th><th scope="col">وضعیت</th>
+      </tr></thead>
+      <tbody>
+        {% for c in page_obj.object_list %}
+          <tr class="hover:bg-base-300{% if not c.is_active %} opacity-60{% endif %}">
+            <td><a href="{% url 'panel:customer_detail' c.pk %}" class="text-small link link-hover"><bdi>{{ c.get_full_name|default:"بدون نام"|fa_text }}</bdi></a></td>
+            <td><span class="num">{{ c.mobile|fa_digits }}</span></td>
+            <td><span class="num">{{ c.order_count|fa_digits }}</span></td>
+            <td class="whitespace-nowrap">{{ c.spent|default:0|toman }}</td>
+            <td class="text-ink-2 whitespace-nowrap"><span class="num">{{ c.date_joined|to_jalali:"%Y/%m/%d" }}</span></td>
+            <td><span class="flex items-center gap-2 text-small whitespace-nowrap"><span class="status {% if c.is_active %}status-success{% else %}status-neutral{% endif %}"></span>{% if c.is_active %}فعال{% else %}غیرفعال{% endif %}</span></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <ul class="lg:hidden flex flex-col gap-3">
+    {% for c in page_obj.object_list %}
+      <li><a href="{% url 'panel:customer_detail' c.pk %}" class="block bg-base-100 border rounded-box p-4 flex flex-col gap-2{% if not c.is_active %} opacity-60{% endif %}">
+        <span class="flex items-center justify-between gap-2">
+          <span class="text-small font-medium"><bdi>{{ c.get_full_name|default:"بدون نام"|fa_text }}</bdi></span>
+          <span class="flex items-center gap-2 text-small"><span class="status {% if c.is_active %}status-success{% else %}status-neutral{% endif %}"></span>{% if c.is_active %}فعال{% else %}غیرفعال{% endif %}</span>
+        </span>
+        <span class="flex items-center justify-between gap-2 text-label text-ink-3">
+          <span class="num">{{ c.mobile|fa_digits }}</span>
+          <span><span class="num">{{ c.order_count|fa_digits }}</span> سفارش — <span class="whitespace-nowrap">{{ c.spent|default:0|toman }} تومان</span></span>
+        </span>
+      </a></li>
+    {% endfor %}
+  </ul>
+  {% include "panel/partials/_pagination.html" with target="#customers-results" %}
+{% else %}
+  {% include "partials/_empty_state.html" with title="مشتری پیدا نشد" description="عبارت جستجو را تغییر دهید" %}
+{% endif %}

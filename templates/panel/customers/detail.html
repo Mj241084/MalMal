@@ -1,0 +1,117 @@
+{% extends "panel/shell.html" %}
+{% load core_tags jalali_tags panel_tags %}
+{% block title %}{{ customer.get_full_name|default:customer.mobile|fa_text }}{% endblock %}
+{% block content %}
+<div class="flex flex-col gap-4">
+  {% url 'panel:customers' as back_url %}
+  {% include "panel/partials/_form_head.html" with back_url=back_url title=customer.get_full_name|default:"مشتری بدون نام"|fa_text %}
+
+  <div class="lg:grid lg:grid-cols-[1fr_320px] lg:gap-6 items-start flex flex-col gap-4">
+    <div class="flex flex-col gap-4 min-w-0 w-full">
+      <section class="bg-base-100 border rounded-box p-4 flex flex-col gap-3">
+        <h2 class="text-lead font-medium">پروفایل</h2>
+        <dl class="grid sm:grid-cols-2 gap-x-6 gap-y-2 text-small">
+          <div class="flex justify-between gap-3"><dt class="text-ink-2">موبایل</dt><dd class="num">{{ customer.mobile|fa_digits }}</dd></div>
+          <div class="flex justify-between gap-3"><dt class="text-ink-2">کد ملی</dt>
+            <dd class="flex items-center gap-1">{% if customer.national_code %}{% icon "lock" size=16 class="text-ink-3" %}<span class="num">{{ customer.national_code|fa_digits }}</span>{% else %}—{% endif %}</dd></div>
+          <div class="flex justify-between gap-3"><dt class="text-ink-2">ایمیل</dt><dd>{% if customer.email %}<span class="latin">{{ customer.email }}</span>{% else %}—{% endif %}</dd></div>
+          <div class="flex justify-between gap-3"><dt class="text-ink-2">عضویت</dt><dd class="num">{{ customer.date_joined|to_jalali }}</dd></div>
+          <div class="flex justify-between gap-3"><dt class="text-ink-2">آخرین ورود</dt><dd class="num">{% if customer.last_login %}{{ customer.last_login|to_jalali }}{% else %}—{% endif %}</dd></div>
+        </dl>
+      </section>
+
+      <section class="grid grid-cols-3 gap-3">
+        <div class="bg-base-100 border rounded-box p-3 flex flex-col gap-1"><span class="text-label text-ink-3">سفارش‌ها</span><span class="text-lead font-medium num">{{ order_count|fa_digits }}</span></div>
+        <div class="bg-base-100 border rounded-box p-3 flex flex-col gap-1"><span class="text-label text-ink-3">پرداخت‌شده</span><span class="text-lead font-medium num">{{ paid_count|fa_digits }}</span></div>
+        <div class="bg-base-100 border rounded-box p-3 flex flex-col gap-1"><span class="text-label text-ink-3">جمع خرید</span><span class="text-small font-medium whitespace-nowrap">{{ spent|toman }} تومان</span></div>
+      </section>
+
+      <section class="bg-base-100 border rounded-box p-4 flex flex-col gap-3">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-lead font-medium">آخرین سفارش‌ها</h2>
+          {% if can_orders %}<a href="{% url 'panel:orders' %}?tab=all&q={{ customer.mobile }}" class="text-small text-brand-ink">همه‌ی سفارش‌ها</a>{% endif %}
+        </div>
+        {% for order in orders %}
+          <div class="flex items-center justify-between gap-3 {% if not forloop.first %}border-t pt-3{% endif %}">
+            <span class="min-w-0 flex flex-col">
+              {% if can_orders %}<a href="{% url 'panel:order_detail' order.number %}" class="latin text-small link link-hover">{{ order.number }}</a>{% else %}<span class="latin text-small">{{ order.number }}</span>{% endif %}
+              <span class="text-label text-ink-3 num">{{ order.created_at|to_jalali }}</span>
+            </span>
+            <span class="flex items-center gap-3 text-small shrink-0"><span class="flex items-center gap-2"><span class="status {{ order.status_dot }}"></span>{{ order.get_status_display }}</span><span class="whitespace-nowrap">{{ order.payable|toman }}</span></span>
+          </div>
+        {% empty %}<p class="text-small text-ink-2">سفارشی ثبت نشده است</p>{% endfor %}
+      </section>
+
+      <section class="bg-base-100 border rounded-box p-4 flex flex-col gap-3">
+        <h2 class="text-lead font-medium">آدرس‌ها</h2>
+        {% for a in addresses %}
+          <div class="flex flex-col gap-1 {% if not forloop.first %}border-t pt-3{% endif %}">
+            <span class="text-small">{{ a.title|default:a.city.name|fa_text }}{% if a.is_default %} <span class="badge badge-sm badge-soft ms-1">پیش‌فرض</span>{% endif %} — <bdi>{{ a.recipient_name|fa_text }}</bdi> <span class="num">{{ a.recipient_mobile|fa_digits }}</span></span>
+            <span class="text-label text-ink-3 leading-5">{{ a.province.name }}، {{ a.city.name }}، {{ a.address_text|fa_text }}، پلاک {{ a.plate|fa_digits }} — <span class="num">{{ a.postal_code|fa_digits }}</span></span>
+          </div>
+        {% empty %}<p class="text-small text-ink-2">آدرسی ثبت نشده است</p>{% endfor %}
+      </section>
+
+      <section class="bg-base-100 border rounded-box p-4 flex flex-col gap-3">
+        <h2 class="text-lead font-medium">نظرها</h2>
+        {% for review in reviews %}
+          <div class="flex items-start justify-between gap-3 {% if not forloop.first %}border-t pt-3{% endif %}">
+            <span class="min-w-0 flex flex-col gap-1"><span class="text-small line-clamp-1">{{ review.product.title|fa_text }}</span><span class="text-label text-ink-3 line-clamp-2">{{ review.body|fa_text }}</span></span>
+            <span class="flex items-center gap-2 text-small shrink-0 whitespace-nowrap"><span class="status {{ review.status|review_dot }}"></span>{{ review.get_status_display }}</span>
+          </div>
+        {% empty %}<p class="text-small text-ink-2">نظری ثبت نشده است</p>{% endfor %}
+      </section>
+
+      <section class="grid sm:grid-cols-2 gap-4">
+        <div class="bg-base-100 border rounded-box p-4 flex flex-col gap-2">
+          <h2 class="text-lead font-medium">علاقه‌مندی‌ها <span class="text-small text-ink-3 num">({{ like_count|fa_digits }})</span></h2>
+          {% for like in likes %}<span class="text-small line-clamp-1">{{ like.product.title|fa_text }}</span>{% empty %}<p class="text-small text-ink-2">خالی است</p>{% endfor %}
+        </div>
+        <div class="bg-base-100 border rounded-box p-4 flex flex-col gap-2">
+          <h2 class="text-lead font-medium">منتظر «موجود شد»</h2>
+          {% for sub in subscriptions %}<span class="text-small line-clamp-1">{{ sub.variant.product.title|fa_text }} — {{ sub.variant.title|fa_text }}</span>{% empty %}<p class="text-small text-ink-2">اشتراک بازی ندارد</p>{% endfor %}
+        </div>
+      </section>
+    </div>
+
+    <aside class="bg-base-100 border rounded-box p-4 flex flex-col gap-3 w-full lg:sticky lg:top-20">
+      <h2 class="text-lead font-medium">وضعیت حساب</h2>
+      <p class="flex items-center gap-2 text-small"><span class="status {% if customer.is_active %}status-success{% else %}status-neutral{% endif %}"></span>{% if customer.is_active %}فعال{% else %}غیرفعال{% endif %}</p>
+      {% if can_change %}
+        <form method="post" action="{% url 'panel:customer_active' customer.pk %}"
+              data-confirm="{% if customer.is_active %}این حساب غیرفعال شود؟ مشتری دیگر نمی‌تواند وارد شود{% else %}این حساب دوباره فعال شود؟{% endif %}"
+              data-confirm-title="{% if customer.is_active %}غیرفعال‌سازی حساب{% else %}فعال‌سازی حساب{% endif %}"
+              data-confirm-label="{% if customer.is_active %}غیرفعال کن{% else %}فعال کن{% endif %}"{% if customer.is_active %} data-confirm-tone="danger"{% endif %}>
+          {% csrf_token %}<input type="hidden" name="to" value="{% if customer.is_active %}0{% else %}1{% endif %}">
+          <button type="submit" class="btn w-full h-10 bg-base-300 border">{% if customer.is_active %}غیرفعال‌سازی حساب{% else %}فعال‌سازی حساب{% endif %}</button>
+        </form>
+        <form method="post" action="{% url 'panel:customer_logout' customer.pk %}" data-confirm="مشتری از همه‌ی دستگاه‌ها خارج شود؟" data-confirm-title="خروج از همه‌ی دستگاه‌ها" data-confirm-label="خارج کن">
+          {% csrf_token %}<button type="submit" class="btn btn-ghost w-full h-10 text-ink-2">خروج از همه‌ی دستگاه‌ها</button>
+        </form>
+      {% endif %}
+      {% if can_national %}
+        <button type="button" popovertarget="nc-modal" class="btn btn-ghost w-full h-10 text-ink-2">{% if customer.national_code %}تغییر کد ملی{% else %}ثبت کد ملی{% endif %}</button>
+      {% endif %}
+    </aside>
+  </div>
+</div>
+
+{% if can_national %}
+  <div class="modal" popover id="nc-modal">
+    <div class="modal-box max-w-sm">
+      <h3 class="text-lead font-medium">{% if customer.national_code %}تغییر کد ملی{% else %}ثبت کد ملی{% endif %}</h3>
+      <p class="text-small text-ink-2 mt-2 leading-6">کد ملی بعد از ثبت برای خود مشتری قفل است و فقط شما با دلیل ثبت‌شده می‌توانید آن را عوض کنید</p>
+      <form method="post" action="{% url 'panel:customer_national_code' customer.pk %}" class="mt-4 flex flex-col gap-3" novalidate>
+        {% csrf_token %}
+        {% include "panel/partials/_field.html" with field=nc_form.code %}
+        {% include "panel/partials/_field.html" with field=nc_form.note %}
+        <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" name="confirm" value="1" required class="checkbox checkbox-sm mt-0.5"><span class="text-small">{{ nc_form.confirm.label }}</span></label>
+        <div class="flex items-center gap-2 border-t pt-3">
+          <button type="submit" class="btn btn-primary flex-1 h-11 min-h-11">ثبت</button>
+          <button type="button" popovertarget="nc-modal" popovertargetaction="hide" class="btn btn-ghost h-11 text-ink-2">انصراف</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

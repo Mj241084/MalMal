@@ -100,7 +100,7 @@ static/js/mm/panel.js  upload.js  richtext.js
 | محتوا | `core.view_staticpage`، `core.view_footerlink` | `add/change/delete` |
 | مشتریان | `accounts.view_user` | تغییر کد ملی: `accounts.change_national_code`. فعال/غیرفعال: `accounts.change_user` |
 | تنظیمات | `core.change_sitesettings` | درگاه: `payments.change_paymentgateway`. روش ارسال: `orders.change_shippingmethod`. فیلدهای OTP و `trust_marks_html`: فقط superuser |
-| سیستم (پیامک، همکاران، ممیزی، آمادگی انتشار) | فقط superuser | پیامک را می‌شود با `notifications.view_smslog` به گروه داد |
+| سیستم (پیامک، همکاران، ممیزی، آمادگی انتشار) | فقط superuser | پیامک را می‌شود با `notifications.view_smslog` به گروه داد (مسیرش `/panel/sms/` است، بیرون از `/panel/system/`) |
 
 گروه‌های موجود (`setup_groups`) این‌ها را کم دارند و هر فاز برای نیاز خودش گسترششان می‌دهد (idempotent):
 - «فروش»: `accounts.view_user`، `engagement.view_stocksubscription`، `catalog.adjust_stock` (`[ASSUMPTION]` تا جواب سوال باز ۲ در بخش ۲.۱۰).
@@ -260,34 +260,35 @@ static/js/mm/panel.js  upload.js  richtext.js
 - **لینک‌های فوتر:** سه ستون طبق `FooterLink.GROUP_CHOICES` برای چیدمان و ترتیب (↑↓ و روشن/خاموش). انتخاب سریع صفحه‌ی ثابت فعال. اعتبارسنجی URL: مسیر داخلی `/…` (نه `//`) یا `https://`، با همان منطق `is_safe_target`. ذخیره، کش فوتر را از `FooterLink.save` باطل می‌کند.
 
 **۱۱. مشتریان `/panel/customers/`**
-- فقط `is_staff=False`. لیست با جستجو (موبایل، نام، کد ملی)، تعداد سفارش (غیر pending) و جمع خرید (`PAID_STATES`). صفحه‌بندی، annotate بدون N+1.
+- فقط `is_staff=False`. لیست با جستجو (موبایل، نام، کد ملی) و فیلتر «غیرفعال»، تعداد سفارش (غیر pending) و جمع خرید (`PAID_STATES`). صفحه‌بندی، annotate بدون N+1. جستجو با `queries.customer_search_q` و ارقام فارسی نرمال می‌شود.
 - جزئیات: پروفایل، آدرس‌های فعال، سفارش‌ها (لینک به فهرست سفارش‌ها با فیلتر کاربر)، علاقه‌مندی‌ها، نظرها، اشتراک‌های «خبرم کن».
-- کد ملی فقط‌خواندنی است (D20). اگر کارمند `accounts.change_national_code` دارد: «تغییر کد ملی» با مودال تایید، اعتبارسنجی `validate_national_code`، یادداشت اجباری، `allow_national_code_change()` و ممیزی (مثل ادمین).
-- فعال/غیرفعال کردن حساب (`accounts.change_user`) و خروج از همه‌ی دستگاه‌ها. ویرایش آزاد نام/ایمیل نیست `[ASSUMPTION]`.
+- کد ملی فقط‌خواندنی است (D20). اگر کارمند `accounts.change_national_code` دارد: «تغییر کد ملی» با مودال تایید، اعتبارسنجی `validate_national_code`، یادداشت اجباری، `allow_national_code_change()` و ممیزی (مثل ادمین). منطق در `accounts.services.change_national_code` است.
+- فعال/غیرفعال کردن حساب (`accounts.change_user`) و خروج از همه‌ی دستگاه‌ها (`accounts.services.revoke_sessions`). ویرایش آزاد نام/ایمیل نیست `[ASSUMPTION]`.
+- provider جستجوی سراسری «مشتریان» در `providers.py` ثبت می‌شود (نام، موبایل، کد ملی).
 
 **۱۲. تنظیمات `/panel/settings/`** (تب‌ها)
-- **هویت و تماس:** نام، تلفن، ایمیل، آدرس، ساعات، لینک‌های اجتماعی، لوگوی روشن/تاریک با پیش‌نمایش و اعتبارسنجی نوع/حجم، `trust_marks_html` (فقط superuser؛ هشدار اینکه بدون پاک‌سازی رندر می‌شود).
-- **مشخصات حقوقی فاکتور:** `legal_name`، `economic_code`، `national_id`، `registration_no`، `legal_address`، `legal_postal_code`، `legal_phone`.
+- **هویت و تماس:** نام، تلفن، ایمیل، آدرس، ساعات، لینک‌های اجتماعی، لوگوی روشن/تاریک با پیش‌نمایش و حذف لوگوی فعلی. لوگو فقط jpg/png/webp تا ۲ مگابایت (`validate_upload` با `LOGO_MAX_BYTES`)؛ SVG فقط از ادمین.
+- **مشخصات حقوقی فاکتور:** `legal_name`، `economic_code`، `national_id`، `registration_no`، `legal_address`، `legal_postal_code`، `legal_phone`. کدها با ارقام ASCII ذخیره می‌شوند.
 - **فروش و ارسال:**
   - آستانه‌ی موجودی کم و بازه‌ی ساعت «موجود شد» (۰ تا ۲۳، شروع < پایان).
   - `shipping_note` (متن جایگزین ارسال).
-  - ویرایش `ShippingMethod`: عنوان، `product_note`، `checkout_note`، `has_tracking`، `payment_mode`، فعال، ترتیب. `code` ثابت است. غیرفعال‌کردن آخرین روش فعال مسدود است (checkout می‌شکند).
+  - ویرایش `ShippingMethod`: عنوان، `product_note`، `checkout_note`، `has_tracking`، `payment_mode` (**فقط‌خواندنی**)، فعال، ترتیب. `code` ثابت است. غیرفعال‌کردن آخرین روش فعال مسدود است (checkout می‌شکند).
   - `free_shipping_threshold` در v1 استفاده نمی‌شود و در رابط نیست.
-- **درگاه‌ها:** ویرایش `PaymentGateway` (فعال، ترتیب، سقف و کف مبلغ، لوگو؛ `code` ثابت). غیرفعال‌کردن آخرین درگاه قابل‌استفاده (در `DEBUG=False`) با تایید خطرناک.
-- **OTP و پیامک** (فقط superuser): `otp_ttl_seconds` (۳۰ تا ۶۰۰)، `otp_max_attempts` (۱ تا ۱۰)، `otp_lock_minutes` (۱ تا ۱۲۰).
+- **درگاه‌ها:** ویرایش `PaymentGateway` (فعال، ترتیب، سقف و کف مبلغ، لوگو؛ `code` ثابت). غیرفعال‌کردن آخرین درگاه قابل‌استفاده (در `DEBUG=False`) فقط با تیک تایید خطرناک.
+- **پیشرفته** (تب جدا، فقط superuser): `otp_ttl_seconds` (۳۰ تا ۶۰۰)، `otp_max_attempts` (۱ تا ۱۰)، `otp_lock_minutes` (۱ تا ۱۲۰) و `trust_marks_html` (هشدار اینکه بدون پاک‌سازی در فوتر رندر می‌شود).
 - ذخیره از `SiteSettings.save()` می‌گذرد. هر تغییر ممیزی دارد.
 
 **۱۳. سیستم `/panel/system/`** (superuser، مگر ذکر شده)
-- **گزارش پیامک:** `SmsLog` فقط‌خواندنی، جستجو با موبایل، فیلتر وضعیت و نوع (`sent`، `failed`، `skipped_no_template`). می‌شود با `notifications.view_smslog` به گروه داد.
+- **گزارش پیامک `/panel/sms/`** (نه `/panel/system/sms/`؛ چون نقش غیر superuser هم می‌تواند `notifications.view_smslog` بگیرد و ناوبری با پیشوند مسیر فعال را تشخیص می‌دهد): `SmsLog` فقط‌خواندنی، جستجو با موبایل، فیلتر وضعیت و نوع (`sent`، `failed`، `skipped_no_template`) و بازه‌ی تاریخ شمسی.
 - **همکاران:**
   - لیست staff با گروه، آخرین ورود، فعال.
-  - ساخت: موبایل، نام، گروه‌ها، رمز موقت که مدیر کل وارد می‌کند و اعتبارسنجی می‌شود.
-  - منطق ساخت به `accounts.services.create_staff_user` می‌رود و دستور `create_staff` هم از آن استفاده می‌کند (رد موبایل مشتری، رد گروه ناموجود).
+  - ساخت: موبایل، نام، گروه‌ها، رمز موقت که مدیر کل وارد می‌کند و اعتبارسنجی می‌شود. ساخت از شماره‌ی موجود (حتی همکار) در پنل رد می‌شود (`allow_existing=False`).
+  - منطق ساخت به `accounts.services.create_staff_user` می‌رود و دستور `create_staff` هم از آن استفاده می‌کند (رد موبایل مشتری، رد گروه ناموجود). دستور برای شماره‌ی موجود رفتار قبلی را دارد (رمز و گروه را به‌روز می‌کند).
   - ویرایش گروه‌ها، ریست رمز (`session_version+1`)، فعال/غیرفعال.
-  - مدیر کل خودش را غیرفعال نمی‌کند و آخرین superuser فعال غیرفعال نمی‌شود. superuser از پنل ساخته نمی‌شود (D47).
+  - مدیر کل خودش را غیرفعال نمی‌کند و آخرین superuser فعال غیرفعال نمی‌شود. superuser از پنل ساخته نمی‌شود و گروه و رمزش از پنل ویرایش نمی‌شود (D47)؛ فقط فعال/غیرفعالش می‌شود.
 - **ممیزی:** فهرست `LogEntry`های ثبت‌شده توسط پنل با فیلتر کاربر، نوع شیء و تاریخ.
 - **آمادگی انتشار:** نمایش خطاها و هشدارهای `check_launch` با لینک به صفحه‌ی رفع. چون `collect()` سنگین است (Redis، migration، FTS)، فقط روی همین صفحه و با دکمه‌ی «بررسی دوباره» اجرا می‌شود. `collect()` برای حفظ خروجی دستور دست‌نخورده می‌ماند و نسخه‌ی `collect_detailed()` با فیلد `fix` (نام url پنل) اضافه می‌شود.
-- **وضعیت پشتیبان** (فقط‌خواندنی، اختیاری): زمان آخرین `db-*.sqlite3` در `BACKUP_DIR`.
+- **وضعیت پشتیبان** (فقط‌خواندنی، اختیاری): زمان آخرین `db-*.sqlite3` در `BACKUP_DIR` (`queries.backup_status`)، با هشدار کهنه‌بودن بیش از دو روز.
 
 **۱۴. حساب من:** تغییر رمز، خروج، خروج از همه‌ی دستگاه‌ها (بخش ۲.۴).
 
@@ -365,3 +366,4 @@ static/js/mm/panel.js  upload.js  richtext.js
 ## ۳. تغییرات
 
 - ۰.۱ — نسخه‌ی اول: اصول، D34 تا D48، معماری `apps/panel/`، ورود و نشست، ماتریس مجوز، ۱۵ ماژول، قواعد هسته، تست، سوالات باز، و فهرست ادعاهای وابسته به کد (۲.۱۱).
+- ۰.۲ — P14 (مشتریان، تنظیمات، سیستم): ماژول‌های ۱۱ تا ۱۴ با کد هم‌تراز شدند. انحراف‌های ثبت‌شده: گزارش پیامک در `/panel/sms/` (نه زیر `system/`)، `ShippingMethod.payment_mode` در رابط فقط‌خواندنی (چون `place_order` همیشه `shipping_cost=0` می‌گذارد و حالت `prepaid` خلاف واقع می‌شد؛ انحراف آگاهانه از ماژول ۱۲)، لوگو فقط jpg/png/webp تا ۲ مگابایت (SVG از ادمین)، تب جدا و superuser-only «پیشرفته» برای OTP و `trust_marks_html`، و ثبت‌نشدن مدیر کل از پنل (D47). مجوز `accounts.view_user` به گروه «فروش» در `setup_groups` اضافه شد.

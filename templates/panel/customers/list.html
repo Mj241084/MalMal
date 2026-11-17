@@ -1,0 +1,23 @@
+{% extends "panel/shell.html" %}
+{% block title %}مشتریان{% endblock %}
+{% block content %}
+<div class="flex flex-col gap-4">
+  <div class="flex items-center justify-between gap-3">
+    {% include "panel/partials/_page_heading.html" with title="مشتریان" %}
+    <span id="customers-indicator" class="htmx-indicator loading loading-spinner loading-sm" aria-hidden="true"></span>
+  </div>
+  <form action="{% url 'panel:customers' %}" method="get" role="search"
+        hx-get="{% url 'panel:customers' %}" hx-target="#customers-results" hx-swap="innerHTML" hx-push-url="true"
+        hx-trigger="input changed delay:300ms, change, submit" hx-sync="this:replace" hx-indicator="#customers-indicator"
+        class="bg-base-100 border rounded-box p-3 flex flex-wrap items-center gap-3">
+    <label class="input h-10 grow min-w-48 flex items-center gap-2">
+      <input type="search" name="q" value="{{ q }}" placeholder="موبایل، نام یا کد ملی" class="grow text-small" autocomplete="off">
+    </label>
+    <select name="state" class="select h-10 w-40 text-small">
+      <option value="">همه‌ی حساب‌ها</option>
+      <option value="inactive"{% if state == "inactive" %} selected{% endif %}>غیرفعال</option>
+    </select>
+  </form>
+  <div id="customers-results" aria-live="polite">{% include "panel/customers/_list_results.html" %}</div>
+</div>
+{% endblock %}
