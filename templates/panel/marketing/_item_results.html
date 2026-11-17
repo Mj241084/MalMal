@@ -1,0 +1,19 @@
+{% load core_tags panel_tags %}
+{% if products %}
+  <ul class="flex flex-col gap-1 border rounded-field p-1 bg-base-100">
+    {% for product in products %}
+      <li class="flex items-center justify-between gap-3 p-2">
+        <span class="flex items-center gap-2 min-w-0">
+          <span class="w-10 h-10 shrink-0 rounded-lg bg-white border overflow-hidden flex items-center justify-center">
+            {% if product.main_image %}<img src="{{ product.main_image|thumb_url }}" alt="" width="40" height="40" loading="lazy" class="w-full h-full object-contain p-1">{% else %}{% icon "package" size=18 class="text-ink-3" %}{% endif %}
+          </span>
+          <span class="text-small line-clamp-1">{{ product.title|fa_text }}</span>
+        </span>
+        <button type="button" class="btn btn-sm h-10 bg-base-300 border shrink-0" hx-post="{% url 'panel:collection_item_add' collection.pk %}"
+                hx-vals='{"product": "{{ product.pk }}"}' hx-target="#coll-items" hx-swap="outerHTML" hx-disabled-elt="this">افزودن</button>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="text-label text-ink-3 p-2">محصول فعالی پیدا نشد؛ دست‌کم دو حرف بنویسید</p>
+{% endif %}

@@ -1,0 +1,6 @@
+<div role="tablist" class="tabs tabs-border overflow-x-auto no-scrollbar">
+  {% if perms.marketing.view_homeblock %}<a role="tab" href="{% url 'panel:blocks' %}" class="tab whitespace-nowrap{% if active == 'blocks' %} tab-active{% endif %}">چیدمان صفحه‌ی اصلی</a>{% endif %}
+  {% if perms.marketing.view_banner %}<a role="tab" href="{% url 'panel:banners' %}" class="tab whitespace-nowrap{% if active == 'banners' %} tab-active{% endif %}">بنرها</a>{% endif %}
+  {% if perms.marketing.view_collection %}<a role="tab" href="{% url 'panel:collections' %}" class="tab whitespace-nowrap{% if active == 'collections' %} tab-active{% endif %}">مجموعه‌ها</a>{% endif %}
+  {% if perms.marketing.view_trustitem %}<a role="tab" href="{% url 'panel:trust' %}" class="tab whitespace-nowrap{% if active == 'trust' %} tab-active{% endif %}">مزیت‌های فروشگاه</a>{% endif %}
+</div>

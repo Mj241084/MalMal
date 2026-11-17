@@ -1,0 +1,12 @@
+{% extends "panel/shell.html" %}
+{% block title %}بنرها{% endblock %}
+{% block content %}
+<div class="flex flex-col gap-4">
+  <div class="flex items-center justify-between gap-3">
+    {% include "panel/partials/_page_heading.html" with title="بازاریابی" %}
+    {% if can_add %}<a href="{% url 'panel:banner_new' %}" class="btn btn-primary h-10">افزودن بنر</a>{% endif %}
+  </div>
+  {% include "panel/marketing/_tabs.html" with active="banners" %}
+  <div id="banners-list" class="flex flex-col gap-6" aria-live="polite">{% include "panel/marketing/_banners_list.html" %}</div>
+</div>
+{% endblock %}

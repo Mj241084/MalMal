@@ -1,10 +1,11 @@
-<section class="card bg-base-100 border">
-    <div class="card-body">
-        <h2 class="card-title">اطلاعات پایه</h2>
-        <form hx-post="{% url 'panel:product_basics' product.pk %}" hx-target="#sec-basics" hx-swap="outerHTML">
-            {% csrf_token %}
-            {{ basics_form.as_p }}
-            <button type="submit" class="btn btn-primary mt-4">ذخیره اطلاعات</button>
-        </form>
-    </div>
+{% load core_tags %}
+<section id="sec-basics" class="bg-base-100 border rounded-box p-4 flex flex-col gap-4"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+  <h2 class="text-lead font-medium">اطلاعات پایه</h2>
+  <form method="post" action="{% url 'panel:product_basics' product.pk %}" hx-post="{% url 'panel:product_basics' product.pk %}"
+        hx-target="#sec-basics" hx-swap="outerHTML" hx-disabled-elt="find button[type='submit']" class="flex flex-col gap-4" novalidate>
+    {% csrf_token %}
+    {% for e in basics_form.non_field_errors %}<div role="alert" class="alert alert-error text-small">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ e }}</span></div>{% endfor %}
+    {% for field in basics_form.visible_fields %}{% include "panel/partials/_field.html" %}{% endfor %}
+    <button type="submit" class="btn btn-sm h-10 bg-base-300 border self-start">ذخیره‌ی اطلاعات</button>
+  </form>
 </section>

@@ -53,7 +53,7 @@ def _form_view(request, brand):
         return htmx.close_popover(response, "brand-modal")
     response = render(request, "panel/brands/_form.html", {"form": form, "brand": brand})
     if request.method == "POST":
-        retarget(response, "#brand-form-body")
+        retarget(response, "#brand-modal-body")
         reswap(response, "innerHTML")
     return response
 

@@ -1,30 +1,37 @@
-{% extends "panel/base.html" %}
-{% load panel_tags %}
-
+{% extends "panel/shell.html" %}
+{% load static core_tags %}
+{% block title %}{{ product.title|fa_text }}{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
-    <h1 class="text-h2">{{ product.title }}</h1>
-    <div class="flex gap-2">
-        {% if delete_block %}
-        <span class="text-xs text-error">{{ delete_block }}</span>
-        {% elif can_delete %}
-        <form method="post" action="{% url 'panel:product_delete' product.pk %}">
-            {% csrf_token %}
-            <button type="button" onclick="MM.ui.confirm('حذف شود؟', { action: function() { this.closest('form').submit(); } })" class="btn btn-sm btn-outline btn-error">حذف پیش‌نویس</button>
-        </form>
-        {% endif %}
+<div class="flex flex-col gap-4">
+  <div class="flex items-center justify-between gap-3">
+    {% url 'panel:products' as back_url %}
+    {% include "panel/partials/_form_head.html" with back_url=back_url title=product.title|fa_text %}
+    <a href="{{ product.get_absolute_url }}" target="_blank" rel="noopener" class="btn btn-ghost h-10 text-small font-normal shrink-0">مشاهده در فروشگاه</a>
+  </div>
+  <div class="flex flex-col lg:grid lg:grid-cols-[1fr_320px] gap-6 items-start">
+    <div class="flex flex-col gap-4 min-w-0 w-full">
+      {% include "panel/products/_sec_basics.html" %}
+      {% include "panel/products/_sec_gallery.html" %}
+      {% include "panel/products/_sec_variants.html" %}
+      {% include "panel/products/_sec_specs.html" %}
     </div>
-</div>
-
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <div class="lg:col-span-2 space-y-6">
-        <div id="sec-basics">{% include "panel/products/_sec_basics.html" %}</div>
-        <div id="sec-gallery">{% include "panel/products/_sec_gallery.html" %}</div>
-        <div id="sec-variants">{% include "panel/products/_sec_variants.html" %}</div>
-        <div id="sec-specs">{% include "panel/products/_sec_specs.html" %}</div>
+    <div class="w-full lg:sticky lg:top-20 flex flex-col gap-4">
+      {% include "panel/products/_sec_publish.html" %}
+      {% if can_delete %}
+        <div class="bg-base-100 border rounded-box p-4 flex flex-col gap-2">
+          {% if delete_block %}
+            <p class="text-small text-ink-2">{{ delete_block }}</p>
+          {% else %}
+            <form method="post" action="{% url 'panel:product_delete' product.pk %}" data-confirm="این پیش‌نویس برای همیشه حذف شود؟" data-confirm-title="حذف پیش‌نویس" data-confirm-label="حذف" data-confirm-tone="danger" class="flex items-center justify-between gap-3">
+              {% csrf_token %}
+              <span class="text-small text-ink-2">حذف قابل بازگشت نیست</span>
+              <button type="submit" class="btn btn-ghost h-10 text-error text-small">حذف پیش‌نویس</button>
+            </form>
+          {% endif %}
+        </div>
+      {% endif %}
     </div>
-    <div class="space-y-6">
-        <div id="sec-publish">{% include "panel/products/_sec_publish.html" %}</div>
-    </div>
+  </div>
 </div>
 {% endblock %}
+{% block extra_js %}<script src="{% static 'js/mm/upload.js' %}" defer></script>{% endblock %}

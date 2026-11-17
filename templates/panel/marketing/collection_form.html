@@ -1,0 +1,39 @@
+{% extends "panel/shell.html" %}
+{% load static core_tags %}
+{% block title %}{{ heading }}{% endblock %}
+{% block content %}
+<div class="flex flex-col gap-4 max-w-3xl">
+  <div class="flex items-center justify-between gap-3">
+    {% include "panel/partials/_form_head.html" with back_url=back_url title=heading %}
+    {% if public_url %}<a href="{{ public_url }}" target="_blank" rel="noopener" class="btn btn-ghost h-10 text-small font-normal shrink-0">مشاهده در فروشگاه</a>{% endif %}
+  </div>
+
+  <form id="collection-form" method="post" enctype="multipart/form-data" class="bg-base-100 border rounded-box p-4 flex flex-col gap-4" novalidate>
+    {% csrf_token %}
+    {% for e in form.non_field_errors %}<div role="alert" class="alert alert-error text-small">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ e }}</span></div>{% endfor %}
+    {% for field in form.visible_fields %}
+      {% if field.name == "cover_clear" and not obj.cover %}{% else %}{% include "panel/partials/_field.html" %}{% endif %}
+    {% endfor %}
+    <div data-when="mode" data-values="rule" class="border rounded-field p-3">
+      <p id="rule-count" class="text-small text-ink-2 min-h-6" aria-live="polite"
+         hx-get="{% url 'panel:collection_preview' %}"
+         hx-include="[name='categories'],[name='brands'],[name='min_discount_pct'],[name='min_price'],[name='max_price'],[name='only_in_stock']"
+         hx-trigger="load, change from:closest form delay:300ms" hx-swap="innerHTML"></p>
+    </div>
+    {% include "panel/partials/_save_bar.html" with back_url=back_url %}
+  </form>
+
+  {% if obj %}
+    {% if obj.mode == "manual" %}
+      {% include "panel/marketing/_items.html" %}
+    {% else %}
+      <p class="text-small text-ink-2">محصولات این مجموعه از روی قاعده‌ی بالا انتخاب می‌شوند</p>
+    {% endif %}
+  {% else %}
+    <p class="text-small text-ink-2">بعد از ذخیره، برای مجموعه‌ی دستی می‌توانید محصول اضافه کنید</p>
+  {% endif %}
+
+  {% include "panel/marketing/_delete_box.html" %}
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/jalali_picker.js' %}" defer></script>{% endblock %}

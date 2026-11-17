@@ -1,49 +1,56 @@
-{% load panel_tags %}
-<div class="overflow-x-auto bg-base-100 rounded-box border">
-  <table class="table table-hover">
-    <thead>
-      <tr>
-        <th><input type="checkbox" class="checkbox" data-check-all></th>
-        <th></th>
-        <th>عنوان</th>
-        <th>دسته / برند</th>
-        <th>وضعیت</th>
-        <th>موجودی</th>
-        <th>قیمت</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for product in page_obj %}
-      <tr class="{% if not product.is_active %}opacity-60{% endif %}">
-        <td><input type="checkbox" name="product" value="{{ product.pk }}" class="checkbox"></td>
-        <td><img src="{{ product|thumb_url }}" class="size-10 rounded object-cover"></td>
-        <td>
-          <a href="{% url 'panel:product_studio' product.pk %}" class="link link-hover font-medium">{{ product.title }}</a>
-          <div class="text-xs text-ink-3">SKU: {{ product.pk }}</div>
-        </td>
-        <td class="text-sm">
-          {{ product.category.name }}
-          <div class="text-ink-3">{{ product.brand.name_fa|default:"-" }}</div>
-        </td>
-        <td><span class="badge {% if product.status == 'active' %}badge-success{% else %}badge-ghost{% endif %}">{{ product.get_status_display }}</span></td>
-        <td class="tabular-nums">{{ product.total_stock|fa_digits }}</td>
-        <td class="tabular-nums">{{ product.min_price|fa_digits }}</td>
-        <td>
-          <button type="button" hx-get="{% url 'panel:product_quick' product.pk %}" hx-target="body" hx-swap="beforeend" class="btn btn-sm btn-ghost text-ink-3">ویرایش قیمت</button>
-        </td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="8" class="text-center py-8 text-ink-3">محصولی یافت نشد</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-
-<div class="mt-4 flex items-center justify-between">
-  <div class="flex gap-2">
-    <button type="submit" name="action" value="activate" class="btn btn-sm">فعال‌سازی</button>
-    <button type="submit" name="action" value="archive" class="btn btn-sm">بایگانی</button>
-  </div>
-  {% include "panel/partials/_pagination.html" with page_obj=page_obj %}
+{% load core_tags panel_tags %}
+<div class="flex flex-col gap-4">
+  {% if page_obj.object_list %}
+    <form id="products-bulk" method="post" action="{% url 'panel:product_bulk' %}" hx-post="{% url 'panel:product_bulk' %}"
+          hx-target="#products-results" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']" class="flex flex-col gap-3">
+      {% csrf_token %}
+      {% for name, value in hidden %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+      {% if can_change %}
+        <div class="flex flex-wrap items-center gap-2">
+          <label class="flex items-center gap-2 text-small text-ink-2 cursor-pointer min-h-10"><input type="checkbox" data-check-all class="checkbox checkbox-sm"><span>انتخاب همه</span></label>
+          <button type="submit" name="action" value="activate" class="btn btn-sm h-10 bg-base-300 border">فعال‌سازی انتخاب‌شده‌ها</button>
+          <button type="submit" name="action" value="archive" class="btn btn-sm h-10 bg-base-300 border">بایگانی انتخاب‌شده‌ها</button>
+        </div>
+      {% endif %}
+      <div class="bg-base-100 border rounded-box overflow-x-auto">
+        <table class="table table-sm">
+          <thead><tr>
+            {% if can_change %}<th scope="col" class="w-10"><span class="sr-only">انتخاب</span></th>{% endif %}
+            <th scope="col">محصول</th><th scope="col">دسته و برند</th><th scope="col">وضعیت</th>
+            <th scope="col">موجودی</th><th scope="col">قیمت (تومان)</th><th scope="col"><span class="sr-only">اقدام</span></th>
+          </tr></thead>
+          <tbody>
+            {% for product in page_obj.object_list %}
+              <tr class="hover:bg-base-300">
+                {% if can_change %}<td><input type="checkbox" name="product" value="{{ product.pk }}" class="checkbox checkbox-sm" aria-label="انتخاب {{ product.title|fa_text }}"></td>{% endif %}
+                <td>
+                  <div class="flex items-center gap-3 min-w-0">
+                    <span class="w-10 h-10 shrink-0 rounded-lg bg-white border overflow-hidden flex items-center justify-center">
+                      {% if product.main_image %}<img src="{{ product.main_image|thumb_url }}" alt="" width="40" height="40" loading="lazy" class="w-full h-full object-contain p-1">{% else %}{% icon "package" size=18 class="text-ink-3" %}{% endif %}
+                    </span>
+                    {% if can_change %}<a href="{% url 'panel:product_studio' product.pk %}" class="text-small link link-hover line-clamp-2">{{ product.title|fa_text }}</a>
+                    {% else %}<span class="text-small line-clamp-2">{{ product.title|fa_text }}</span>{% endif %}
+                  </div>
+                </td>
+                <td class="text-small">{{ product.category.name|fa_text }}<div class="text-label text-ink-3">{{ product.brand.name_fa|default:"—"|fa_text }}</div></td>
+                <td><span class="flex items-center gap-2 text-small whitespace-nowrap"><span class="status {{ product.status|product_dot }}"></span>{{ product.get_status_display }}</span></td>
+                <td class="whitespace-nowrap">{% if product.total_stock > 0 %}<span class="num">{{ product.total_stock|fa_digits }}</span>{% else %}<span class="text-small text-ink-2">ناموجود</span>{% endif %}</td>
+                <td class="whitespace-nowrap">{{ product.min_price|toman }}{% if product.max_price > product.min_price %}<span class="text-label text-ink-3"> تا {{ product.max_price|toman }}</span>{% endif %}</td>
+                <td>
+                  {% if can_price %}
+                    <button type="button" popovertarget="quick-modal" class="btn btn-sm h-10 bg-base-300 border whitespace-nowrap"
+                            hx-get="{% url 'panel:product_quick' product.pk %}?{{ qs }}{% if qs %}&{% endif %}page={{ page_obj.number }}"
+                            hx-target="#quick-body" hx-swap="innerHTML">قیمت</button>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </form>
+    {% include "panel/partials/_pagination.html" with target="#products-results" %}
+  {% else %}
+    {% include "partials/_empty_state.html" with title="محصولی پیدا نشد" description="فیلترها را تغییر دهید" %}
+  {% endif %}
 </div>

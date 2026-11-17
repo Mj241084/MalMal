@@ -16,6 +16,10 @@ _SEPARATORS = re.compile(r"[\s,٬،_]")
 class FaIntegerField(forms.IntegerField):
     widget = FaDigitsInput
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.widget.attrs.setdefault("class", "input w-full text-end num")
+
     def to_python(self, value):
         if isinstance(value, str):
             value = _SEPARATORS.sub("", normalize_digits(value))

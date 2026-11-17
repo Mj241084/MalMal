@@ -1,0 +1,24 @@
+{% load core_tags %}
+{% for label, links in groups %}
+  <section class="bg-base-100 border rounded-box p-3 flex flex-col gap-2">
+    <h2 class="text-small font-medium">{{ label }}</h2>
+    {% for link in links %}
+      <div class="border-t pt-2 flex items-center gap-2{% if not link.is_active %} opacity-60{% endif %}">
+        <div class="min-w-0 flex-1 flex flex-col">
+          {% if can_change %}<a href="{% url 'panel:link_edit' link.pk %}" class="text-small line-clamp-1">{{ link.title|fa_text }}</a>
+          {% else %}<span class="text-small line-clamp-1">{{ link.title|fa_text }}</span>{% endif %}
+          <bdi class="latin text-label text-ink-3 truncate">{{ link.url }}</bdi>
+        </div>
+        {% if can_change %}
+          <div class="flex items-center shrink-0">
+            <button type="button" class="btn btn-ghost btn-square w-10 h-10" aria-label="بالاتر"{% if forloop.first %} disabled{% endif %} hx-post="{% url 'panel:link_action' link.pk 'up' %}" hx-target="#links-list" hx-swap="innerHTML" hx-disabled-elt="this">{% icon "arrow-up" size=18 %}</button>
+            <button type="button" class="btn btn-ghost btn-square w-10 h-10" aria-label="پایین‌تر"{% if forloop.last %} disabled{% endif %} hx-post="{% url 'panel:link_action' link.pk 'down' %}" hx-target="#links-list" hx-swap="innerHTML" hx-disabled-elt="this">{% icon "arrow-down" size=18 %}</button>
+            <button type="button" class="btn btn-ghost btn-sm h-10 text-ink-2" hx-post="{% url 'panel:link_action' link.pk 'toggle' %}" hx-target="#links-list" hx-swap="innerHTML" hx-disabled-elt="this">{% if link.is_active %}خاموش{% else %}روشن{% endif %}</button>
+          </div>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p class="text-label text-ink-3">لینکی در این ستون نیست</p>
+    {% endfor %}
+  </section>
+{% endfor %}

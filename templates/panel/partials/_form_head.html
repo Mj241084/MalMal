@@ -1,0 +1,5 @@
+{% load core_tags %}
+<div class="flex items-center gap-3 min-w-0">
+  <a href="{{ back_url }}" class="btn btn-ghost btn-square w-10 h-10 shrink-0" aria-label="بازگشت">{% icon "arrow-left" size=18 flip=True %}</a>
+  {% include "panel/partials/_page_heading.html" with title=title %}
+</div>

@@ -1,49 +1,42 @@
-{% extends "panel/base.html" %}
-{% load panel_tags %}
-
+{% extends "panel/shell.html" %}
+{% load core_tags %}
+{% block title %}محصولات{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-4">
-  <h1 class="text-h2">محصولات</h1>
-  {% if can_add %}
-  <a href="{% url 'panel:product_new' %}" class="btn btn-primary">افزودن محصول</a>
-  {% endif %}
-</div>
-
-<form hx-get="{% url 'panel:products' %}" hx-trigger="change delay:200ms, keyup changed delay:500ms from:(input, select)" hx-target="#results" hx-push-url="true" class="mb-6 bg-base-100 p-4 rounded-box border">
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <input type="text" name="q" placeholder="جستجو (عنوان، SKU)" value="{{ q }}" class="input input-bordered w-full">
-    <select name="category" class="select select-bordered w-full">
-      <option value="">همه دسته‌ها</option>
-      {% for pk, label in category_options %}
-      <option value="{{ pk }}" {% if pk|slugify == selected.category %}selected{% endif %}>{{ label }}</option>
-      {% endfor %}
-    </select>
-    <select name="brand" class="select select-bordered w-full">
-      <option value="">همه برندها</option>
-      {% for pk, name in brand_options %}
-      <option value="{{ pk }}" {% if pk|slugify == selected.brand %}selected{% endif %}>{{ name }}</option>
-      {% endfor %}
-    </select>
-    <div class="flex gap-2">
-      <select name="status" class="select select-bordered w-full">
-        <option value="">همه وضعیت‌ها</option>
-        {% for status, label in status_choices %}
-        <option value="{{ status }}" {% if status == selected.status %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-      <select name="stock" class="select select-bordered w-full">
-        <option value="">همه موجودی‌ها</option>
-        {% for val, label in stock_filters %}
-        <option value="{{ val }}" {% if val == selected.stock %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
+<div class="flex flex-col gap-4">
+  <div class="flex items-center justify-between gap-3">
+    {% include "panel/partials/_page_heading.html" with title="محصولات" %}
+    <div class="flex items-center gap-3">
+      <span id="products-indicator" class="htmx-indicator loading loading-spinner loading-sm" aria-hidden="true"></span>
+      {% if can_add %}<a href="{% url 'panel:product_new' %}" class="btn btn-primary h-10">افزودن محصول</a>{% endif %}
     </div>
   </div>
-</form>
 
-<form hx-post="{% url 'panel:product_bulk' %}" hx-target="#results" hx-swap="outerHTML">
-  <div id="results">
-    {% include "panel/products/_list_results.html" %}
-  </div>
-</form>
+  <form action="{% url 'panel:products' %}" method="get" role="search"
+        hx-get="{% url 'panel:products' %}" hx-target="#products-results" hx-swap="innerHTML" hx-push-url="true"
+        hx-trigger="input changed delay:300ms, change, submit" hx-sync="this:replace" hx-indicator="#products-indicator"
+        class="bg-base-100 border rounded-box p-3 flex flex-wrap items-center gap-3">
+    <label class="input h-10 grow min-w-48 flex items-center gap-2">
+      <input type="search" name="q" value="{{ q }}" placeholder="عنوان، برند یا کد کالا" class="grow text-small" autocomplete="off">
+    </label>
+    <select name="category" class="select h-10 w-44 text-small">
+      <option value="">همه‌ی دسته‌ها</option>
+      {% for pk, label in category_options %}<option value="{{ pk }}"{% if pk|stringformat:"s" == selected.category %} selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <select name="brand" class="select h-10 w-36 text-small">
+      <option value="">همه‌ی برندها</option>
+      {% for pk, name in brand_options %}<option value="{{ pk }}"{% if pk|stringformat:"s" == selected.brand %} selected{% endif %}>{{ name }}</option>{% endfor %}
+    </select>
+    <select name="status" class="select h-10 w-36 text-small">
+      <option value="">همه‌ی وضعیت‌ها</option>
+      {% for code, label in status_choices %}<option value="{{ code }}"{% if code == selected.status %} selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <select name="stock" class="select h-10 w-36 text-small">
+      <option value="">همه‌ی موجودی‌ها</option>
+      {% for code, label in stock_filters %}<option value="{{ code }}"{% if code == selected.stock %} selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </form>
+
+  <div id="products-results" aria-live="polite">{% include "panel/products/_list_results.html" %}</div>
+</div>
+<div class="modal" popover id="quick-modal"><div class="modal-box max-w-md" id="quick-body"></div></div>
 {% endblock %}

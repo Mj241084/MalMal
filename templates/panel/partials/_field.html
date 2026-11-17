@@ -1,0 +1,30 @@
+{% load core_tags %}
+{% if field.is_hidden %}{{ field }}{% else %}
+<div{% if field.field.when %} data-when="{{ field.field.when.0 }}" data-values="{{ field.field.when.1 }}"{% endif %}>
+  {% if field.widget_type == "checkbox" %}
+    <label class="flex items-center gap-2 cursor-pointer min-h-10">{{ field }}<span class="text-small">{{ field.label }}</span></label>
+    {% if field.help_text %}<p class="text-label text-ink-3">{{ field.help_text }}</p>{% endif %}
+  {% else %}
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend text-small font-medium">{{ field.label }}</legend>
+      {% if field.widget_type == "checkboxselectmultiple" %}
+        <div class="border rounded-field p-2 max-h-56 overflow-y-auto flex flex-col">
+          {% for option in field %}
+            <label class="flex items-center gap-2 cursor-pointer min-h-9">
+              <input type="checkbox" name="{{ option.data.name }}" value="{{ option.data.value }}" class="checkbox checkbox-sm"{% if option.data.selected %} checked{% endif %}>
+              <span class="text-small">{{ option.choice_label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      {% else %}
+        {% if field.widget_type == "file" %}
+          <img id="preview-{{ field.html_name }}" src="{% if field.initial %}{{ field.initial.url }}{% endif %}" alt="" class="max-h-40 w-auto rounded-lg border bg-white object-contain{% if not field.initial %} hidden{% endif %}">
+        {% endif %}
+        {{ field }}
+      {% endif %}
+      {% if field.help_text %}<p class="label text-label text-ink-3">{{ field.help_text }}</p>{% endif %}
+    </fieldset>
+  {% endif %}
+  {% for error in field.errors %}<p class="text-label text-error flex items-center gap-1 mt-1">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ error }}</span></p>{% endfor %}
+</div>
+{% endif %}

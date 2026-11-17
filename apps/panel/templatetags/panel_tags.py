@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from django import template
+from django.conf import settings
 
 from apps.core.jalali import to_fa_digits
 from apps.panel import badges, nav, queries
@@ -10,6 +11,7 @@ register = template.Library()
 
 PAYMENT_DOT = {Payment.VERIFIED: "status-success", Payment.VERIFYING: "status-info", Payment.FAILED: "status-error"}
 REVIEW_DOT = {"pending": "status-warning", "approved": "status-success", "rejected": "status-error"}
+PRODUCT_DOT = {"active": "status-success", "draft": "status-warning", "archived": "status-neutral"}
 
 
 @register.inclusion_tag("panel/partials/sidebar.html", takes_context=True)
@@ -40,6 +42,11 @@ def review_dot(status: str) -> str:
 
 
 @register.filter
+def product_dot(status: str) -> str:
+    return PRODUCT_DOT.get(status, "status-neutral")
+
+
+@register.filter
 def stamp(moment) -> int:
     return queries.stamp(moment)
 
@@ -48,3 +55,13 @@ def stamp(moment) -> int:
 def signed(value) -> str:
     number = int(value)
     return to_fa_digits(f"+{number}" if number > 0 else str(number))
+
+
+@register.filter
+def thumb_url(image) -> str:
+    """Smallest rendition of a ProductImage, for table rows and cards."""
+    if not image:
+        return ""
+    if image.widths:
+        return f"{settings.MEDIA_URL}{image.widths[min(image.widths, key=int)]}"
+    return image.image.url if image.image else ""

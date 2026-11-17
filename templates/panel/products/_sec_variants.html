@@ -1,19 +1,30 @@
-<section class="card bg-base-100 border">
-    <div class="card-body">
-        <h2 class="card-title">تنوع‌ها</h2>
-        {% for variant, form in variant_forms %}
-        <form hx-post="{% url 'panel:variant_edit' product.pk variant.pk %}" hx-target="#sec-variants" hx-swap="outerHTML" class="flex gap-2 items-center mb-2">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-sm btn-primary">ذخیره</button>
-            <button type="button" hx-post="{% url 'panel:variant_action' product.pk variant.pk 'delete' %}" hx-target="#sec-variants" hx-swap="outerHTML" class="btn btn-sm btn-ghost">حذف</button>
-        </form>
-        {% endfor %}
-        <div class="divider">تنوع جدید</div>
-        <form hx-post="{% url 'panel:variant_new' product.pk %}" hx-target="#sec-variants" hx-swap="outerHTML">
-            {% csrf_token %}
-            {{ new_variant_form.as_p }}
-            <button type="submit" class="btn btn-primary w-full">افزودن تنوع</button>
-        </form>
+{% load core_tags %}
+<section id="sec-variants" class="bg-base-100 border rounded-box p-4 flex flex-col gap-4"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+  <h2 class="text-lead font-medium">قیمت، تنوع و موجودی</h2>
+  {% for variant, form in variant_forms %}
+    <div class="border rounded-field p-3 flex flex-col gap-3">
+      <p class="text-label text-ink-3">موجودی: <span class="num">{{ variant.stock|fa_digits }}</span>{% if can_stock %} — <a href="{% url 'panel:inventory' %}?product={{ product.pk }}" class="link">تغییر موجودی</a>{% endif %}</p>
+      <form method="post" action="{% url 'panel:variant_edit' product.pk variant.pk %}" hx-post="{% url 'panel:variant_edit' product.pk variant.pk %}"
+            hx-target="#sec-variants" hx-swap="outerHTML" hx-disabled-elt="find button[type='submit']" class="flex flex-col gap-3" novalidate>
+        {% csrf_token %}
+        <div class="grid sm:grid-cols-2 gap-3">{% for field in form.visible_fields %}{% include "panel/partials/_field.html" %}{% endfor %}</div>
+        <button type="submit" class="btn btn-sm h-10 bg-base-300 border self-start">ذخیره‌ی تنوع</button>
+      </form>
+      <div class="flex flex-wrap items-center gap-1 border-t pt-3">
+        {% if not forloop.first %}<button type="button" class="btn btn-ghost btn-square btn-sm w-10 h-10" aria-label="بالاتر" hx-post="{% url 'panel:variant_action' product.pk variant.pk 'up' %}" hx-target="#sec-variants" hx-swap="outerHTML" hx-disabled-elt="this">{% icon "arrow-up" size=18 %}</button>{% endif %}
+        {% if not forloop.last %}<button type="button" class="btn btn-ghost btn-square btn-sm w-10 h-10" aria-label="پایین‌تر" hx-post="{% url 'panel:variant_action' product.pk variant.pk 'down' %}" hx-target="#sec-variants" hx-swap="outerHTML" hx-disabled-elt="this">{% icon "arrow-down" size=18 %}</button>{% endif %}
+        <button type="button" class="btn btn-ghost btn-sm h-10 text-error" hx-post="{% url 'panel:variant_action' product.pk variant.pk 'delete' %}" hx-target="#sec-variants" hx-swap="outerHTML"
+                hx-confirm="این تنوع حذف شود؟" data-confirm-title="حذف تنوع" data-confirm-label="حذف" data-confirm-tone="danger">حذف</button>
+      </div>
     </div>
+  {% endfor %}
+  <details class="border rounded-field p-3"{% if new_variant_form.errors %} open{% endif %}>
+    <summary class="text-small font-medium cursor-pointer min-h-10 flex items-center">افزودن تنوع</summary>
+    <form method="post" action="{% url 'panel:variant_new' product.pk %}" hx-post="{% url 'panel:variant_new' product.pk %}"
+          hx-target="#sec-variants" hx-swap="outerHTML" hx-disabled-elt="find button[type='submit']" class="flex flex-col gap-3 mt-3" novalidate>
+      {% csrf_token %}
+      <div class="grid sm:grid-cols-2 gap-3">{% for field in new_variant_form.visible_fields %}{% include "panel/partials/_field.html" %}{% endfor %}</div>
+      <button type="submit" class="btn btn-sm h-10 bg-base-300 border self-start">افزودن</button>
+    </form>
+  </details>
 </section>

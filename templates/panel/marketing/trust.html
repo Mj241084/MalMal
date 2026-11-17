@@ -1,0 +1,13 @@
+{% extends "panel/shell.html" %}
+{% block title %}مزیت‌های فروشگاه{% endblock %}
+{% block content %}
+<div class="flex flex-col gap-4">
+  <div class="flex items-center justify-between gap-3">
+    {% include "panel/partials/_page_heading.html" with title="بازاریابی" %}
+    {% if can_add %}<a href="{% url 'panel:trust_new' %}" class="btn btn-primary h-10">افزودن مزیت</a>{% endif %}
+  </div>
+  {% include "panel/marketing/_tabs.html" with active="trust" %}
+  <p class="text-small text-ink-2">این مزیت‌ها در صفحه‌ی اصلی و صفحه‌ی محصول دیده می‌شوند. متن آن‌ها را پیش از انتشار بازبینی کنید</p>
+  <div id="trust-list" aria-live="polite">{% include "panel/marketing/_trust_list.html" %}</div>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% load core_tags panel_tags %}
+<section id="coll-items" class="bg-base-100 border rounded-box p-4 flex flex-col gap-4">
+  <div>
+    <h2 class="text-lead font-medium">محصولات مجموعه</h2>
+    <p class="text-small text-ink-2 mt-1">ترتیب این فهرست همان ترتیب نمایش در فروشگاه است. محصول غیرفعال نمایش داده نمی‌شود</p>
+  </div>
+  {% if can_items %}
+    <div class="flex flex-col gap-2">
+      <label class="input h-10 w-full flex items-center gap-2">
+        {% icon "search" size=18 class="text-ink-3" %}
+        <input type="search" name="q" placeholder="جستجوی محصول برای افزودن" class="grow text-small" autocomplete="off"
+               hx-get="{% url 'panel:collection_item_search' collection.pk %}" hx-trigger="input changed delay:300ms, search"
+               hx-target="#item-results" hx-swap="innerHTML">
+      </label>
+      <div id="item-results" aria-live="polite"></div>
+    </div>
+  {% endif %}
+  {% if items %}
+    <ul class="flex flex-col gap-2">
+      {% for item in items %}
+        <li class="border rounded-field p-2 flex items-center gap-3">
+          <span class="w-10 h-10 shrink-0 rounded-lg bg-white border overflow-hidden flex items-center justify-center">
+            {% if item.product.main_image %}<img src="{{ item.product.main_image|thumb_url }}" alt="" width="40" height="40" loading="lazy" class="w-full h-full object-contain p-1">{% else %}{% icon "package" size=18 class="text-ink-3" %}{% endif %}
+          </span>
+          <span class="min-w-0 flex-1 flex flex-col">
+            <span class="text-small line-clamp-1">{{ item.product.title|fa_text }}</span>
+            {% if item.product.status != "active" %}<span class="text-label text-ink-3">فعال نیست؛ در فروشگاه نمایش داده نمی‌شود</span>{% endif %}
+          </span>
+          {% if can_items %}
+            <div class="flex items-center gap-1 shrink-0">
+              <button type="button" class="btn btn-ghost btn-square w-10 h-10" aria-label="بالاتر"{% if forloop.first %} disabled{% endif %} hx-post="{% url 'panel:collection_item_action' collection.pk item.pk 'up' %}" hx-target="#coll-items" hx-swap="outerHTML" hx-disabled-elt="this">{% icon "arrow-up" size=18 %}</button>
+              <button type="button" class="btn btn-ghost btn-square w-10 h-10" aria-label="پایین‌تر"{% if forloop.last %} disabled{% endif %} hx-post="{% url 'panel:collection_item_action' collection.pk item.pk 'down' %}" hx-target="#coll-items" hx-swap="outerHTML" hx-disabled-elt="this">{% icon "arrow-down" size=18 %}</button>
+              <button type="button" class="btn btn-ghost btn-sm h-10 text-error" hx-post="{% url 'panel:collection_item_action' collection.pk item.pk 'remove' %}" hx-target="#coll-items" hx-swap="outerHTML"
+                      hx-confirm="این محصول از مجموعه برداشته شود؟" data-confirm-title="برداشتن محصول" data-confirm-label="بردار" data-confirm-tone="danger">بردار</button>
+            </div>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-small text-ink-2">هنوز محصولی اضافه نشده است</p>
+  {% endif %}
+</section>

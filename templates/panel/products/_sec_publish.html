@@ -1,13 +1,27 @@
-<section class="card bg-base-100 border">
-    <div class="card-body">
-        <h2 class="card-title">انتشار</h2>
-        <form hx-post="{% url 'panel:product_publish' product.pk %}" hx-target="#sec-publish" hx-swap="outerHTML">
-            {% csrf_token %}
-            <div class="flex gap-2">
-                <button type="submit" name="to" value="active" class="btn btn-success flex-1">فعال</button>
-                <button type="submit" name="to" value="draft" class="btn btn-warning flex-1">پیش‌نویس</button>
-                <button type="submit" name="to" value="archived" class="btn btn-error flex-1">بایگانی</button>
-            </div>
-        </form>
-    </div>
+{% load core_tags panel_tags %}
+<section id="sec-publish" class="bg-base-100 border rounded-box p-4 flex flex-col gap-3"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+  <h2 class="text-lead font-medium">انتشار</h2>
+  <p class="flex items-center gap-2 text-small"><span class="status {{ product.status|product_dot }}"></span>{{ product.get_status_display }}</p>
+  {% for message in publish_errors %}<p class="flex items-start gap-2 text-small text-error">{% icon "alert-circle" size=18 class="shrink-0 mt-0.5" %}<span>{{ message }}</span></p>{% endfor %}
+  {% for message in publish_warnings %}<p class="flex items-start gap-2 text-small text-ink-2">{% icon "info" size=18 class="shrink-0 mt-0.5 text-ink-3" %}<span>{{ message }}</span></p>{% endfor %}
+  <div class="flex flex-col gap-2 border-t pt-3">
+    {% if product.status != "active" %}
+      <form method="post" action="{% url 'panel:product_publish' product.pk %}" hx-post="{% url 'panel:product_publish' product.pk %}" hx-target="#sec-publish" hx-swap="outerHTML" hx-disabled-elt="find button">
+        {% csrf_token %}<input type="hidden" name="to" value="active">
+        <button type="submit" class="btn btn-primary w-full h-11 min-h-11"{% if publish_errors %} disabled{% endif %}>فعال‌سازی و نمایش در فروشگاه</button>
+      </form>
+    {% endif %}
+    {% if product.status != "draft" %}
+      <form method="post" action="{% url 'panel:product_publish' product.pk %}" hx-post="{% url 'panel:product_publish' product.pk %}" hx-target="#sec-publish" hx-swap="outerHTML" hx-disabled-elt="find button">
+        {% csrf_token %}<input type="hidden" name="to" value="draft">
+        <button type="submit" class="btn w-full h-10 bg-base-300 border">بازگشت به پیش‌نویس</button>
+      </form>
+    {% endif %}
+    {% if product.status != "archived" %}
+      <form method="post" action="{% url 'panel:product_publish' product.pk %}" hx-post="{% url 'panel:product_publish' product.pk %}" hx-target="#sec-publish" hx-swap="outerHTML" hx-disabled-elt="find button">
+        {% csrf_token %}<input type="hidden" name="to" value="archived">
+        <button type="submit" class="btn btn-ghost w-full h-10 text-ink-2">بایگانی</button>
+      </form>
+    {% endif %}
+  </div>
 </section>

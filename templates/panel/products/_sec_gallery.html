@@ -1,22 +1,42 @@
-<section class="card bg-base-100 border">
-    <div class="card-body">
-        <h2 class="card-title">تصاویر</h2>
-        <div class="grid grid-cols-4 gap-2 mb-4">
-            {% for img in images %}
-            <div class="relative group">
-                <img src="{{ img.image.url }}" class="rounded size-24 object-cover">
-                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1 transition">
-                    <button hx-post="{% url 'panel:product_image_action' product.pk img.pk 'delete' %}" hx-target="#sec-gallery" hx-swap="outerHTML" class="btn btn-xs btn-error">حذف</button>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% if images|length < max_images %}
-        <form hx-post="{% url 'panel:product_images' product.pk %}" hx-target="#sec-gallery" hx-swap="outerHTML" enctype="multipart/form-data">
-            {% csrf_token %}
-            <input type="file" name="files" multiple accept="image/*" class="file-input w-full">
-            <button type="submit" class="btn btn-primary mt-2">آپلود</button>
-        </form>
-        {% endif %}
-    </div>
+{% load core_tags panel_tags %}
+<section id="sec-gallery" class="bg-base-100 border rounded-box p-4 flex flex-col gap-4"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+  <div>
+    <h2 class="text-lead font-medium">تصاویر</h2>
+    <p class="text-small text-ink-2 mt-1">اولین تصویر، تصویر اصلی محصول است. تا {{ max_images|fa_digits }} تصویر، هر کدام حداکثر ۵ مگابایت</p>
+  </div>
+  {% if images %}
+    <ul class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      {% for image in images %}
+        <li class="border rounded-field p-2 flex flex-col gap-2">
+          <div class="aspect-square bg-white rounded-lg border overflow-hidden flex items-center justify-center">
+            <img src="{{ image|thumb_url }}" alt="{{ image.alt }}" loading="lazy" class="w-full h-full object-contain p-1">
+          </div>
+          {% if forloop.first %}<span class="badge badge-sm badge-soft self-start">تصویر اصلی</span>{% endif %}
+          <input type="text" name="alt" value="{{ image.alt|fa_text }}" maxlength="200" placeholder="متن جایگزین" aria-label="متن جایگزین تصویر" class="input input-sm w-full text-label"
+                 hx-post="{% url 'panel:product_image_action' product.pk image.pk 'alt' %}" hx-trigger="change" hx-swap="none">
+          <div class="flex flex-wrap items-center gap-1">
+            {% if not forloop.first %}
+              <button type="button" class="btn btn-ghost btn-xs h-8" hx-post="{% url 'panel:product_image_action' product.pk image.pk 'first' %}" hx-target="#sec-gallery" hx-swap="outerHTML" hx-disabled-elt="this">اصلی کن</button>
+              <button type="button" class="btn btn-ghost btn-square btn-xs w-8 h-8" aria-label="بالاتر" hx-post="{% url 'panel:product_image_action' product.pk image.pk 'up' %}" hx-target="#sec-gallery" hx-swap="outerHTML" hx-disabled-elt="this">{% icon "arrow-up" size=16 %}</button>
+            {% endif %}
+            {% if not forloop.last %}
+              <button type="button" class="btn btn-ghost btn-square btn-xs w-8 h-8" aria-label="پایین‌تر" hx-post="{% url 'panel:product_image_action' product.pk image.pk 'down' %}" hx-target="#sec-gallery" hx-swap="outerHTML" hx-disabled-elt="this">{% icon "arrow-down" size=16 %}</button>
+            {% endif %}
+            <button type="button" class="btn btn-ghost btn-xs h-8 text-error" hx-post="{% url 'panel:product_image_action' product.pk image.pk 'delete' %}" hx-target="#sec-gallery" hx-swap="outerHTML"
+                    hx-confirm="این تصویر حذف شود؟" data-confirm-title="حذف تصویر" data-confirm-label="حذف" data-confirm-tone="danger">حذف</button>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  {% if images|length < max_images %}
+    <form id="gallery-upload" data-dropzone method="post" action="{% url 'panel:product_images' product.pk %}" enctype="multipart/form-data"
+          hx-post="{% url 'panel:product_images' product.pk %}" hx-encoding="multipart/form-data" hx-target="#sec-gallery" hx-swap="outerHTML"
+          class="border border-dashed rounded-field p-4 flex flex-col items-center gap-3 text-center">
+      {% csrf_token %}
+      <span class="text-small text-ink-2">عکس‌ها را اینجا رها کنید یا انتخاب کنید</span>
+      <input type="file" name="files" multiple accept="image/png,image/jpeg,image/webp" class="file-input w-full max-w-xs" aria-label="انتخاب عکس">
+      <progress data-dropzone-progress class="progress w-full hidden" value="0" max="1"></progress>
+    </form>
+  {% endif %}
 </section>

@@ -1,10 +1,11 @@
-{% extends "panel/base.html" %}
+{% extends "panel/shell.html" %}
+{% block title %}دسته‌ها{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-4">
-    <h1 class="text-h2">دسته‌ها</h1>
-    {% if can_add %}
-    <a href="{% url 'panel:category_new' %}" class="btn btn-primary">افزودن دسته</a>
-    {% endif %}
+<div class="flex flex-col gap-4">
+  <div class="flex items-center justify-between gap-3">
+    {% include "panel/partials/_page_heading.html" with title="دسته‌ها" %}
+    {% if can_add %}<a href="{% url 'panel:category_new' %}" class="btn btn-primary h-10">افزودن دسته</a>{% endif %}
+  </div>
+  <div id="tree">{% include "panel/categories/_tree.html" %}</div>
 </div>
-<div id="tree">{% include "panel/categories/_tree.html" %}</div>
 {% endblock %}

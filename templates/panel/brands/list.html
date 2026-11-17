@@ -1,15 +1,15 @@
-{% extends "panel/base.html" %}
+{% extends "panel/shell.html" %}
+{% block title %}برندها{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-4">
-    <h1 class="text-h2">برندها</h1>
-    <button hx-get="{% url 'panel:brand_new' %}" hx-target="#brand-modal-body" hx-trigger="click" onclick="brand_modal.showModal()" class="btn btn-primary">افزودن برند</button>
+<div class="flex flex-col gap-4">
+  <div class="flex items-center justify-between gap-3">
+    {% include "panel/partials/_page_heading.html" with title="برندها" %}
+    {% if can_add %}
+      <button type="button" popovertarget="brand-modal" class="btn btn-primary h-10"
+              hx-get="{% url 'panel:brand_new' %}" hx-target="#brand-modal-body" hx-swap="innerHTML">افزودن برند</button>
+    {% endif %}
+  </div>
+  <div id="brands-results" aria-live="polite">{% include "panel/brands/_list_results.html" %}</div>
 </div>
-<div id="brands-list">{% include "panel/brands/_list_results.html" %}</div>
-
-<dialog id="brand-modal" class="modal">
-    <div class="modal-box">
-        <div id="brand-modal-body"></div>
-    </div>
-    <form method="dialog" class="modal-backdrop"><button>بستن</button></form>
-</dialog>
+<div class="modal" popover id="brand-modal"><div class="modal-box max-w-md" id="brand-modal-body"></div></div>
 {% endblock %}

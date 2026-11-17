@@ -45,6 +45,23 @@ ALWAYS_INCLUDE: set[str] = {
     "user",
     "log-out",
     "package",
+    # Marketing/content icons chosen in the panel are stored in the database (TrustItem, advantages picker).
+    "gift",
+    "store",
+    "map-pin",
+    "clock",
+    "rotate-ccw",
+    "badge-check",
+    "wallet",
+    "percent",
+    "tag",
+    "headphones",
+    "message-circle",
+    "star",
+    "heart",
+    "thumbs-up",
+    "zap",
+    "leaf",
 }
 
 

@@ -1,0 +1,26 @@
+{% extends "panel/shell.html" %}
+{% load core_tags %}
+{% block title %}{{ heading }}{% endblock %}
+{% block content %}
+<div class="flex flex-col gap-4 max-w-xl">
+  {% include "panel/partials/_form_head.html" with back_url=back_url title=heading %}
+  <form method="post" class="bg-base-100 border rounded-box p-4 flex flex-col gap-4" novalidate>
+    {% csrf_token %}
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend text-small font-medium">{{ form.icon.label }}</legend>
+      <div class="grid grid-cols-5 sm:grid-cols-6 gap-2">
+        {% for radio in form.icon %}
+          <label class="cursor-pointer" title="{{ radio.choice_label }}">
+            <input type="radio" name="{{ radio.data.name }}" value="{{ radio.data.value }}" class="sr-only peer"{% if radio.data.selected %} checked{% endif %}>
+            <span class="flex items-center justify-center w-full h-11 rounded-field border text-ink-2 peer-checked:bg-base-300 peer-checked:text-base-content peer-checked:border-base-content peer-focus-visible:border-base-content">{% icon radio.data.value size=20 safe=True %}</span>
+          </label>
+        {% endfor %}
+      </div>
+      {% for error in form.icon.errors %}<p class="text-label text-error flex items-center gap-1 mt-1">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ error }}</span></p>{% endfor %}
+    </fieldset>
+    {% for field in form.visible_fields %}{% if field.name != "icon" %}{% include "panel/partials/_field.html" %}{% endif %}{% endfor %}
+    {% include "panel/partials/_save_bar.html" with back_url=back_url %}
+  </form>
+  {% include "panel/marketing/_delete_box.html" %}
+</div>
+{% endblock %}

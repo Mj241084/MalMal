@@ -32,7 +32,7 @@
 
 | ماژول | فایل | API عمومی | قرارداد HTML | وضعیت |
 |-------|------|-----------|--------------|-------|
-| panel | `panel.js` | — (فقط attribute و رویداد) | پل toast برای `HX-Trigger: {"mm:toast": {...}}` به `MM.ui.toast`؛ `[data-copy]` (کپی در کلیپ‌بورد)؛ `[data-toman-hint]` (نمایش زنده‌ی «۱٬۲۵۰٬۰۰۰ تومان»)؛ `[data-discount-from]` (٪ تخفیف زنده) | برنامه‌ریزی‌شده — P9 |
+| panel | `panel.js` | — (فقط attribute و رویداد) | پل toast برای `HX-Trigger: {"mm:toast": {...}}` به `MM.ui.toast`؛ `[data-copy]` (کپی در کلیپ‌بورد)؛ `[data-toman-hint]` (نمایش زنده‌ی «۱٬۲۵۰٬۰۰۰ تومان»)؛ `[data-discount-from]` (٪ تخفیف زنده)؛ `[data-when="field"][data-values="a,b"]` (نمایش فیلد وابسته، فقط پنهان‌کردن و بدون `disabled`)؛ `input[type=file][data-preview="#img"]` (پیش‌نمایش عکس انتخاب‌شده) | برنامه‌ریزی‌شده — P9 |
 | upload | `upload.js` | — (فقط attribute) | `[data-dropzone]` (drop ← `input.files` ← رویداد `change`)؛ ارسال نوبتی حداکثر ۳ فایل؛ نوار پیشرفت | برنامه‌ریزی‌شده — P11 |
 | richtext | `richtext.js` | بسته به D46 `[OPEN]` | بسته به D46؛ اگر textarea ساده بماند این فایل ساخته نمی‌شود | برنامه‌ریزی‌شده — P11 (مشروط به D46) |
 

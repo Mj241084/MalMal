@@ -1,0 +1,12 @@
+{% if delete_url or delete_hint %}
+  <div class="bg-base-100 border rounded-box p-4 flex items-center justify-between gap-3">
+    {% if delete_url %}
+      <span class="text-small text-ink-2">حذف قابل بازگشت نیست</span>
+      <form method="post" action="{{ delete_url }}" data-confirm="{{ delete_confirm }}" data-confirm-title="تایید حذف" data-confirm-label="حذف" data-confirm-tone="danger">
+        {% csrf_token %}<button type="submit" class="btn btn-ghost h-10 text-error text-small">حذف</button>
+      </form>
+    {% else %}
+      <span class="text-small text-ink-2">{{ delete_hint }}</span>
+    {% endif %}
+  </div>
+{% endif %}

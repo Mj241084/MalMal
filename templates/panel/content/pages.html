@@ -1,0 +1,33 @@
+{% extends "panel/shell.html" %}
+{% load core_tags jalali_tags %}
+{% block title %}صفحه‌های ثابت{% endblock %}
+{% block content %}
+<div class="flex flex-col gap-4">
+  <div class="flex items-center justify-between gap-3">
+    {% include "panel/partials/_page_heading.html" with title="محتوا" %}
+    {% if can_add %}<a href="{% url 'panel:page_new' %}" class="btn btn-primary h-10">افزودن صفحه</a>{% endif %}
+  </div>
+  {% include "panel/content/_tabs.html" with active="pages" %}
+  {% if pages %}
+    <ul class="flex flex-col gap-2">
+      {% for page in pages %}
+        <li class="bg-base-100 border rounded-box p-3 flex items-center gap-3{% if not page.is_active %} opacity-60{% endif %}">
+          <div class="min-w-0 flex-1 flex flex-col gap-1">
+            {% if perms.core.change_staticpage %}<a href="{% url 'panel:page_edit' page.pk %}" class="text-small font-medium line-clamp-1">{{ page.title|fa_text }}</a>
+            {% else %}<span class="text-small font-medium line-clamp-1">{{ page.title|fa_text }}</span>{% endif %}
+            <span class="flex flex-wrap items-center gap-2 text-label text-ink-3">
+              <span class="flex items-center gap-1"><span class="status {% if page.is_active %}status-success{% else %}status-neutral{% endif %}"></span>{% if page.is_active %}فعال{% else %}غیرفعال{% endif %}</span>
+              <bdi class="latin">/pages/{{ page.slug }}/</bdi>
+              <span class="num">{{ page.updated_at|to_jalali:"%Y/%m/%d" }}</span>
+              {% if page.needs_review %}<span class="badge badge-sm badge-soft gap-1">{% icon "info" size=16 %}نیازمند بازبینی</span>{% endif %}
+            </span>
+          </div>
+          {% if page.is_active %}<a href="{% url 'core:static_page' page.slug %}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm h-10 text-ink-2 shrink-0">مشاهده</a>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    {% include "partials/_empty_state.html" with title="هنوز صفحه‌ای ثبت نشده" description="با «افزودن صفحه» شروع کنید" %}
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% load core_tags %}
+<form method="post" action="{% url 'panel:product_quick' product.pk %}" hx-post="{% url 'panel:product_quick' product.pk %}"
+      hx-target="#products-results" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']" class="flex flex-col gap-3" novalidate>
+  {% csrf_token %}
+  {% for name, value in hidden %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+  <div>
+    <h3 class="text-lead font-medium">ویرایش سریع قیمت</h3>
+    <p class="text-small text-ink-2 mt-1"><bdi>{{ product.title|fa_text }}</bdi></p>
+  </div>
+  {% for variant, price, compare in rows %}
+    <div class="flex flex-col gap-2{% if not forloop.first %} border-t pt-3{% endif %}">
+      <span class="text-small font-medium">{{ variant.title|fa_text }} <span class="latin text-ink-3">{{ variant.sku }}</span></span>
+      <div class="grid grid-cols-2 gap-3">
+        {% include "panel/partials/_field.html" with field=price %}
+        {% include "panel/partials/_field.html" with field=compare %}
+      </div>
+    </div>
+  {% endfor %}
+  <div class="flex items-center gap-2 border-t pt-3">
+    <button type="submit" class="btn btn-primary flex-1 h-11 min-h-11">ذخیره‌ی قیمت</button>
+    <button type="button" popovertarget="quick-modal" popovertargetaction="hide" class="btn btn-ghost h-11 text-ink-2">انصراف</button>
+  </div>
+</form>

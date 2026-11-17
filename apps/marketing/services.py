@@ -53,30 +53,43 @@ def _position_order(ids: list[int]):
     )
 
 
+def rule_queryset(
+    *, only_in_stock=False, min_discount_pct=None, min_price=None, max_price=None, brand_ids=(), category_paths=()
+):
+    """Published products matching a collection rule. The panel previews with it before anything is saved."""
+    queryset = Product.objects.published()
+    if only_in_stock:
+        queryset = queryset.filter(in_stock=True)
+    if min_discount_pct:
+        queryset = queryset.filter(discount_pct__gte=min_discount_pct)
+    if min_price is not None:
+        queryset = queryset.filter(max_price__gte=min_price)
+    if max_price is not None:
+        queryset = queryset.filter(min_price__lte=max_price)
+    if brand_ids:
+        queryset = queryset.filter(brand_id__in=list(brand_ids))
+    if category_paths:
+        queryset = queryset.filter(_subtree_q(category_paths))
+    return queryset
+
+
 def collection_products(collection: Collection):
     """(queryset of published products, default ordering) for either mode."""
-    base = Product.objects.published()
     if collection.mode == Collection.MODE_MANUAL:
+        base = Product.objects.published()
         ids = list(collection.items.order_by("sort", "pk").values_list("product_id", flat=True))
         if not ids:
             return base.none(), []
         return base.filter(pk__in=ids), [_position_order(ids)]
 
-    queryset = base
-    if collection.only_in_stock:
-        queryset = queryset.filter(in_stock=True)
-    if collection.min_discount_pct:
-        queryset = queryset.filter(discount_pct__gte=collection.min_discount_pct)
-    if collection.min_price is not None:
-        queryset = queryset.filter(max_price__gte=collection.min_price)
-    if collection.max_price is not None:
-        queryset = queryset.filter(min_price__lte=collection.max_price)
-    brand_ids = list(collection.brands.values_list("pk", flat=True))
-    if brand_ids:
-        queryset = queryset.filter(brand_id__in=brand_ids)
-    paths = list(collection.categories.values_list("path", flat=True))
-    if paths:
-        queryset = queryset.filter(_subtree_q(paths))
+    queryset = rule_queryset(
+        only_in_stock=collection.only_in_stock,
+        min_discount_pct=collection.min_discount_pct,
+        min_price=collection.min_price,
+        max_price=collection.max_price,
+        brand_ids=list(collection.brands.values_list("pk", flat=True)),
+        category_paths=list(collection.categories.values_list("path", flat=True)),
+    )
     return queryset, RULE_ORDERING[collection.sort_by]
 
 
@@ -135,6 +148,11 @@ def _resolve_target(banner: Banner):
     if target and target.is_active:
         return target.get_absolute_url(), [(target.starts_at, target.ends_at)], True
     return "", [], False
+
+
+def banner_target_dead(banner: Banner) -> bool:
+    """True when the banner's target is gone or inactive: the home page hides such a banner (docs/02 §8.1)."""
+    return not _resolve_target(banner)[2]
 
 
 def _banner_rows() -> list[dict]:

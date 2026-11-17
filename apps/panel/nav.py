@@ -76,6 +76,27 @@ ITEMS: list[NavItem] = [
     NavItem(
         "inventory", "انبار", "panel:inventory", icon="warehouse", group="catalog", perms=("catalog.view_variant",)
     ),
+    NavItem(
+        "marketing",
+        "بازاریابی",
+        "panel:marketing",
+        icon="megaphone",
+        group="store",
+        perms=(
+            "marketing.view_homeblock",
+            "marketing.view_banner",
+            "marketing.view_collection",
+            "marketing.view_trustitem",
+        ),
+    ),
+    NavItem(
+        "content",
+        "محتوا",
+        "panel:content",
+        icon="file-text",
+        group="store",
+        perms=("core.view_staticpage", "core.view_footerlink"),
+    ),
 ]
 
 

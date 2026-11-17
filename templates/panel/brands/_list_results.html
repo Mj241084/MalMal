@@ -1,16 +1,36 @@
-<table class="table bg-base-100 border rounded-box">
-    <thead>
-        <tr><th>نام</th><th>تعداد محصول</th><th>عملیات</th></tr>
-    </thead>
-    <tbody>
+{% load core_tags %}
+{% if brands %}
+  <div class="bg-base-100 border rounded-box overflow-x-auto">
+    <table class="table table-sm">
+      <thead><tr><th scope="col">برند</th><th scope="col">نشانی</th><th scope="col">محصول فعال / کل</th><th scope="col">وضعیت</th><th scope="col"><span class="sr-only">اقدام</span></th></tr></thead>
+      <tbody>
         {% for brand in brands %}
-        <tr>
-            <td>{{ brand.name_fa }}</td>
-            <td>{{ brand.live_products }} / {{ brand.product_total }}</td>
+          <tr class="hover:bg-base-300">
             <td>
-                <button hx-get="{% url 'panel:brand_edit' brand.pk %}" hx-target="#brand-modal-body" onclick="brand_modal.showModal()" class="btn btn-sm">ویرایش</button>
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="w-10 h-10 shrink-0 rounded-lg bg-white border overflow-hidden flex items-center justify-center">
+                  {% if brand.logo %}<img src="{{ brand.logo.url }}" alt="" width="40" height="40" loading="lazy" class="w-full h-full object-contain p-1">{% else %}{% icon "tag" size=18 class="text-ink-3" %}{% endif %}
+                </span>
+                <span class="flex flex-col min-w-0"><span class="text-small">{{ brand.name_fa|fa_text }}</span>{% if brand.name_en %}<span class="latin text-label text-ink-3">{{ brand.name_en }}</span>{% endif %}</span>
+              </div>
             </td>
-        </tr>
+            <td><span class="latin text-label">{{ brand.slug }}</span></td>
+            <td class="whitespace-nowrap"><span class="num">{{ brand.live_products|fa_digits }} / {{ brand.product_total|fa_digits }}</span>
+              {% if brand.is_active and brand.logo and brand.live_products %}<div class="text-label text-ink-3">در صفحه‌ی اصلی</div>{% endif %}</td>
+            <td><span class="flex items-center gap-2 text-small whitespace-nowrap"><span class="status {% if brand.is_active %}status-success{% else %}status-neutral{% endif %}"></span>{% if brand.is_active %}فعال{% else %}غیرفعال{% endif %}</span></td>
+            <td>
+              <div class="flex items-center gap-1 justify-end">
+                {% if can_change %}<button type="button" popovertarget="brand-modal" class="btn btn-sm h-10 bg-base-300 border" hx-get="{% url 'panel:brand_edit' brand.pk %}" hx-target="#brand-modal-body" hx-swap="innerHTML">ویرایش</button>{% endif %}
+                {% if can_delete and not brand.product_total %}
+                  <form method="post" action="{% url 'panel:brand_delete' brand.pk %}" data-confirm="این برند حذف شود؟" data-confirm-title="حذف برند" data-confirm-label="حذف" data-confirm-tone="danger">{% csrf_token %}<button type="submit" class="btn btn-ghost btn-sm h-10 text-error">حذف</button></form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
         {% endfor %}
-    </tbody>
-</table>
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  {% include "partials/_empty_state.html" with title="هنوز برندی ثبت نشده" description="با «افزودن برند» شروع کنید" %}
+{% endif %}

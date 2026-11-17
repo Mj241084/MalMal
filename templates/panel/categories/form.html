@@ -1,14 +1,27 @@
-{% extends "panel/base.html" %}
+{% extends "panel/shell.html" %}
+{% load core_tags %}
+{% block title %}{% if category %}{{ category.name|fa_text }}{% else %}دسته‌ی تازه{% endif %}{% endblock %}
 {% block content %}
-<h1 class="text-h2 mb-6">{% if category %}ویرایش {{ category.name }}{% else %}افزودن دسته{% endif %}</h1>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <form method="post" enctype="multipart/form-data" class="bg-base-100 p-6 rounded-box border">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary mt-4">ذخیره</button>
-    </form>
-    {% if category %}
-    <div id="attrs">{% include "panel/categories/_sec_attrs.html" %}</div>
+<div class="flex flex-col gap-4 max-w-3xl">
+  {% url 'panel:categories' as back_url %}
+  {% include "panel/partials/_form_head.html" with back_url=back_url title=category.name|default:"دسته‌ی تازه"|fa_text %}
+  <form method="post" enctype="multipart/form-data" class="bg-base-100 border rounded-box p-4 flex flex-col gap-4" novalidate>
+    {% csrf_token %}
+    {% for e in form.non_field_errors %}<div role="alert" class="alert alert-error text-small">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ e }}</span></div>{% endfor %}
+    {% for field in form.visible_fields %}{% include "panel/partials/_field.html" %}{% endfor %}
+    {% include "panel/partials/_save_bar.html" with back_url=back_url %}
+  </form>
+  {% if category %}
+    {% include "panel/categories/_sec_attrs.html" %}
+    {% if can_delete %}
+      <div class="bg-base-100 border rounded-box p-4 flex items-center justify-between gap-3">
+        {% if delete_block %}<span class="text-small text-ink-2">{{ delete_block }}</span>
+        {% else %}
+          <span class="text-small text-ink-2">حذف قابل بازگشت نیست</span>
+          <form method="post" action="{% url 'panel:category_delete' category.pk %}" data-confirm="این دسته حذف شود؟" data-confirm-title="حذف دسته" data-confirm-label="حذف" data-confirm-tone="danger">{% csrf_token %}<button type="submit" class="btn btn-ghost h-10 text-error text-small">حذف</button></form>
+        {% endif %}
+      </div>
     {% endif %}
+  {% endif %}
 </div>
 {% endblock %}

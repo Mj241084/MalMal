@@ -1,15 +1,32 @@
-<section class="card bg-base-100 border">
-    <div class="card-body">
-        <h2 class="card-title">مشخصات فنی</h2>
-        <form hx-post="{% url 'panel:product_specs' product.pk %}" hx-target="#sec-specs" hx-swap="outerHTML">
-            {% csrf_token %}
-            {% for attr, field, sugg in spec_rows %}
-            <div class="form-control mb-2">
-                <label class="label">{{ attr.name }}</label>
-                {{ field }}
-            </div>
-            {% endfor %}
-            <button type="submit" class="btn btn-primary mt-4">ذخیره مشخصات</button>
-        </form>
+{% load core_tags %}
+<section id="sec-specs" class="bg-base-100 border rounded-box p-4 flex flex-col gap-4"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+  <h2 class="text-lead font-medium">مشخصات فنی</h2>
+  {% if spec_rows %}
+    <form method="post" action="{% url 'panel:product_specs' product.pk %}" hx-post="{% url 'panel:product_specs' product.pk %}"
+          hx-target="#sec-specs" hx-swap="outerHTML" hx-disabled-elt="find button[type='submit']" class="flex flex-col gap-4" novalidate>
+      {% csrf_token %}
+      <div class="grid sm:grid-cols-2 gap-4">
+        {% for attribute, field, suggestions in spec_rows %}
+          <div>
+            {% include "panel/partials/_field.html" %}
+            {% if suggestions %}<datalist id="spec-list-{{ attribute.pk }}">{% for value in suggestions %}<option value="{{ value }}">{% endfor %}</datalist>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      <button type="submit" class="btn btn-sm h-10 bg-base-300 border self-start">ذخیره‌ی مشخصات</button>
+    </form>
+  {% else %}
+    <p class="text-small text-ink-2">برای دسته‌ی این محصول مشخصه‌ای تعریف نشده است</p>
+  {% endif %}
+  {% if orphans %}
+    <div class="border-t pt-3 flex flex-col gap-2">
+      <span class="text-small font-medium">خارج از دسته‌ی فعلی</span>
+      {% for value in orphans %}
+        <div class="flex items-center justify-between gap-3 text-small">
+          <span>{{ value.attribute.name|fa_text }}: {{ value.value_text|fa_text }}</span>
+          <button type="button" class="btn btn-ghost btn-sm h-10 text-error" hx-post="{% url 'panel:product_spec_remove' product.pk value.pk %}" hx-target="#sec-specs" hx-swap="outerHTML" hx-disabled-elt="this">حذف</button>
+        </div>
+      {% endfor %}
     </div>
+  {% endif %}
 </section>

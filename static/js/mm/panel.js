@@ -84,6 +84,34 @@
     if (panel && !target.closest("[data-panel-search]")) panel.classList.add("hidden");
   });
 
+  /* ----- [data-when]: a field wrapper shown only while another field of the same form has one of the listed values ----- */
+  function applyWhen(form) {
+    Array.prototype.forEach.call(form.querySelectorAll("[data-when]"), function (box) {
+      var control = form.elements[box.getAttribute("data-when")];
+      if (!control) return;
+      var show = box.getAttribute("data-values").split(",").indexOf(control.value) !== -1;
+      box.classList.toggle("hidden", !show);
+    });
+  }
+  document.addEventListener("change", function (event) {
+    if (event.target.form) applyWhen(event.target.form);
+  });
+  MM.init("panel-when", function (root) {
+    MM.each(root, "form", applyWhen);
+  });
+
+  /* ----- input[type=file][data-preview="#img"]: show the chosen picture before saving ----- */
+  document.addEventListener("change", function (event) {
+    var input = event.target;
+    if (!input.matches || !input.matches("input[type='file'][data-preview]") || !input.files || !input.files[0]) return;
+    var img = document.querySelector(input.getAttribute("data-preview"));
+    if (!img) return;
+    if (img.dataset.blob) URL.revokeObjectURL(img.dataset.blob);
+    img.dataset.blob = URL.createObjectURL(input.files[0]);
+    img.src = img.dataset.blob;
+    img.classList.remove("hidden");
+  });
+
   /* HX-Trigger: {"mm:popover-close": {"id": "..."}} closes a popover modal after a successful save */
   document.addEventListener("mm:popover-close", function (event) {
     var el = document.getElementById((event.detail || {}).id);

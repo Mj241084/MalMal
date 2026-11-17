@@ -1,11 +1,15 @@
-{% extends "panel/base.html" %}
+{% extends "panel/shell.html" %}
+{% load core_tags %}
+{% block title %}محصول تازه{% endblock %}
 {% block content %}
-<h1 class="text-h2 mb-6">افزودن محصول</h1>
-<form method="post" class="max-w-xl bg-base-100 p-6 rounded-box border">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <div class="mt-6">
-    <button type="submit" class="btn btn-primary">ایجاد پیش‌نویس</button>
-  </div>
-</form>
+<div class="flex flex-col gap-4 max-w-xl">
+  {% url 'panel:products' as back_url %}
+  {% include "panel/partials/_form_head.html" with back_url=back_url title="محصول تازه" %}
+  <form method="post" class="bg-base-100 border rounded-box p-4 flex flex-col gap-4" novalidate>
+    {% csrf_token %}
+    <p class="text-small text-ink-2">ابتدا یک پیش‌نویس ساخته می‌شود؛ عکس، قیمت و مشخصات را در مرحله‌ی بعد کامل می‌کنید</p>
+    {% for field in form.visible_fields %}{% include "panel/partials/_field.html" %}{% endfor %}
+    {% include "panel/partials/_save_bar.html" with back_url=back_url label="ساخت پیش‌نویس" %}
+  </form>
+</div>
 {% endblock %}

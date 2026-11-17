@@ -226,6 +226,7 @@ def _studio_context(request, product: Product, **forms) -> dict:
         "publish_warnings": warnings,
         "delete_block": services.delete_block_reason(product),
         "can_delete": user.has_perm("catalog.delete_product"),
+        "can_stock": user.has_perm("catalog.adjust_stock"),
     }
 
 

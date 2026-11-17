@@ -1,0 +1,13 @@
+{% extends "panel/shell.html" %}
+{% block title %}بازاریابی{% endblock %}
+{% block content %}
+<div class="flex flex-col gap-4">
+  <div class="flex items-center justify-between gap-3">
+    {% include "panel/partials/_page_heading.html" with title="بازاریابی" %}
+    {% if can_add %}<a href="{% url 'panel:block_new' %}" class="btn btn-primary h-10">افزودن بلوک</a>{% endif %}
+  </div>
+  {% include "panel/marketing/_tabs.html" with active="blocks" %}
+  <p class="text-small text-ink-2">ترتیب این فهرست همان ترتیب نمایش در صفحه‌ی اصلی است. <a href="{% url 'core:home' %}" target="_blank" rel="noopener" class="link">پیش‌نمایش صفحه‌ی اصلی</a></p>
+  <div id="blocks-list" aria-live="polite">{% include "panel/marketing/_blocks_list.html" %}</div>
+</div>
+{% endblock %}

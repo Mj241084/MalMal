@@ -1,18 +1,36 @@
-<section class="card bg-base-100 border">
-    <div class="card-body">
-        <h2 class="card-title">مشخصات فنی</h2>
-        {% for a, form in rows %}
-        <form hx-post="{% url 'panel:spec_edit' attrs_category.pk a.pk %}" hx-target="#attrs" hx-swap="outerHTML" class="flex gap-2 items-center mb-2">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-sm">ذخیره</button>
-            <button type="button" hx-post="{% url 'panel:spec_action' attrs_category.pk a.pk 'delete' %}" hx-target="#attrs" hx-swap="outerHTML" class="btn btn-sm btn-error">حذف</button>
-        </form>
-        {% endfor %}
-        <form hx-post="{% url 'panel:spec_new' attrs_category.pk %}" hx-target="#attrs" hx-swap="outerHTML">
-            {% csrf_token %}
-            {{ new_form.as_p }}
-            <button type="submit" class="btn btn-primary w-full">افزودن مشخصه</button>
-        </form>
+{% load core_tags %}
+<section id="attrs" class="bg-base-100 border rounded-box p-4 flex flex-col gap-4">
+  <h2 class="text-lead font-medium">مشخصات فنی این دسته</h2>
+  {% for attribute, form in rows %}
+    <div class="border rounded-field p-3 flex flex-col gap-3">
+      <form method="post" action="{% url 'panel:spec_edit' attrs_category.pk attribute.pk %}" hx-post="{% url 'panel:spec_edit' attrs_category.pk attribute.pk %}"
+            hx-target="#attrs" hx-swap="outerHTML" hx-disabled-elt="find button[type='submit']" class="flex flex-col gap-3" novalidate>
+        {% csrf_token %}
+        <div class="grid sm:grid-cols-2 gap-3">{% for field in form.visible_fields %}{% include "panel/partials/_field.html" %}{% endfor %}</div>
+        {% if can_attr %}<button type="submit" class="btn btn-sm h-10 bg-base-300 border self-start">ذخیره</button>{% endif %}
+      </form>
+      {% if can_attr %}
+        <div class="flex flex-wrap items-center gap-1 border-t pt-3">
+          <span class="text-label text-ink-3 me-auto"><span class="num">{{ attribute.value_count|fa_digits }}</span> محصول مقدار دارند</span>
+          <button type="button" class="btn btn-ghost btn-square btn-sm w-10 h-10" aria-label="بالاتر" hx-post="{% url 'panel:spec_action' attrs_category.pk attribute.pk 'up' %}" hx-target="#attrs" hx-swap="outerHTML" hx-disabled-elt="this">{% icon "arrow-up" size=18 %}</button>
+          <button type="button" class="btn btn-ghost btn-square btn-sm w-10 h-10" aria-label="پایین‌تر" hx-post="{% url 'panel:spec_action' attrs_category.pk attribute.pk 'down' %}" hx-target="#attrs" hx-swap="outerHTML" hx-disabled-elt="this">{% icon "arrow-down" size=18 %}</button>
+          <button type="button" class="btn btn-ghost btn-sm h-10 text-error" hx-post="{% url 'panel:spec_action' attrs_category.pk attribute.pk 'delete' %}" hx-target="#attrs" hx-swap="outerHTML"
+                  hx-confirm="این مشخصه و مقدارهای ثبت‌شده‌ی آن حذف شود؟" data-confirm-title="حذف مشخصه" data-confirm-label="حذف" data-confirm-tone="danger">حذف</button>
+        </div>
+      {% endif %}
     </div>
+  {% empty %}
+    <p class="text-small text-ink-2">هنوز مشخصه‌ای برای این دسته تعریف نشده است</p>
+  {% endfor %}
+  {% if can_attr %}
+    <details class="border rounded-field p-3"{% if new_form.errors %} open{% endif %}>
+      <summary class="text-small font-medium cursor-pointer min-h-10 flex items-center">افزودن مشخصه</summary>
+      <form method="post" action="{% url 'panel:spec_new' attrs_category.pk %}" hx-post="{% url 'panel:spec_new' attrs_category.pk %}"
+            hx-target="#attrs" hx-swap="outerHTML" hx-disabled-elt="find button[type='submit']" class="flex flex-col gap-3 mt-3" novalidate>
+        {% csrf_token %}
+        <div class="grid sm:grid-cols-2 gap-3">{% for field in new_form.visible_fields %}{% include "panel/partials/_field.html" %}{% endfor %}</div>
+        <button type="submit" class="btn btn-sm h-10 bg-base-300 border self-start">افزودن</button>
+      </form>
+    </details>
+  {% endif %}
 </section>

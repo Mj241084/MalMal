@@ -1,10 +1,26 @@
-<div class="bg-base-100 rounded-box border p-4">
-    {% for cat in categories %}
-    <div class="flex items-center gap-2 mb-2" style="margin-right: {{ cat.level }}rem">
-        <a href="{% url 'panel:category_edit' cat.pk %}" class="link">{{ cat.name }}</a>
-        <span class="text-xs text-ink-3">({{ cat.product_count }})</span>
-        <form hx-post="{% url 'panel:category_move' cat.pk 'up' %}" hx-target="#tree">{% csrf_token %}<button {% if cat.is_first %}disabled{% endif %}>↑</button></form>
-        <form hx-post="{% url 'panel:category_move' cat.pk 'down' %}" hx-target="#tree">{% csrf_token %}<button {% if cat.is_last %}disabled{% endif %}>↓</button></form>
-    </div>
-    {% endfor %}
-</div>
+{% load core_tags %}
+{% if categories %}
+<ul class="flex flex-col gap-2">
+  {% for cat in categories %}
+    <li class="bg-base-100 border rounded-box p-3 flex items-center gap-3{% if not cat.is_active %} opacity-60{% endif %}" style="margin-inline-start: calc({{ cat.depth }} * 1.5rem)">
+      <div class="min-w-0 flex-1 flex flex-col gap-1">
+        {% if can_change %}<a href="{% url 'panel:category_edit' cat.pk %}" class="text-small font-medium line-clamp-1">{{ cat.name|fa_text }}</a>{% else %}<span class="text-small font-medium line-clamp-1">{{ cat.name|fa_text }}</span>{% endif %}
+        <span class="flex flex-wrap items-center gap-2 text-label text-ink-3">
+          <span class="num">{{ cat.product_count|fa_digits }} محصول</span>
+          {% if cat.is_featured %}<span class="badge badge-sm badge-soft">برتر</span>{% endif %}
+          {% if cat.show_in_menu %}<span class="badge badge-sm badge-soft">در منو</span>{% endif %}
+          {% if not cat.is_active %}<span class="badge badge-sm badge-soft">غیرفعال</span>{% endif %}
+        </span>
+      </div>
+      {% if can_change %}
+        <div class="flex items-center gap-1 shrink-0">
+          <button type="button" class="btn btn-ghost btn-square w-10 h-10" aria-label="بالاتر"{% if cat.is_first %} disabled{% endif %} hx-post="{% url 'panel:category_move' cat.pk 'up' %}" hx-target="#tree" hx-swap="innerHTML" hx-disabled-elt="this">{% icon "arrow-up" size=18 %}</button>
+          <button type="button" class="btn btn-ghost btn-square w-10 h-10" aria-label="پایین‌تر"{% if cat.is_last %} disabled{% endif %} hx-post="{% url 'panel:category_move' cat.pk 'down' %}" hx-target="#tree" hx-swap="innerHTML" hx-disabled-elt="this">{% icon "arrow-down" size=18 %}</button>
+        </div>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% else %}
+  {% include "partials/_empty_state.html" with title="هنوز دسته‌ای ثبت نشده" description="با «افزودن دسته» شروع کنید" %}
+{% endif %}

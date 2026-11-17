@@ -1,10 +1,14 @@
-<form method="post" enctype="multipart/form-data" hx-post="{% if brand %}{% url 'panel:brand_edit' brand.pk %}{% else %}{% url 'panel:brand_new' %}{% endif %}" hx-target="#brand-modal-body">
-    {% csrf_token %}
-    <div id="brand-form-body">
-        {{ form.as_p }}
-    </div>
-    <div class="modal-action">
-        <button type="submit" class="btn btn-primary">ذخیره</button>
-        <button type="button" class="btn" onclick="brand_modal.close()">بستن</button>
-    </div>
+{% load core_tags %}
+{% url 'panel:brand_new' as new_url %}
+<form method="post" enctype="multipart/form-data" action="{% if brand %}{% url 'panel:brand_edit' brand.pk %}{% else %}{{ new_url }}{% endif %}"
+      hx-post="{% if brand %}{% url 'panel:brand_edit' brand.pk %}{% else %}{{ new_url }}{% endif %}" hx-encoding="multipart/form-data"
+      hx-target="#brands-results" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']" class="flex flex-col gap-3" novalidate>
+  {% csrf_token %}
+  <h3 class="text-lead font-medium">{% if brand %}ویرایش برند{% else %}برند تازه{% endif %}</h3>
+  {% for e in form.non_field_errors %}<div role="alert" class="alert alert-error text-small">{% icon "alert-circle" size=18 class="shrink-0" %}<span>{{ e }}</span></div>{% endfor %}
+  {% for field in form.visible_fields %}{% include "panel/partials/_field.html" %}{% endfor %}
+  <div class="flex items-center gap-2 border-t pt-3">
+    <button type="submit" class="btn btn-primary flex-1 h-11 min-h-11">ذخیره</button>
+    <button type="button" popovertarget="brand-modal" popovertargetaction="hide" class="btn btn-ghost h-11 text-ink-2">انصراف</button>
+  </div>
 </form>
