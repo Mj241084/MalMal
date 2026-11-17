@@ -1,0 +1,16 @@
+{% load core_tags %}
+<section class="bg-base-100 border rounded-box p-4 flex flex-col gap-3">
+  <div class="flex items-center justify-between gap-3">
+    <h2 class="text-lead font-medium">صفحه‌های نیازمند بازبینی</h2>
+    <a href="{% url 'panel:pages' %}" class="text-small text-brand-ink">محتوا</a>
+  </div>
+  {% for page in review_pages %}
+    <div class="flex items-center justify-between gap-3 {% if not forloop.first %}border-t pt-3{% endif %}">
+      <span class="min-w-0 flex flex-col">
+        <span class="text-small line-clamp-1">{{ page.title|fa_text }}</span>
+        <bdi class="latin text-label text-ink-3">/pages/{{ page.slug }}/</bdi>
+      </span>
+      {% if can_edit_pages %}<a href="{% url 'panel:page_edit' page.pk %}" class="btn btn-sm h-10 bg-base-300 border shrink-0">بازبینی</a>{% endif %}
+    </div>
+  {% endfor %}
+</section>

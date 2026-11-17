@@ -11,7 +11,7 @@
         <div class="relative flex-1 max-w-xl" role="search" data-panel-search>
           <label class="input h-10 w-full bg-base-200 flex items-center gap-2">
             {% icon "search" size=18 class="text-ink-3" %}
-            <input type="search" name="q" placeholder="جستجو: سفارش، موبایل، کد رهگیری" class="grow text-small" autocomplete="off"
+            <input type="search" name="q" placeholder="جستجو: سفارش، محصول، مشتری" class="grow text-small" autocomplete="off"
                    aria-label="جستجوی سراسری"
                    hx-get="{% url 'panel:search' %}" hx-trigger="input changed delay:300ms, search"
                    hx-target="#search-results" hx-swap="innerHTML" hx-indicator="#search-indicator">

@@ -15,10 +15,12 @@ def dashboard(request):
     can_orders = user.has_perm("orders.view_order")
     can_reviews = user.has_perm("engagement.view_review")
     can_stock = user.has_perm("catalog.view_variant")
+    can_pages = user.has_perm("core.view_staticpage")
     context = {
         "can_orders": can_orders,
         "can_reviews": can_reviews,
         "can_stock": can_stock,
+        "can_pages": can_pages,
         "refunds": payment_services.refund_candidates().count() if user.has_perm("payments.view_payment") else 0,
     }
     if can_orders:
@@ -27,4 +29,8 @@ def dashboard(request):
         context.update(reviews_pending=queries.reviews_pending(), **queries.review_queue(user))
     if can_stock:
         context.update(stock_alerts=queries.stock_alert_count(), wanted=queries.wanted_out_of_stock())
+    if can_pages:
+        context.update(
+            review_pages=queries.pages_needing_review(), can_edit_pages=user.has_perm("core.change_staticpage")
+        )
     return render(request, "panel/dashboard.html", context)

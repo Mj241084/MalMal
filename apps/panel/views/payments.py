@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.core.text import normalize_fa
-from apps.panel import audit, auth, htmx, queries
+from apps.panel import audit, auth, badges, htmx, queries
 from apps.panel.permissions import panel_view
 from apps.payments import services as payment_services
 from apps.payments.models import Payment
@@ -92,6 +92,7 @@ def payment_refund(request, pk):
             message, level = str(exc), "error"
         else:
             audit.log(request.user, result.payment, audit.CHANGE, f"بازگشت وجه ثبت شد: {note}")
+            badges.bust("refunds")
             message, level = "بازگشت وجه ثبت شد", "success"
 
     if request.htmx:  # only the payments list posts with HTMX; the order page posts normally

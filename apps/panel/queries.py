@@ -11,7 +11,7 @@ from apps.catalog.models import Product, Variant
 from apps.core.cache import safe_cache_get, safe_cache_set
 from apps.core.jalali import to_fa_digits
 from apps.core.jalali_forms import parse_jalali_safe
-from apps.core.models import SiteSettings
+from apps.core.models import SiteSettings, StaticPage
 from apps.core.text import normalize_fa
 from apps.engagement.models import Review
 from apps.notifications import sms
@@ -155,3 +155,11 @@ def backup_status() -> dict | None:
         return {"name": "", "at": None, "stale": True}
     moment = datetime.fromtimestamp(files[0].stat().st_mtime, tz=timezone.get_current_timezone())
     return {"name": files[0].name, "at": moment, "stale": timezone.now() - moment > timedelta(days=2)}
+
+
+# --- Phase 15 helpers --------------------------------------------------------
+
+
+def pages_needing_review(limit: int = 5) -> list[StaticPage]:
+    """Active static pages still marked as drafts (check_launch warns about the same ones)."""
+    return list(StaticPage.objects.filter(is_active=True, needs_review=True).order_by("title")[:limit])

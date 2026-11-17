@@ -17,7 +17,7 @@ from apps.core.jalali import to_fa_digits
 from apps.orders import notify, shipping, workflow
 from apps.orders.invoice import render_invoice
 from apps.orders.models import PAID_STATES, Order
-from apps.panel import audit, htmx, queries
+from apps.panel import audit, badges, htmx, queries
 from apps.panel.forms import StatusChangeForm
 from apps.panel.permissions import panel_view
 from apps.payments import services as payment_services
@@ -105,6 +105,7 @@ def order_bulk(request):
         except workflow.TransitionError:
             continue  # someone else moved it meanwhile
         done += 1
+    badges.bust("orders_to_ship")
     skipped = len(numbers) - done
     message = to_fa_digits(f"{done} سفارش در حال آماده‌سازی شد" + (f"، {skipped} مورد مجاز نبود" if skipped else ""))
     level = "success" if done and not skipped else "warning"
@@ -202,6 +203,8 @@ def order_status(request, number):
         )
     except workflow.TransitionError as exc:  # illegal move, missing tracking code, or a stale page
         return _detail_response(request, number, str(exc), "error")
+    badges.bust("orders_to_ship")
+    badges.bust("refunds")
     return _detail_response(request, number, DONE[data["to"]])
 
 

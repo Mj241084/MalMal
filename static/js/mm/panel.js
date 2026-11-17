@@ -122,4 +122,11 @@
     var swapped = event.detail && event.detail.target;
     if (swapped && swapped.id === "search-results") swapped.classList.toggle("hidden", !swapped.innerHTML.trim());
   });
+
+  /* Escape closes the global search results */
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape") return;
+    var panel = document.getElementById("search-results");
+    if (panel) panel.classList.add("hidden");
+  });
 })(window.MM);

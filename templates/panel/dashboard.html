@@ -41,11 +41,14 @@
         </a>
       {% endif %}
     </section>
+  {% endif %}
 
-    {% if can_orders %}{% include "panel/partials/_ship_queue.html" %}{% endif %}
-    {% if can_reviews and review_queue %}{% include "panel/partials/_review_queue.html" %}{% endif %}
-    {% if can_stock and wanted %}{% include "panel/partials/_wanted_stock.html" %}{% endif %}
-  {% elif not refunds %}
+  {% if can_orders %}{% include "panel/partials/_ship_queue.html" %}{% endif %}
+  {% if can_reviews and review_queue %}{% include "panel/partials/_review_queue.html" %}{% endif %}
+  {% if can_stock and wanted %}{% include "panel/partials/_wanted_stock.html" %}{% endif %}
+  {% if can_pages and review_pages %}{% include "panel/partials/_pages_review.html" %}{% endif %}
+
+  {% if not refunds and not can_orders and not can_reviews and not can_stock and not can_pages %}
     {% include "partials/_empty_state.html" with title="هنوز بخشی به حساب شما اضافه نشده" description="از مدیر کل بخواهید دسترسی‌های لازم را بدهد" %}
   {% endif %}
 </div>
