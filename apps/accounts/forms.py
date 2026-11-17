@@ -209,7 +209,8 @@ class AddressForm(FieldErrorAttrsMixin, forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         self.user = user
         super().__init__(*args, **kwargs)
-        geo_services.refresh_provinces()
+        if not self.is_bound:  # a POST validates against what is already stored; never wait for Neshan there
+            geo_services.refresh_provinces()
         self.fields["province"].queryset = Province.objects.order_by("sort", "name")
         self.fields["province"].empty_label = "انتخاب استان"
         self.fields["city"].queryset = City.objects.none()

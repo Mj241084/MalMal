@@ -1,4 +1,5 @@
 {% load core_tags jalali_tags panel_tags %}
+{% url 'panel:payments' as payments_url %}
 <input type="hidden" id="payments-tab" name="tab" value="{{ tab }}">
 <div class="flex flex-col gap-4">
   <div role="tablist" class="tabs tabs-border overflow-x-auto no-scrollbar">
@@ -31,7 +32,7 @@
               <td>
                 {% if can_refund and p.pk in candidate_ids %}
                   <button type="button" popovertarget="refund-{{ p.pk }}" class="btn btn-sm h-10 bg-base-300 border whitespace-nowrap">ثبت بازگشت وجه</button>
-                  {% include "panel/payments/_refund_modal.html" with payment=p next=request.get_full_path htmx_target="#payments-results" %}
+                  {% include "panel/payments/_refund_modal.html" with payment=p next=payments_url htmx_target="#payments-results" %}
                 {% endif %}
               </td>
             </tr>
@@ -44,3 +45,4 @@
     {% include "partials/_empty_state.html" with title="پرداختی پیدا نشد" description="فیلترها را تغییر دهید یا تب دیگری را ببینید" %}
   {% endif %}
 </div>
+{% if sidebar_oob %}{% render_sidebar oob=True %}{% endif %}

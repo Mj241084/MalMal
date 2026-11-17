@@ -135,8 +135,12 @@ def invalidate_product(
     reindex_product(product_id)
 
 
-def invalidate_category(category_id: int, old_path: str | None = None) -> None:
-    """Structural category change: the subtree caches (of the old chain too, after a move) and the menu epoch move."""
+def invalidate_category(category_id: int, old_path: str | None = None, *, reindex_search: bool = False) -> None:
+    """Structural category change: the subtree caches (of the old chain too, after a move) and the menu epoch move.
+
+    `reindex_search=True` (a rename or a move) also rebuilds the search text of every product under the category,
+    because the category chain is part of it.
+    """
     from apps.catalog.tree import ancestor_ids
 
     ids = _ancestor_ids(category_id)
@@ -144,6 +148,27 @@ def invalidate_category(category_id: int, old_path: str | None = None) -> None:
         ids += ancestor_ids(old_path)
     bump_subtree_rev(ids)
     bump_epoch()
+    if reindex_search:
+        _refresh_category_search(category_id)
+
+
+def _refresh_category_search(category_id: int) -> None:
+    from apps.catalog.models import Category, Product
+    from apps.catalog.search_text import build_search_text
+    from apps.catalog.tree import subtree_upper_bound
+    from apps.search.index import reindex_product
+
+    path = Category.objects.filter(pk=category_id).values_list("path", flat=True).first()
+    if not path:
+        return
+    products = Product.objects.filter(
+        category_path__gte=path, category_path__lt=subtree_upper_bound(path)
+    ).select_related("brand", "category")
+    for product in products:
+        text = build_search_text(product)
+        if text != product.search_text:
+            Product.objects.filter(pk=product.pk).update(search_text=text)  # allowed file (architecture test)
+            reindex_product(product.pk)
 
 
 def touch_product(product_id: int, level: str = LEVEL_LIST) -> None:

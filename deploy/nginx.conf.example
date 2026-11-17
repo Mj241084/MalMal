@@ -1,4 +1,5 @@
 limit_req_zone $binary_remote_addr zone=otp:10m rate=10r/m;
+limit_req_zone $binary_remote_addr zone=adminlogin:10m rate=5r/m;
 limit_req_status 429;
 
 server {
@@ -21,6 +22,15 @@ server {
 
     location = /auth/otp/request/ {
         limit_req zone=otp burst=5 nodelay;
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    # Replace ADMIN_URL_VALUE with the real ADMIN_URL (without slashes), e.g. s3cret-area
+    location = /ADMIN_URL_VALUE/login/ {
+        limit_req zone=adminlogin burst=5 nodelay;
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

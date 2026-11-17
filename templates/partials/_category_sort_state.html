@@ -1,0 +1,3 @@
+<form id="category-sort-form" class="hidden" hx-swap-oob="true">
+  {% for name, value in filters.pairs %}{% if name != 'sort' %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endif %}{% endfor %}
+</form>

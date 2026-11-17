@@ -61,7 +61,8 @@ def start(order: Order, gateway_code: str, *, ip: str | None = None) -> str:
         raise PaymentStartError(f"unknown gateway {gateway_code!r}") from exc
 
     # The customer is about to leave for the bank: keep the reservation past their return (capped).
-    order_services.extend_reservation(order.pk)
+    if not order_services.extend_reservation(order.pk):
+        raise PaymentStartError("order is no longer payable")
     payment = Payment.objects.create(order=order, gateway_code=gateway_code, amount=order.payable, ip=ip)
     callback = f"{settings.SITE_URL}{reverse('payments:callback', args=[gateway_code])}"
     try:

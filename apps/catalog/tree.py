@@ -12,7 +12,7 @@ The upper bound is the path with its trailing ``/`` replaced by ``"0"`` because
 from __future__ import annotations
 
 from django.db.models import Value
-from django.db.models.functions import Replace
+from django.db.models.functions import Concat, Substr
 
 
 def subtree_upper_bound(path: str) -> str:
@@ -59,6 +59,7 @@ def move_subtree(category, old_path: str) -> None:
         updated = f"{new_path}{suffix}"
         Category.objects.filter(pk=descendant.pk).update(path=updated, depth=depth_of(updated))
 
+    # Swap only the leading old_path: REPLACE would also hit a second occurrence ("1/" inside "1/11/").
     Product.objects.filter(category_path__gte=lower, category_path__lt=upper).update(
-        category_path=Replace("category_path", Value(old_path), Value(new_path))
+        category_path=Concat(Value(new_path), Substr("category_path", len(old_path) + 1))
     )

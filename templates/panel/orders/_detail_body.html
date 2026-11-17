@@ -154,9 +154,10 @@
 {% endif %}
 
 {% if can_refund %}
+  {% url 'panel:order_detail' order.number as order_url %}
   {% for p in payments %}
     {% if p.pk in refund_ids or p.pk == refund_payment.pk %}
-      {% include "panel/payments/_refund_modal.html" with payment=p next=request.path htmx_target="" %}
+      {% include "panel/payments/_refund_modal.html" with payment=p next=order_url htmx_target="" %}
     {% endif %}
   {% endfor %}
 {% endif %}

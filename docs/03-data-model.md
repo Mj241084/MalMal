@@ -340,6 +340,7 @@ CREATE VIRTUAL TABLE product_fts USING fts5(
 
 ## ۱۱. تغییرات
 
+- ۰.۳.۱۵ — اصلاحات بازبینی: search_text و ردیف FTS با تغییر نام یا والد دسته (invalidate_category با reindex_search) و تغییر sku یا options تنوع به‌روز می‌شوند؛ move_subtree پیشوند category_path را با Concat/Substr عوض می‌کند (نه Replace).
 - ۰.۳.۱۴ (P13) — بدون مدل و مهاجرت؛ `marketing.services.rule_queryset` و `banner_target_dead` اضافه شد و `collection_products` به `rule_queryset` واگذار می‌کند.
 - ۰.۳.۱۲ (پنل، برنامه‌ریزی) — اپ `panel` در جدول اپ‌ها (بدون مدل و مهاجرت؛ ممیزی روی `LogEntry`)، مجوز `catalog.adjust_stock` روی `Variant.Meta.permissions` (P12)، قرارداد `StockMovement.note` برای حرکت دستی، و اتصال اکشن بازگشت وجه به `record_refund` (P10). عنوان سند با تاریخچه (۰.۳.۱۱) هم‌تراز شد؛ قبلاً ۰.۳.۹ مانده بود. هیچ‌کدام تا اجرای فاز مربوط در کد نیست.
 - ۰.۳.۱۱ (P8 اصلاحی) — حذف `is_demo` از مدل‌های کاتالوگ و بازاریابی، حذف `is_placeholder` از `TrustItem`، حذف `weight_g` و `max_weight_g`، و افزودن `neshan_id` روی `Province`/`City` برای همگام‌سازی با Region API نشان (`sync_geo` و کش ۷ روزه).

@@ -137,7 +137,8 @@ def category_view(request: HttpRequest, pk: int, slug: str) -> HttpResponse:
     results_html = get_or_build(key, lambda: _render_results(category, filters), TTL_CATEGORY_LIST)
 
     if request.htmx:
-        response = HttpResponse(results_html)
+        state = render_to_string("partials/_category_sort_state.html", {"filters": filters})
+        response = HttpResponse(results_html + state)
         response["Cache-Control"] = "private, no-store"
         return response
 

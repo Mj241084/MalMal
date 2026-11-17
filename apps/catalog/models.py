@@ -180,7 +180,8 @@ class Category(TimeStampedModel):
         if changed or moved:
             category_id = self.pk
             moved_from = old_path if moved else None
-            transaction.on_commit(lambda: invalidate_category(category_id, moved_from))
+            reindex = bool(old_path) and (moved or bool({"name", "parent_id"} & changed))
+            transaction.on_commit(lambda: invalidate_category(category_id, moved_from, reindex_search=reindex))
 
 
 class ProductQuerySet(models.QuerySet):
@@ -471,7 +472,7 @@ class Variant(TimeStampedModel):
     def save(self, *args, **kwargs) -> None:
         previous = {}
         if self.pk and not self._state.adding:
-            previous = Variant.objects.filter(pk=self.pk).values(*VARIANT_DETAIL_FIELDS, "stock").first() or {}
+            previous = Variant.objects.filter(pk=self.pk).values(*VARIANT_DETAIL_FIELDS, "stock", "sku").first() or {}
 
         super().save(*args, **kwargs)
 
@@ -479,6 +480,16 @@ class Variant(TimeStampedModel):
         before = _list_snapshot(product)
         product.refresh_aggregates()
         list_moved = before != _list_snapshot(product)  # Product.save already did the LIST invalidation
+
+        # sku and options feed Product.search_text (and through it the FTS row): keep them in step.
+        if previous.get("sku") != self.sku or previous.get("options") != self.options:
+            from apps.catalog.search_text import build_search_text
+
+            text = build_search_text(product)
+            if text != product.search_text:
+                product.search_text = text
+                product.save(update_fields=["search_text"])  # LIST invalidation + FTS reindex
+                list_moved = True
 
         if previous.get("stock") == 0 and self.stock > 0 and self.is_active:
             from apps.engagement import back_in_stock

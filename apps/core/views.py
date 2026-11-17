@@ -5,6 +5,7 @@ from __future__ import annotations
 from django.conf import settings
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template import loader
 from django.views.decorators.http import require_GET
 
 from apps.core import shortlinks
@@ -117,4 +118,5 @@ def custom_404_view(request: HttpRequest, exception=None) -> HttpResponse:
 
 
 def custom_500_view(request: HttpRequest) -> HttpResponse:
-    return render(request, "500.html", status=500)
+    # No request context on purpose: the context processors need the database and Redis, which may be what failed.
+    return HttpResponse(loader.get_template("500.html").render({}), status=500)

@@ -96,7 +96,8 @@ def payment_refund(request, pk):
             message, level = "بازگشت وجه ثبت شد", "success"
 
     if request.htmx:  # only the payments list posts with HTMX; the order page posts normally
-        response = render(request, "panel/payments/_list_results.html", _list_context(request.POST, request.user))
+        context = {**_list_context(request.POST, request.user), "sidebar_oob": True}
+        response = render(request, "panel/payments/_list_results.html", context)
         return htmx.toast(response, message, level)
     htmx.flash(request, message, level)
     return redirect(auth.safe_next(request, request.POST.get("next")))

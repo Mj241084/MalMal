@@ -90,14 +90,21 @@ def reserve_again(order: Order) -> bool:
     return True
 
 
-def extend_reservation(order_id: int) -> None:
-    """Keep the stock for the customer while they are at the bank (capped, so it cannot be held forever)."""
-    order = Order.objects.filter(pk=order_id, status=Order.PENDING).first()
-    if order is None:
-        return
-    target = min(timezone.now() + PAYMENT_GRACE, order.created_at + ORDER_RESERVE + PAYMENT_GRACE)
-    if order.reserved_until is None or order.reserved_until < target:
-        Order.objects.filter(pk=order_id, status=Order.PENDING).update(reserved_until=target, updated_at=timezone.now())
+def extend_reservation(order_id: int) -> bool:
+    """Keep the stock for the customer while they are at the bank (capped, so it cannot be held forever).
+
+    False when the order is no longer pending or its reservation already ended: the caller must not send the
+    customer to the bank. The IMMEDIATE transaction serializes this against expire_order.
+    """
+    now = timezone.now()
+    with transaction.atomic():
+        order = Order.objects.filter(pk=order_id, status=Order.PENDING, reserved_until__gt=now).first()
+        if order is None:
+            return False
+        target = min(now + PAYMENT_GRACE, order.created_at + ORDER_RESERVE + PAYMENT_GRACE)
+        if order.reserved_until < target:
+            Order.objects.filter(pk=order_id, status=Order.PENDING).update(reserved_until=target, updated_at=now)
+    return True
 
 
 def cancel_pending(order: Order, *, reason: str) -> bool:
