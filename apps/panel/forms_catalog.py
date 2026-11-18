@@ -257,6 +257,15 @@ class QuickPriceForm(FieldErrorAttrsMixin, forms.Form):
         return cleaned
 
 
+# Shown under each specification field so the editor knows what kind of value the attribute takes.
+SPEC_TYPE_HINTS = {
+    SpecAttribute.TYPE_TEXT: "نوع: متنی",
+    SpecAttribute.TYPE_NUMBER: "نوع: عددی (مثلاً ۱۲ یا ۱۲٫۵)",
+    SpecAttribute.TYPE_BOOL: "نوع: بله/خیر",
+    SpecAttribute.TYPE_CHOICE: "نوع: انتخابی",
+}
+
+
 class SpecNumberField(forms.Field):
     """Persian or Arabic digits, «٬» thousands and «٫» decimals in; a Decimal with two places out."""
 
@@ -264,6 +273,8 @@ class SpecNumberField(forms.Field):
         if value in self.empty_values:
             return None
         text = _SEPARATORS.sub("", normalize_digits(str(value))).replace("٫", ".")
+        if not re.fullmatch(r"-?\d+(\.\d+)?", text):  # no letters, no «1e5», no «NaN»
+            raise ValidationError("عدد معتبر وارد کنید")
         try:
             number = Decimal(text)
         except InvalidOperation:
@@ -293,7 +304,9 @@ class SpecsForm(FieldErrorAttrsMixin, forms.Form):
                 field = SpecNumberField(
                     label=label,
                     required=False,
-                    widget=FaDigitsInput(attrs={"class": "input w-full text-end num", "inputmode": "decimal"}),
+                    widget=FaDigitsInput(
+                        attrs={"class": "input w-full text-end num", "inputmode": "decimal", "data-number-only": "1"}
+                    ),
                 )
             else:
                 field = forms.CharField(
@@ -302,6 +315,7 @@ class SpecsForm(FieldErrorAttrsMixin, forms.Form):
                     max_length=255,
                     widget=FaTextInput(attrs={"class": "input w-full", "list": f"spec-list-{attribute.pk}"}),
                 )
+            field.help_text = SPEC_TYPE_HINTS.get(attribute.type, "")
             saved = existing.get(attribute.pk)
             if saved is not None:
                 if attribute.type == SpecAttribute.TYPE_BOOL:

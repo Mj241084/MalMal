@@ -7,6 +7,7 @@
     var end = input.selectionEnd;
     var next = MM.fmt.faDigits(MM.fmt.enDigits(input.value));
     if (input.hasAttribute("data-digits-only")) next = next.replace(/[^۰-۹]/g, "");
+    if (input.hasAttribute("data-number-only")) next = next.replace(/[^۰-۹٫.\-]/g, "");
     if (next === input.value) return;
     input.value = next;
     try {

@@ -32,3 +32,10 @@ assets-incoming/
 *.log
 .DS_Store
 Thumbs.db
+
+# Others
+*.zip
+*.sqlite3
+*.sqlite3.bak
+pnpm-lock.yaml
+uv.lock
