@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 from config.env import derive_ratelimit_redis_url, get_env, get_env_bool, get_env_list, load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -145,24 +147,61 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-def build_caches(redis_url: str, ratelimit_url: str = "") -> dict[str, dict]:
-    """Configure RedisCache for general caching (mm:v1:) and a separate DB for rate limits.
+CACHE_BACKENDS = ("redis", "database", "locmem")
+CACHE_BACKEND = get_env("CACHE_BACKEND", "redis").lower()
+if CACHE_BACKEND not in CACHE_BACKENDS:
+    raise ImproperlyConfigured(f"CACHE_BACKEND must be one of {CACHE_BACKENDS}, got {CACHE_BACKEND!r}.")
 
-    `ratelimit_url` overrides the derived URL (hosts that give one database or a unix socket).
-    """
-    return {
-        "default": {
-            "BACKEND": "django.core.cache.backends.redis.RedisCache",
-            "LOCATION": redis_url,
-            "KEY_PREFIX": "mm:v1",
-            "KEY_FUNCTION": "apps.core.cache.make_key",
-            "TIMEOUT": 60 * 60 * 24,  # 24h safety TTL
-        },
-        "ratelimit": {
-            "BACKEND": "django.core.cache.backends.redis.RedisCache",
-            "LOCATION": ratelimit_url or derive_ratelimit_redis_url(redis_url),
-            "KEY_PREFIX": "mm:rl",
-            "KEY_FUNCTION": "apps.core.cache.make_key",
-            "TIMEOUT": 60 * 60 * 24,
-        },
-    }
+_COMMON = {"KEY_FUNCTION": "apps.core.cache.make_key", "TIMEOUT": 60 * 60 * 24}
+
+
+def build_caches(backend: str, redis_url: str = "", ratelimit_url: str = "") -> dict[str, dict]:
+    """`default` (mm:v1) and `ratelimit` (mm:rl) for the chosen backend."""
+    if backend == "redis":
+        engine = "django.core.cache.backends.redis.RedisCache"
+        return {
+            "default": {**_COMMON, "BACKEND": engine, "LOCATION": redis_url, "KEY_PREFIX": "mm:v1"},
+            "ratelimit": {
+                **_COMMON,
+                "BACKEND": engine,
+                "LOCATION": ratelimit_url or derive_ratelimit_redis_url(redis_url),
+                "KEY_PREFIX": "mm:rl",
+            },
+        }
+    if backend == "database":
+        engine = "django.core.cache.backends.db.DatabaseCache"
+        return {
+            "default": {
+                **_COMMON,
+                "BACKEND": engine,
+                "LOCATION": "mm_cache",
+                "KEY_PREFIX": "mm:v1",
+                "OPTIONS": {"MAX_ENTRIES": 10_000},
+            },
+            "ratelimit": {
+                **_COMMON,
+                "BACKEND": engine,
+                "LOCATION": "mm_ratelimit",
+                "KEY_PREFIX": "mm:rl",
+                "OPTIONS": {"MAX_ENTRIES": 5_000},
+            },
+        }
+    if backend == "locmem":
+        engine = "django.core.cache.backends.locmem.LocMemCache"
+        return {
+            "default": {
+                **_COMMON,
+                "BACKEND": engine,
+                "LOCATION": "mm-default",
+                "KEY_PREFIX": "mm:v1",
+                "OPTIONS": {"MAX_ENTRIES": 10_000},
+            },
+            "ratelimit": {
+                **_COMMON,
+                "BACKEND": engine,
+                "LOCATION": "mm-ratelimit",
+                "KEY_PREFIX": "mm:rl",
+                "OPTIONS": {"MAX_ENTRIES": 5_000},
+            },
+        }
+    raise ImproperlyConfigured(f"Unknown CACHE_BACKEND {backend!r}.")

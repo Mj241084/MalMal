@@ -148,6 +148,23 @@ uv run python manage.py backup_db --with-media   # db-YYYYMMDD-HHMMSS.sqlite3 + 
   `FLUSHALL` کامل مجاز است (کش از نو ساخته می‌شود؛ بعدش `warm_cache`).
 - `maxmemory-policy allkeys-lru` تا Redis با فشار حافظه سرویس را نخواباند.
 
+### کش بدون Redis (هاست cPanel) [DECIDED]
+
+`CACHE_BACKEND` در `.env` هر دو کش `default` و `ratelimit` را انتخاب می‌کند: `redis` (پیش‌فرض)، `database`، `locmem`.
+
+- **`database`** — جدول‌های `mm_cache` و `mm_ratelimit` در همان `db.sqlite3`. یک‌بار پیش از استارت:
+
+  ```bash
+  uv run python manage.py createcachetable
+  ```
+
+  `REDIS_URL` در این حالت لازم نیست (فقط با `CACHE_BACKEND=redis` اجباری است).
+- **`locmem`** — کش داخل پروسه. فقط با **یک** worker امن است؛ با چند worker هر پروسه کش جدا دارد و
+  شمارنده‌های محدودیت نرخ (OTP، ورود پنل) دور زده می‌شوند.
+- شمارنده‌ی محدودیت نرخ در `database` غیراتمیک است (get/set با انقضای صریح، نه `incr` اتمیک)؛
+  برای ضدسوءاستفاده کافی است، ولی سقف را در فشار همزمان چند درخواست ممکن است چند واحد رد کند.
+- `check_launch` با `database`/`locmem` هشدار می‌دهد و در `database` نبود جدول‌ها را خطا می‌بیند.
+
 ---
 
 ## ۷. عیب‌یابی سریع
@@ -179,6 +196,7 @@ uv run python manage.py backup_db --with-media   # db-YYYYMMDD-HHMMSS.sqlite3 + 
 
 ## ۹. تغییرات
 
+- ۰.۴ — بخش ۶: «کش بدون Redis» (`CACHE_BACKEND=database|locmem`، `createcachetable`، محدودیت `locmem`).
 - ۰.۳ — P15 (تکمیل پنل): ارجاع به `docs/panel-guide.md` در بخش ۸. بخش ۸ از قبل «اولین کارمند» و «`setup_groups` بعد از هر استقرار با مجوز تازه» را داشت.
 - ۰.۲ — بخش ۸ «پنل مدیریت» (اولین کارمند، `setup_groups` پس از مجوز تازه، حد آپلود، robots/noindex، `ADMIN_URL`، بازگشت وجه). این سند تا ۰.۱ بخش «تغییرات» نداشت.
 - هاست cPanel: passenger_wsgi.py، STATIC_ROOT و MEDIA_ROOT و RATELIMIT_REDIS_URL از env، و deploy/crontab.cpanel.example.

@@ -75,7 +75,15 @@ def _services():
             if caches[alias].get("launch_check") != 1:
                 raise RuntimeError(alias)
     except Exception:
-        yield ERROR, "Redis در دسترس نیست (کش و محدودیت نرخ OTP)"
+        message = (
+            f"کش یا محدودیت نرخ در دسترس نیست (CACHE_BACKEND={settings.CACHE_BACKEND}؛ "
+            "برای database دستور createcachetable را اجرا کنید)"
+        )
+        yield ERROR, message
+    if settings.CACHE_BACKEND == "locmem":
+        yield WARNING, "CACHE_BACKEND=locmem: هر پروسه کش جدا دارد؛ فقط با یک worker امن است"
+    elif settings.CACHE_BACKEND == "database":
+        yield WARNING, "CACHE_BACKEND=database: بدون Redis؛ کار می‌کند ولی کندتر است"
     if not settings.NESHAN_MAP_KEY:
         yield WARNING, "NESHAN_MAP_KEY خالی است (نقشه‌ی آدرس غیرفعال)"
     if not settings.NESHAN_SERVICE_KEY:

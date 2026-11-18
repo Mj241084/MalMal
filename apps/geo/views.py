@@ -9,11 +9,11 @@ from urllib.request import Request, urlopen
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.core.cache import caches
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 
+from apps.accounts import ratelimit
 from apps.core.cache import safe_cache_get, safe_cache_set
 from apps.core.text import normalize_fa
 from apps.geo import services
@@ -28,15 +28,7 @@ REVERSE_CACHE_TTL = 60 * 60
 
 
 def _consume_reverse_quota(user_id: int) -> bool:
-    rl = caches["ratelimit"]
-    key = f"neshan:rev:u:{user_id}"
-    try:
-        rl.add(key, 0, REVERSE_RATE_WINDOW)
-        count = rl.incr(key)
-    except ValueError:
-        rl.set(key, 1, REVERSE_RATE_WINDOW)
-        count = 1
-    return count <= REVERSE_RATE_LIMIT
+    return ratelimit.consume(f"neshan:rev:u:{user_id}", REVERSE_RATE_LIMIT, REVERSE_RATE_WINDOW)
 
 
 def _match_province_and_city(state_raw: str | None, city_raw: str | None) -> tuple[int | None, int | None]:

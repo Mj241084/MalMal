@@ -40,6 +40,7 @@
 | کلید و شناسه‌ی قالب‌های sms.ir | `SMS_BACKEND=console`؛ شناسه‌ی خالی = ارسال انجام نمی‌شود و `SmsLog(skipped_no_template)` ثبت می‌شود، نه خطا و نه شکست جریان اصلی |
 | دامنه | `SITE_URL=http://localhost:8000`؛ همه‌ی آدرس‌های مطلق (callback پرداخت، sitemap، canonical، OG) از آن؛ قالب OTP بدون خط WebOTP |
 | کلید نشان | نقشه غیرفعال، آدرس بدون مختصات؛ اگر `NESHAN_SERVICE_KEY` خالی باشد، لیست استان/شهر فقط از دیتابیس خوانده می‌شود (یک‌بار `sync_geo` یا ادمین) |
+| Redis | `CACHE_BACKEND=database` یا `locmem` (بدون Redis؛ `database` نیاز به یک‌بار `createcachetable` دارد، `locmem` فقط با یک worker) |
 | مشخصات فروشنده، متن صفحات ثابت، اینماد | فیلد خالی نمایش داده نمی‌شود |
 | سوال‌ها و تایید `07` (ارسال) | با فروشنده است و خارج از پروژه؛ متن پیش‌فرض می‌ماند |
 | فونت، sprite، عکس | فونت سیستم و placeholder |
@@ -138,6 +139,7 @@
 # پاک‌سازی نگه‌داری:     uv run python manage.py purge_otp | purge_sms_logs  (شبانه)
 # گروه‌های staff:        uv run python manage.py setup_groups  و  create_staff 0912... --group فروش
 # دستورهای مدیریتی:     uv run python manage.py migrate | makemigrations | collectstatic
+# جدول کش دیتابیسی:     uv run python manage.py createcachetable  (فقط با CACHE_BACKEND=database)
 ```
 
 cron سرور در `deploy/crontab.example` است (یک فایل، بدون timer). استقرار و بازیابی: `docs/deploy.md`.
