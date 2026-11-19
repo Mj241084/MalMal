@@ -1,4 +1,4 @@
-# ۰۸ — ماژول‌های UI سمت کلاینت (`window.MM`) — نسخه ۰.۹
+# ۰۸ — ماژول‌های UI سمت کلاینت (`window.MM`) — نسخه ۰.۱۰
 
 هر سشن قبل از نوشتن JS این سند را می‌خواند. هر تغییر در ماژول‌ها = به‌روزرسانی همین سند در همان تغییر
 (تست `test_every_mm_module_is_documented` فایل‌های بدون ردیف را رد می‌کند).
@@ -26,6 +26,7 @@
 | gallery | `gallery.js` | — (فقط attribute) | `[data-gallery]`، `[data-gallery-track]`، `[data-gallery-slide]`، `[data-gallery-prev\|next\|zoom\|counter\|thumb]`، `img[data-full]`، و `#gallery-lightbox[data-lightbox]` با `[data-lb-stage\|image\|counter\|prev\|next\|zoom-in\|zoom-out]` |
 | neshan | `neshan.js` | — | `[data-neshan-picker]` (فقط وقتی `NESHAN_MAP_KEY` هست) |
 | slider | `slider.js` | — (فقط attribute) | `[data-slider]` + `data-autoplay` (میلی‌ثانیه)، `[data-slider-track]`، `[data-slider-prev]`، `[data-slider-next]`، `[data-slider-dot]` |
+| scroll | `scroll.js` | `scroll.to(y)` | بدون attribute. چرخ ماوس را نرم می‌کند (ترک‌پد، لمس، کیبورد، دیالوگ باز و عنصرهای داخلی دارای اسکرول دست‌نخورده می‌مانند). هر `<a href="#id">` داخلی با فاصله‌ی `header.sticky` نرم اسکرول می‌شود و فوکوس به مقصد می‌رود. با `prefers-reduced-motion` هیچ کاری نمی‌کند. فقط در `base.html` فروشگاه، نه پنل |
 
 ## ماژول‌های پنل (برنامه‌ریزی‌شده — P9/P11)
 اسکریپت‌های پنل فقط در `templates/panel/base.html` بارگذاری می‌شوند، نه در `base.html` فروشگاه (`09` بخش ۲.۳، `10` بخش ۱۰). هر فاز هنگام ساخت فایل، ردیف را قطعی می‌کند (رفع «برنامه‌ریزی‌شده»). تا آن موقع فایلی وجود ندارد و `test_every_mm_module_is_documented` چیزی از آن‌ها نمی‌خواهد.
@@ -47,6 +48,7 @@
 4. تغییر ناسازگار فقط با grep روی همه‌ی استفاده‌ها و ثبت در «تغییرات».
 
 ## تغییرات
+- ۰.۱۰ — `scroll.js`: اسکرول نرم چرخ ماوس و لینک‌های `#id` (فقط فروشگاه).
 - ۰.۹ — `addresses.js`: فرم آدرس باز و پرشده در checkout پیش از ارسال سفارش ذخیره می‌شود (پرداخت بدون کلیک دوم ادامه می‌یابد)؛ فرم خالی نادیده گرفته می‌شود؛ بدون آدرس ذخیره‌شده فرم باز و toast می‌شود. تشخیص «پر بودن» از مقدار فیلدهای الزامی است، نه event ردیابی (فرم خطادارِ دوباره‌رندرشده «دست‌نخورده» حساب می‌شد).
 - ۰.۸ — بخش «ماژول‌های پنل»: ردیف‌های برنامه‌ریزی‌شده‌ی `panel.js` (P9)، `upload.js` و `richtext.js` (P11)، و استخراج `#mm-dialog` به `partials/_mm_dialog.html` (بدون تغییر رفتار).
 - ۰.۷ — stepper سبد در صفحه‌ی محصول، گالری با فلش و لایت‌باکس زوم‌دار (`gallery.js`).

@@ -110,6 +110,7 @@ ITEMS: list[NavItem] = [
         "sms", "گزارش پیامک", "panel:sms", icon="message-circle", group="admin", perms=("notifications.view_smslog",)
     ),
     NavItem("system", "سیستم", "panel:system", icon="shield-check", group="admin", superuser=True),
+    NavItem("guide", "راهنما", "panel:guide", icon="book-open", group="admin", superuser=True),
 ]
 
 

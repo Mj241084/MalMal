@@ -10,6 +10,7 @@ from .views import (
     content,
     customers,
     dashboard,
+    guide,
     inventory,
     marketing,
     orders,
@@ -149,4 +150,5 @@ urlpatterns = [
     path("system/staff/<int:pk>/active/", system.staff_active, name="staff_active"),
     path("system/audit/", system.audit_list, name="audit"),
     path("system/launch/", system.launch, name="launch"),
+    path("guide/", guide.guide, name="guide"),
 ]
