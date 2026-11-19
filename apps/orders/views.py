@@ -119,7 +119,7 @@ def place_view(request):
     if method is None:
         errors.append("ارسال در حال حاضر ممکن نیست")
     if address is None:
-        errors.append("آدرس تحویل را انتخاب کنید")
+        errors.append("آدرس تحویل را انتخاب کنید" if _addresses(user) else "ابتدا یک آدرس تحویل ثبت کنید")
     if gateway_code not in allowed:
         errors.append("روش پرداخت را انتخاب کنید")
     if buyer_form is not None and not buyer_form.is_valid():

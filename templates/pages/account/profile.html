@@ -53,7 +53,7 @@
 
     <fieldset class="fieldset">
       <legend class="fieldset-legend text-small font-medium">{{ form.national_code.label }}</legend>
-      {% if user.national_code %}
+      {% if national_code_locked %}
         <label class="input w-full h-10 bg-base-300 flex items-center gap-2">
           {% icon "lock" size=18 class="text-ink-3" %}
           <input type="text" value="{{ user.national_code|fa_digits }}" readonly dir="ltr" class="grow text-end num">
@@ -67,7 +67,7 @@
             <span>{{ error }}</span>
           </p>
         {% endfor %}
-        <p class="label text-label text-ink-3">کد ملی باید به نام صاحب همین شماره‌ی موبایل باشد</p>
+        <p class="label text-label text-ink-3">کد ملی باید به نام صاحب همین شماره‌ی موبایل باشد. بعد از ثبت قابل تغییر نیست، پیش از ذخیره دوباره بررسی کنید</p>
       {% endif %}
     </fieldset>
 

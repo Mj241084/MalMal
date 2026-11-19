@@ -256,16 +256,21 @@ def logout_all_view(request: HttpRequest) -> HttpResponse:
 @login_required
 @require_http_methods(["GET", "POST"])
 def profile_view(request: HttpRequest) -> HttpResponse:
+    # A private copy of the user: a ModelForm writes cleaned values onto its instance while validating, even when the
+    # form ends up invalid. On request.user that leaked an unsaved national code into the page (field locked, value lost).
+    profile = User.objects.get(pk=request.user.pk)
+    national_code_locked = bool(profile.national_code)  # decided from the database, before the form touches anything
+
     if request.method == "POST":
-        form = ProfileForm(request.POST, instance=request.user)
+        form = ProfileForm(request.POST, instance=profile)
         if form.is_valid():
             form.save()
             messages.success(request, "اطلاعات حساب ذخیره شد.")
             return redirect("accounts:profile")
     else:
-        form = ProfileForm(instance=request.user)
+        form = ProfileForm(instance=profile)
 
-    return render(request, "pages/account/profile.html", {"form": form})
+    return render(request, "pages/account/profile.html", {"form": form, "national_code_locked": national_code_locked})
 
 
 @login_required

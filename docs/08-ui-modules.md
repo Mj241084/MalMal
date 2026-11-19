@@ -1,4 +1,4 @@
-# ۰۸ — ماژول‌های UI سمت کلاینت (`window.MM`) — نسخه ۰.۸
+# ۰۸ — ماژول‌های UI سمت کلاینت (`window.MM`) — نسخه ۰.۹
 
 هر سشن قبل از نوشتن JS این سند را می‌خواند. هر تغییر در ماژول‌ها = به‌روزرسانی همین سند در همان تغییر
 (تست `test_every_mm_module_is_documented` فایل‌های بدون ردیف را رد می‌کند).
@@ -21,7 +21,7 @@
 | auth | `auth.js` | `MM.auth.open(next)` | `[data-auth-open]`، `#auth-modal`، `#auth-modal-body` |
 | likes | `likes.js` | `MM.likes.loadState(root)` | `[data-like="<id محصول>"]` (دکمه‌ی قلب با `aria-pressed`)، `data-like-seen`، `#social-product[data-product]`؛ مهمان: قلب در `localStorage` (`malmal.like.pending`، ۱۵ دقیقه) می‌ماند و بعد از ورود اعمال می‌شود |
 | otp | `otp.js` | `MM.otp.build(input)`، `MM.otp.startTimer(el)` | `[data-otp]` + `data-otp-length`، `data-otp-submit`؛ `[data-otp-timer]` + `data-seconds`، `data-otp-resend` |
-| addresses | `addresses.js` | — | `[data-address-add]`، `[data-address-cancel]`، `#address-form-container` |
+| addresses | `addresses.js` | — | `[data-address-add]`، `[data-address-cancel]`، `#address-form-container`؛ در checkout (`#checkout-form`) فرم آدرسِ باز و پرشده پیش از ارسال سفارش با `htmx.trigger` ذخیره می‌شود و بعد پرداخت خودکار ادامه می‌یابد؛ فرم خالی نادیده گرفته می‌شود؛ بدون آدرس ذخیره‌شده و بدون فرم، فرم باز می‌شود و toast می‌آید (بدون خطای سرور) |
 | cart | `cart.js` | `MM.cart.read()`، `MM.cart.clear()` | `[data-cart-add]`، `[data-cart-idle]`، `[data-cart-active]`، `[data-cart-step="1\|-1"]`، `[data-cart-qty]`، `[data-cart-minus]`، `[data-cart-trash]`، `[data-cart-set]` با `data-variant`/`data-qty`، `[data-cart-items]`، `[data-guest-cart]`، `#cart-content`، `#cart-state`، `#variant-panel[data-variant-id\|data-variants\|data-max\|data-orderable\|data-price]`، `[data-bar-price]`؛ رویداد `cart:changed` از سرور (برای خط سبد `variant` و `qty` هم دارد)؛ برای کاربر واردشده از `GET /cart/state/` و `POST /cart/line/` استفاده می‌شود |
 | gallery | `gallery.js` | — (فقط attribute) | `[data-gallery]`، `[data-gallery-track]`، `[data-gallery-slide]`، `[data-gallery-prev\|next\|zoom\|counter\|thumb]`، `img[data-full]`، و `#gallery-lightbox[data-lightbox]` با `[data-lb-stage\|image\|counter\|prev\|next\|zoom-in\|zoom-out]` |
 | neshan | `neshan.js` | — | `[data-neshan-picker]` (فقط وقتی `NESHAN_MAP_KEY` هست) |
@@ -47,6 +47,7 @@
 4. تغییر ناسازگار فقط با grep روی همه‌ی استفاده‌ها و ثبت در «تغییرات».
 
 ## تغییرات
+- ۰.۹ — `addresses.js`: فرم آدرس باز و پرشده در checkout پیش از ارسال سفارش ذخیره می‌شود (پرداخت بدون کلیک دوم ادامه می‌یابد)؛ فرم خالی نادیده گرفته می‌شود؛ بدون آدرس ذخیره‌شده فرم باز و toast می‌شود. تشخیص «پر بودن» از مقدار فیلدهای الزامی است، نه event ردیابی (فرم خطادارِ دوباره‌رندرشده «دست‌نخورده» حساب می‌شد).
 - ۰.۸ — بخش «ماژول‌های پنل»: ردیف‌های برنامه‌ریزی‌شده‌ی `panel.js` (P9)، `upload.js` و `richtext.js` (P11)، و استخراج `#mm-dialog` به `partials/_mm_dialog.html` (بدون تغییر رفتار).
 - ۰.۷ — stepper سبد در صفحه‌ی محصول، گالری با فلش و لایت‌باکس زوم‌دار (`gallery.js`).
 - ۰.۶ — P7: `shell.js` پنل پیشنهاد جستجو را بعد از swap سینک می‌کند، `details.dropdown` را با کلیک بیرون/Escape می‌بندد و فلش ریل `[data-rail-scroll]` گرفت؛ `forms.js` پارامترهای HTMX را ASCII می‌کند؛ `cart.js` قفل دکمه را بعد از خطای شبکه باز می‌کند و `syncing` را با `htmx:responseError`/`sendError` ریست می‌کند؛ `likes.js` بعد از لایک معلق، متن اجتماعی صفحه‌ی محصول را دوباره می‌گیرد.

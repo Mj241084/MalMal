@@ -140,6 +140,49 @@ class TestProfilePage:
         assert user.last_name == "احمدی"
 
 
+class TestFailedProfileSave:
+    """A failed save must neither lock nor lose the national code (D20)."""
+
+    @pytest.fixture
+    def newcomer(self, client, db):
+        user = User.objects.create_user("09121230002")
+        client.force_login(user)
+        return user
+
+    def _post(self, client, **data):
+        payload = {"first_name": "", "last_name": "", "national_code": "", "email": "", **data}
+        return client.post(reverse("accounts:profile"), payload)
+
+    def test_failed_save_keeps_national_code_editable(self, client, newcomer):
+        response = self._post(client, national_code=VALID_CODE)
+
+        assert response.status_code == 200
+        form = response.context["form"]
+        assert {"first_name", "last_name"} <= set(form.errors)
+        assert form.fields["national_code"].disabled is False
+        assert response.context["national_code_locked"] is False
+        assert response.context["user"].national_code == ""  # request.user was not touched by the failed validation
+        newcomer.refresh_from_db()
+        assert newcomer.national_code == ""
+
+    def test_second_attempt_saves_everything_together(self, client, newcomer):
+        self._post(client, national_code=VALID_CODE)
+        response = self._post(client, national_code=VALID_CODE, first_name="مریم", last_name="احمدی")
+
+        assert response.status_code == 302
+        newcomer.refresh_from_db()
+        assert (newcomer.first_name, newcomer.last_name, newcomer.national_code) == ("مریم", "احمدی", VALID_CODE)
+
+    def test_invalid_email_does_not_lock_national_code(self, client, newcomer):
+        response = self._post(
+            client, first_name="مریم", last_name="احمدی", national_code=VALID_CODE, email="not-an-email"
+        )
+
+        assert "email" in response.context["form"].errors
+        assert response.context["national_code_locked"] is False
+        assert response.context["form"].fields["national_code"].disabled is False
+
+
 class TestNationalCodeModelLock:
     def test_locked_value_cannot_be_changed_by_direct_save(self, user):
         user.national_code = VALID_CODE
