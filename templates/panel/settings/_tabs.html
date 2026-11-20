@@ -1,6 +1,7 @@
 <div role="tablist" class="tabs tabs-border overflow-x-auto no-scrollbar">
   {% if perms.core.change_sitesettings %}
     <a role="tab" href="{% url 'panel:settings_identity' %}" class="tab whitespace-nowrap{% if tab == 'identity' %} tab-active{% endif %}">هویت و تماس</a>
+    <a role="tab" href="{% url 'panel:settings_social' %}" class="tab whitespace-nowrap{% if tab == 'social' %} tab-active{% endif %}">شبکه‌های اجتماعی</a>
     <a role="tab" href="{% url 'panel:settings_legal' %}" class="tab whitespace-nowrap{% if tab == 'legal' %} tab-active{% endif %}">مشخصات فاکتور</a>
     <a role="tab" href="{% url 'panel:settings_sales' %}" class="tab whitespace-nowrap{% if tab == 'sales' %} tab-active{% endif %}">فروش</a>
   {% endif %}

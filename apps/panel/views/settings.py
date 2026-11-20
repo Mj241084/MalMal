@@ -16,6 +16,7 @@ from apps.panel.forms_settings import (
     LegalForm,
     SalesForm,
     ShippingMethodForm,
+    SocialForm,
 )
 from apps.panel.permissions import panel_view
 from apps.panel.views import common
@@ -23,7 +24,13 @@ from apps.payments.models import PaymentGateway
 
 SITE, GATEWAY, SHIPPING = "core.change_sitesettings", "payments.change_paymentgateway", "orders.change_shippingmethod"
 FORM = "panel/settings/form.html"
-TITLES = {"identity": "هویت و تماس", "legal": "مشخصات فاکتور", "sales": "فروش", "advanced": "پیشرفته"}
+TITLES = {
+    "identity": "هویت و تماس",
+    "social": "شبکه‌های اجتماعی",
+    "legal": "مشخصات فاکتور",
+    "sales": "فروش",
+    "advanced": "پیشرفته",
+}
 
 
 @panel_view(any_of=(SITE, GATEWAY, SHIPPING))
@@ -57,6 +64,12 @@ def _site_tab(request, form_class, tab, prepare=None):
 @require_http_methods(["GET", "POST"])
 def settings_identity(request):
     return _site_tab(request, IdentityForm, "identity", _logos)
+
+
+@panel_view(SITE)
+@require_http_methods(["GET", "POST"])
+def settings_social(request):
+    return _site_tab(request, SocialForm, "social")
 
 
 @panel_view(SITE)

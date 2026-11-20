@@ -123,7 +123,7 @@
 **TrustItem** (مزیت‌های فروشگاه، بلوک `trust`): `icon` (نام نماد در sprite)، `title`، `subtitle`، `sort`، `is_active`.
 
 ### core
-**SiteSettings** (singleton): نام، لوگو (روشن/تاریک)، تلفن، آدرس، ساعات کاری، لینک‌های اجتماعی، آستانه‌ی ارسال رایگان، آستانه‌ی «موجودی کم»، پارامترهای OTP، ساعت مجاز ارسال «موجود شد» (پیش‌فرض ۸ تا ۲۱)، `trust_marks_html` (قطعه‌ی HTML نماد اعتماد/اینماد؛ فقط ادمین؛ خالی = نمایش داده نمی‌شود).
+**SiteSettings** (singleton): نام، لوگو (روشن/تاریک)، تلفن، آدرس، ساعات کاری، لینک‌های اجتماعی (`instagram_url`، `telegram_url`، `x_url`، `bale_url`، `eitaa_url`، `rubika_url`، `igap_url`، `soroush_url`، `whatsapp_url`؛ رجیستری در `apps/core/social.py`)، آستانه‌ی ارسال رایگان، آستانه‌ی «موجودی کم»، پارامترهای OTP، ساعت مجاز ارسال «موجود شد» (پیش‌فرض ۸ تا ۲۱)، `trust_marks_html` (قطعه‌ی HTML نماد اعتماد/اینماد؛ فقط ادمین؛ خالی = نمایش داده نمی‌شود).
 - **مشخصات فروشنده (برای فاکتور، C7):** `legal_name`، `economic_code`، `national_id` (شناسه‌ی ملی)، `registration_no`، `legal_address`، `legal_postal_code`، `legal_phone`. خالی مجاز؛ فاکتور فیلدهای خالی را نشان نمی‌دهد.
 **StaticPage**: `slug`, `title`, `body`, `is_active`, `needs_review` bool (پیش‌فرض `False`؛ متن پیش‌نویسی مثل صفحه‌ی ارسال `True` می‌شود و فروشنده در ادمین خاموشش می‌کند؛ `check_launch` هشدار می‌دهد). **FooterLink**: `group`, `title`, `url`, `sort`. پیوند کوتاه پیامک بدون جدول است و از `core/shortlinks.py` (`r/<kind><pk base36>`) تولید می‌شود (D32).
 
@@ -340,6 +340,7 @@ CREATE VIRTUAL TABLE product_fts USING fts5(
 
 ## ۱۱. تغییرات
 
+- ۰.۳.۱۶ — شش فیلد شبکه‌ی اجتماعی روی SiteSettings؛ رجیستری در apps/core/social.py.
 - ۰.۳.۱۵ — اصلاحات بازبینی: search_text و ردیف FTS با تغییر نام یا والد دسته (invalidate_category با reindex_search) و تغییر sku یا options تنوع به‌روز می‌شوند؛ move_subtree پیشوند category_path را با Concat/Substr عوض می‌کند (نه Replace).
 - ۰.۳.۱۴ (P13) — بدون مدل و مهاجرت؛ `marketing.services.rule_queryset` و `banner_target_dead` اضافه شد و `collection_products` به `rule_queryset` واگذار می‌کند.
 - ۰.۳.۱۲ (پنل، برنامه‌ریزی) — اپ `panel` در جدول اپ‌ها (بدون مدل و مهاجرت؛ ممیزی روی `LogEntry`)، مجوز `catalog.adjust_stock` روی `Variant.Meta.permissions` (P12)، قرارداد `StockMovement.note` برای حرکت دستی، و اتصال اکشن بازگشت وجه به `record_refund` (P10). عنوان سند با تاریخچه (۰.۳.۱۱) هم‌تراز شد؛ قبلاً ۰.۳.۹ مانده بود. هیچ‌کدام تا اجرای فاز مربوط در کد نیست.

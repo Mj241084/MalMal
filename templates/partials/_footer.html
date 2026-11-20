@@ -1,4 +1,4 @@
-{% load core_tags %}
+{% load static core_tags %}
 <footer class="bg-base-100 border-t mt-12">
   <div class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -27,6 +27,20 @@
             {% icon "map-pin" size=18 class="text-ink-3 mt-1" %}
             <span>{{ site_settings.address|fa_text }}</span>
           </div>
+        {% endif %}
+
+        {% social_links site_settings as socials %}
+        {% if socials %}
+          <ul class="flex flex-wrap items-center gap-2" aria-label="شبکه‌های اجتماعی">
+            {% for s in socials %}
+              <li>
+                <a href="{{ s.url }}" target="_blank" rel="noopener noreferrer me" aria-label="{{ s.label }}" title="{{ s.label }}"
+                   class="w-10 h-10 rounded-lg bg-white border flex items-center justify-center transition-colors hover:border-base-content">
+                  <img src="{% static s.icon %}" alt="" width="24" height="24" loading="lazy" class="w-6 h-6 object-contain">
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
         {% endif %}
       </div>
 

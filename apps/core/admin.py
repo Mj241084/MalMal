@@ -20,8 +20,21 @@ class SiteSettingsAdmin(admin.ModelAdmin):
                     "email",
                     "address",
                     "working_hours",
+                )
+            },
+        ),
+        (
+            "شبکه‌های اجتماعی",
+            {
+                "fields": (
                     "instagram_url",
                     "telegram_url",
+                    "x_url",
+                    "bale_url",
+                    "eitaa_url",
+                    "rubika_url",
+                    "igap_url",
+                    "soroush_url",
                     "whatsapp_url",
                 )
             },

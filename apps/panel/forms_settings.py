@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from django import forms
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
 
 from apps.catalog.images import validate_upload
+from apps.core import social
 from apps.core.forms import FieldErrorAttrsMixin
 from apps.core.models import SiteSettings
 from apps.core.text import normalize_digits, normalize_fa
@@ -43,8 +45,8 @@ class _LogoMixin:
 class IdentityForm(_LogoMixin, PanelForm):
     normalized = ("store_name", "address", "working_hours")
     field_order = [
-        "store_name", "phone", "email", "address", "working_hours", "instagram_url", "telegram_url",
-        "whatsapp_url", "logo_light", "logo_light_clear", "logo_dark", "logo_dark_clear",
+        "store_name", "phone", "email", "address", "working_hours", "whatsapp_url",
+        "logo_light", "logo_light_clear", "logo_dark", "logo_dark_clear",
     ]  # fmt: skip
     logo_light_clear = forms.BooleanField(required=False, label="حذف لوگوی روشن فعلی")
     logo_dark_clear = forms.BooleanField(required=False, label="حذف لوگوی تاریک فعلی")
@@ -52,8 +54,8 @@ class IdentityForm(_LogoMixin, PanelForm):
     class Meta:
         model = SiteSettings
         fields = [
-            "store_name", "phone", "email", "address", "working_hours", "instagram_url", "telegram_url",
-            "whatsapp_url", "logo_light", "logo_dark",
+            "store_name", "phone", "email", "address", "working_hours", "whatsapp_url",
+            "logo_light", "logo_dark",
         ]  # fmt: skip
         labels = {
             "store_name": "نام فروشگاه",
@@ -61,8 +63,6 @@ class IdentityForm(_LogoMixin, PanelForm):
             "email": "ایمیل",
             "address": "آدرس",
             "working_hours": "ساعات پاسخگویی",
-            "instagram_url": "اینستاگرام",
-            "telegram_url": "تلگرام",
             "whatsapp_url": "واتساپ",
             "logo_light": "لوگوی تم روشن",
             "logo_dark": "لوگوی تم تاریک",
@@ -93,6 +93,41 @@ class IdentityForm(_LogoMixin, PanelForm):
 
     def clean_logo_dark(self):
         return self._checked_logo("logo_dark")
+
+
+class SocialForm(PanelForm):
+    """One field per registry row. CharField, not URLField: Django's URLField would add «http://» before we see the value."""
+
+    class Meta:
+        model = SiteSettings
+        fields = [network.field for network in social.NETWORKS]
+        field_classes = {network.field: forms.CharField for network in social.NETWORKS}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for network in social.NETWORKS:
+            field = self.fields[network.field]
+            field.label = network.label
+            field.help_text = f"نشانی صفحه‌ی فروشگاه در {network.label}؛ خالی = در فوتر نمایش داده نمی‌شود"
+            field.widget.attrs.update(
+                {
+                    "dir": "ltr",
+                    "autocomplete": "off",
+                    "placeholder": f"{network.hosts[0]}/…",
+                    "class": "input w-full text-end latin",
+                }
+            )
+
+    def clean(self):
+        cleaned = super().clean()
+        for network in social.NETWORKS:
+            if network.field not in cleaned:
+                continue
+            try:
+                cleaned[network.field] = social.normalize(network, cleaned[network.field])
+            except ValidationError as exc:
+                self.add_error(network.field, exc)
+        return cleaned
 
 
 class LegalForm(PanelForm):

@@ -15,6 +15,7 @@ from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_GET
 
 from apps.catalog.models import Brand, Category, Product
+from apps.core import social
 from apps.core.models import StaticPage
 from apps.marketing.models import Collection
 
@@ -152,7 +153,9 @@ def organization_ld(site) -> str:
             "contactType": "customer service",
             "availableLanguage": "fa",
         }
-    same_as = [url for url in (site.instagram_url, site.telegram_url, site.whatsapp_url) if url]
+    same_as = [item["url"] for item in social.links(site)]
+    if site.whatsapp_url:
+        same_as.append(site.whatsapp_url)
     if same_as:
         data["sameAs"] = same_as
     return dumps_ld(data)

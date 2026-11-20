@@ -12,6 +12,7 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 
+from apps.core import social
 from apps.core.jalali import to_fa_digits
 from apps.core.models import SiteSettings, StaticPage
 from apps.core.text import format_toman, to_fa_text
@@ -69,6 +70,12 @@ def static_page_url(slug: str) -> str:
     if StaticPage.objects.filter(slug=slug, is_active=True).exists():
         return reverse("core:static_page", args=[slug])
     return ""
+
+
+@register.simple_tag
+def social_links(site) -> list[dict]:
+    """Filled-in social networks for the footer (see apps/core/social.py)."""
+    return social.links(site)
 
 
 @register.simple_tag

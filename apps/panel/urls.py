@@ -133,6 +133,7 @@ urlpatterns = [
     # settings
     path("settings/", settings.settings_index, name="settings_index"),
     path("settings/identity/", settings.settings_identity, name="settings_identity"),
+    path("settings/social/", settings.settings_social, name="settings_social"),
     path("settings/legal/", settings.settings_legal, name="settings_legal"),
     path("settings/sales/", settings.settings_sales, name="settings_sales"),
     path("settings/advanced/", settings.settings_advanced, name="settings_advanced"),

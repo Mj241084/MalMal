@@ -34,6 +34,12 @@ class SiteSettings(TimeStampedModel):
     instagram_url = models.URLField(blank=True, verbose_name="اینستاگرام")
     telegram_url = models.URLField(blank=True, verbose_name="تلگرام")
     whatsapp_url = models.URLField(blank=True, verbose_name="واتساپ")
+    bale_url = models.URLField(blank=True, verbose_name="بله")
+    eitaa_url = models.URLField(blank=True, verbose_name="ایتا")
+    igap_url = models.URLField(blank=True, verbose_name="آی‌گپ")
+    rubika_url = models.URLField(blank=True, verbose_name="روبیکا")
+    soroush_url = models.URLField(blank=True, verbose_name="سروش پلاس")
+    x_url = models.URLField(blank=True, verbose_name="ایکس (توییتر)")
 
     free_shipping_threshold = models.BigIntegerField(
         null=True,
